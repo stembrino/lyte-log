@@ -4,6 +4,8 @@ export const monoFont = "monospace";
 
 export const retro = {
   brand: "#E95420",
+  accent: "#E95420",
+  accentPressed: "#C34113",
   terminal: "#31F91E",
   light: {
     bg: "#F7F7F7",
@@ -36,6 +38,7 @@ export function getRetroPalette(colorScheme: ColorSchemeName) {
     tagBorder: mode.border,
     tagText: mode.text,
     accent: retro.brand,
+    accentPressed: retro.accentPressed,
     success: retro.terminal,
     listSelected: colorScheme === "dark" ? "#362117" : "#FFF1EA",
     routineBg: mode.card,

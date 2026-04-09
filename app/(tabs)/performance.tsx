@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { useColorScheme } from "@/components/contexts/useColorScheme";
+import { useColorScheme } from "@/components/hooks/useColorScheme";
 import { useI18n } from "@/components/i18n-provider";
 import { getRetroPalette, monoFont } from "@/constants/retroTheme";
 

@@ -3,8 +3,8 @@ import { Tabs } from "expo-router";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 
-import { useClientOnlyValue } from "@/components/contexts/useClientOnlyValue";
-import { useColorScheme } from "@/components/contexts/useColorScheme";
+import { useClientOnlyValue } from "@/components/hooks/useClientOnlyValue";
+import { useColorScheme } from "@/components/hooks/useColorScheme";
 import { useI18n } from "@/components/i18n-provider";
 import { useThemePreference } from "@/components/theme-preference";
 import Colors from "@/constants/Colors";

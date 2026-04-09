@@ -1,6 +1,7 @@
-import { useColorScheme } from "@/components/contexts/useColorScheme";
+import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/i18n-provider";
-import { getRetroPalette, monoFont } from "@/constants/retroTheme";
+import { PrimaryButton } from "@/components/PrimaryButton";
+import { monoFont } from "@/constants/retroTheme";
 import { useMemo, useState } from "react";
 import {
     Alert,
@@ -52,9 +53,8 @@ const initialExercises: Exercise[] = [
 ];
 
 export default function ExercisesScreen() {
-  const colorScheme = useColorScheme();
   const { t } = useI18n();
-  const palette = getRetroPalette(colorScheme);
+  const palette = useRetroPalette();
 
   const [exerciseName, setExerciseName] = useState("");
   const [selectedMuscleGroup, setSelectedMuscleGroup] =
@@ -274,28 +274,11 @@ export default function ExercisesScreen() {
           })}
         </View>
 
-        <Pressable onPress={addExercise}>
-          {({ pressed }) => (
-            <View
-              style={[
-                styles.primaryButton,
-                {
-                  backgroundColor: pressed ? palette.card : palette.accent,
-                  borderColor: palette.accent,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.primaryButtonText,
-                  { color: pressed ? palette.accent : "#ffffff" },
-                ]}
-              >
-                [{t("exercises.addExercise")}]
-              </Text>
-            </View>
-          )}
-        </Pressable>
+        <PrimaryButton
+          label={t("exercises.addExercise")}
+          onPress={addExercise}
+          palette={{ accent: palette.accent, card: palette.card }}
+        />
       </View>
 
       <View
@@ -406,28 +389,11 @@ export default function ExercisesScreen() {
           })}
         </View>
 
-        <Pressable onPress={createRoutine}>
-          {({ pressed }) => (
-            <View
-              style={[
-                styles.primaryButton,
-                {
-                  backgroundColor: pressed ? palette.card : palette.accent,
-                  borderColor: palette.accent,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.primaryButtonText,
-                  { color: pressed ? palette.accent : "#ffffff" },
-                ]}
-              >
-                [{t("exercises.createRoutine")}]
-              </Text>
-            </View>
-          )}
-        </Pressable>
+        <PrimaryButton
+          label={t("exercises.createRoutine")}
+          onPress={createRoutine}
+          palette={{ accent: palette.accent, card: palette.card }}
+        />
       </View>
 
       <View
@@ -634,22 +600,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 0.6,
-  },
-  primaryButton: {
-    borderRadius: 2,
-    borderWidth: 1,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 4,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontFamily: monoFont,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
   },
   emptyText: {
     fontFamily: monoFont,
