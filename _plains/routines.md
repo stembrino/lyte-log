@@ -162,3 +162,23 @@ For Phase 1:
 - Use many-to-many (`routine_tags` + `routine_tag_links`), not 1:1.
 - Keep denormalized `search_en` / `search_pt` on routines for fast text search.
 - Store routine duration as integer minutes (`estimated_duration_min`) instead of a `Time` text field.
+
+## UI Component Division (Create Routine)
+
+- `features/routines/components/types.ts`
+  - Shared `SelectedRoutineExercise` type used by modal and screen components.
+- `features/routines/components/BasicInfoScreen.tsx`
+  - Screen 1 UI only: name, estimated duration, and tags.
+  - Receives values + callbacks via props.
+- `features/routines/components/ExercisePickerScreen.tsx`
+  - Screen 2 UI only: exercise search, selected exercises, sets/reps, and catalog list.
+  - Receives list data + callbacks via props.
+- `features/routines/components/CreateRoutineModal.tsx`
+  - Orchestrator: modal shell, step control, form state, handlers, submission mapping.
+  - Keeps hook usage (`usePaginatedExerciseLibrary`) and business flow in one place.
+
+Why this split:
+
+- Reduces file size and cognitive load in the modal.
+- Keeps presentational UI components focused and easy to test.
+- Avoids Context API complexity for now while preserving clear ownership of state.
