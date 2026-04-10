@@ -55,9 +55,9 @@ export function runMigrations(database: SQLiteDatabase): void {
 
 function ensureExercisesSearchColumns(database: SQLiteDatabase): void {
   try {
-    const rows = (database as any).getAllSync(
-      "PRAGMA table_info(exercises);",
-    ) as Array<{ name: string }>;
+    const rows = (database as any).getAllSync("PRAGMA table_info(exercises);") as {
+      name: string;
+    }[];
     const columnNames = new Set(rows.map((row) => row.name));
 
     if (!columnNames.has("search_pt")) {

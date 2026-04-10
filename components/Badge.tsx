@@ -8,12 +8,7 @@ type BadgeProps = {
   backgroundColor: string;
 };
 
-export function Badge({
-  value,
-  textColor,
-  borderColor,
-  backgroundColor,
-}: BadgeProps) {
+export function Badge({ value, textColor, borderColor, backgroundColor }: BadgeProps) {
   return (
     <View
       style={[

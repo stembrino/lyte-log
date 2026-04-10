@@ -10,9 +10,7 @@ export default function WorkoutsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.page }]}>
-      <Text style={[styles.title, { color: palette.textPrimary }]}>
-        {t("workouts.title")}
-      </Text>
+      <Text style={[styles.title, { color: palette.textPrimary }]}>{t("workouts.title")}</Text>
       <Text style={[styles.description, { color: palette.textSecondary }]}>
         {t("workouts.subtitle")}
       </Text>

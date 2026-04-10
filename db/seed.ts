@@ -14,16 +14,11 @@ function normalizeSearchText(value: string): string {
 }
 
 function buildSearchIndex(exercise: { name: string; i18nKey?: string | null }) {
-  const ptLibrary = translations["pt-BR"].exerciseLibrary as Record<
-    string,
-    string
-  >;
+  const ptLibrary = translations["pt-BR"].exerciseLibrary as Record<string, string>;
   const ptLabel = exercise.i18nKey ? ptLibrary[exercise.i18nKey] : undefined;
 
   return {
-    searchPt: normalizeSearchText(
-      ptLabel ? `${ptLabel} ${exercise.name}` : exercise.name,
-    ),
+    searchPt: normalizeSearchText(ptLabel ? `${ptLabel} ${exercise.name}` : exercise.name),
     searchEn: normalizeSearchText(exercise.name),
   };
 }
@@ -62,10 +57,7 @@ export async function seedDatabase(): Promise<void> {
         i18nKey: row.i18nKey,
       });
 
-      await db
-        .update(exercises)
-        .set({ searchPt, searchEn })
-        .where(eq(exercises.id, row.id));
+      await db.update(exercises).set({ searchPt, searchEn }).where(eq(exercises.id, row.id));
     }
   }
 
@@ -80,15 +72,10 @@ export async function seedDatabase(): Promise<void> {
       .from(exercises)
       .where(or(isNull(exercises.searchPt), isNull(exercises.searchEn)));
 
-    console.log(
-      `[seed] search index validation: missing=${missingSearchRows.length}`,
-    );
+    console.log(`[seed] search index validation: missing=${missingSearchRows.length}`);
 
     if (missingSearchRows.length > 0) {
-      console.log(
-        "[seed] rows missing search fields:",
-        missingSearchRows.slice(0, 5),
-      );
+      console.log("[seed] rows missing search fields:", missingSearchRows.slice(0, 5));
     } else {
       const [sample] = await db
         .select({

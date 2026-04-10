@@ -10,9 +10,7 @@ type ThemePreferenceContextValue = {
   toggleTheme: () => void;
 };
 
-const ThemePreferenceContext = createContext<
-  ThemePreferenceContextValue | undefined
->(undefined);
+const ThemePreferenceContext = createContext<ThemePreferenceContextValue | undefined>(undefined);
 
 const THEME_STORAGE_KEY = "@lyte-log/settings/theme";
 
@@ -59,16 +57,13 @@ export function ThemePreferenceProvider({ children }: PropsWithChildren) {
     () => ({
       theme,
       setTheme,
-      toggleTheme: () =>
-        setTheme((current) => (current === "dark" ? "light" : "dark")),
+      toggleTheme: () => setTheme((current) => (current === "dark" ? "light" : "dark")),
     }),
     [theme],
   );
 
   return (
-    <ThemePreferenceContext.Provider value={value}>
-      {children}
-    </ThemePreferenceContext.Provider>
+    <ThemePreferenceContext.Provider value={value}>{children}</ThemePreferenceContext.Provider>
   );
 }
 

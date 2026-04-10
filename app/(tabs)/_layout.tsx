@@ -58,9 +58,7 @@ export default function TabLayout() {
               onPress={toggleTheme}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel={
-                isDarkTheme ? t("header.themeToLight") : t("header.themeToDark")
-              }
+              accessibilityLabel={isDarkTheme ? t("header.themeToLight") : t("header.themeToDark")}
             >
               {({ pressed }) => (
                 <FontAwesome
@@ -111,9 +109,7 @@ export default function TabLayout() {
         name="workouts"
         options={{
           title: t("tabs.workouts"),
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="calendar" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <TabBarIcon name="calendar" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -133,18 +129,14 @@ export default function TabLayout() {
         name="exercises"
         options={{
           title: t("tabs.exercises"),
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="list-alt" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <TabBarIcon name="list-alt" color={color} />,
         }}
       />
       <Tabs.Screen
         name="performance"
         options={{
           title: t("tabs.performance"),
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="line-chart" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <TabBarIcon name="line-chart" color={color} />,
         }}
       />
     </Tabs>

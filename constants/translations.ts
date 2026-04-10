@@ -31,8 +31,7 @@ export const translations = {
       systemExercisesHint: "Exercícios padrão do app não podem ser excluídos.",
       emptyUserExercises: "Você ainda não criou exercícios personalizados.",
       emptySystemExercises: "Nenhum exercício padrão disponível.",
-      emptyExercises:
-        "Nenhum exercício ainda. Crie seu primeiro exercício acima.",
+      emptyExercises: "Nenhum exercício ainda. Crie seu primeiro exercício acima.",
       alerts: {
         missingExerciseNameTitle: "Nome do exercício obrigatório",
         missingExerciseNameMessage: "Digite um nome para o exercício.",
@@ -94,8 +93,7 @@ export const translations = {
     },
     performance: {
       title: "Desempenho",
-      subtitle:
-        "Próximo passo: adicionar gráficos de progresso, PR e estatísticas semanais.",
+      subtitle: "Próximo passo: adicionar gráficos de progresso, PR e estatísticas semanais.",
     },
   },
   "en-US": {
@@ -190,8 +188,7 @@ export const translations = {
     },
     performance: {
       title: "Performance",
-      subtitle:
-        "Next step: add progress charts, PR tracking, and weekly stats.",
+      subtitle: "Next step: add progress charts, PR tracking, and weekly stats.",
     },
   },
 } as const;

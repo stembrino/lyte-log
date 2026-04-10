@@ -11,9 +11,7 @@ export default function PerformanceScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.page }]}>
-      <Text style={[styles.title, { color: palette.textPrimary }]}>
-        {t("performance.title")}
-      </Text>
+      <Text style={[styles.title, { color: palette.textPrimary }]}>{t("performance.title")}</Text>
       <Text style={[styles.description, { color: palette.textSecondary }]}>
         {t("performance.subtitle")}
       </Text>

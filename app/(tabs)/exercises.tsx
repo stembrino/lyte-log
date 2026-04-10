@@ -6,21 +6,10 @@ import { DEFAULT_EXERCISES } from "@/constants/exercises";
 import { DEFAULT_MUSCLE_GROUPS } from "@/constants/muscleGroups";
 import { monoFont } from "@/constants/retroTheme";
 import { db } from "@/db/client";
-import {
-  exercises as exercisesTable,
-  muscleGroups as muscleGroupsTable,
-} from "@/db/schema";
+import { exercises as exercisesTable, muscleGroups as muscleGroupsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 type MuscleGroup =
   | "Chest"
@@ -61,22 +50,18 @@ function isMuscleGroup(value: string): value is MuscleGroup {
   return muscleGroupValues.includes(value as MuscleGroup);
 }
 
-const initialMuscleGroupOptions: MuscleGroupOption[] =
-  DEFAULT_MUSCLE_GROUPS.map((group) => ({
-    id: group.id,
-    name: group.name as MuscleGroup,
-    i18nKey: group.i18nKey,
-  }));
+const initialMuscleGroupOptions: MuscleGroupOption[] = DEFAULT_MUSCLE_GROUPS.map((group) => ({
+  id: group.id,
+  name: group.name as MuscleGroup,
+  i18nKey: group.i18nKey,
+}));
 
 const defaultExerciseI18nKeyById = new Map(
   DEFAULT_EXERCISES.map((exercise) => [exercise.id, exercise.i18nKey]),
 );
 
 const defaultExerciseI18nKeyByName = new Map(
-  DEFAULT_EXERCISES.map((exercise) => [
-    exercise.name.toLowerCase(),
-    exercise.i18nKey,
-  ]),
+  DEFAULT_EXERCISES.map((exercise) => [exercise.name.toLowerCase(), exercise.i18nKey]),
 );
 
 export default function ExercisesScreen() {
@@ -84,11 +69,9 @@ export default function ExercisesScreen() {
   const palette = useRetroPalette();
 
   const [exerciseName, setExerciseName] = useState("");
-  const [selectedMuscleGroup, setSelectedMuscleGroup] =
-    useState<MuscleGroup>("Chest");
-  const [muscleGroupOptions, setMuscleGroupOptions] = useState<
-    MuscleGroupOption[]
-  >(initialMuscleGroupOptions);
+  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<MuscleGroup>("Chest");
+  const [muscleGroupOptions, setMuscleGroupOptions] =
+    useState<MuscleGroupOption[]>(initialMuscleGroupOptions);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [exerciseNameFocused, setExerciseNameFocused] = useState(false);
 
@@ -107,11 +90,7 @@ export default function ExercisesScreen() {
             name: row.name as MuscleGroup,
             i18nKey: row.i18nKey,
           }))
-          .sort(
-            (a, b) =>
-              muscleGroupValues.indexOf(a.name) -
-              muscleGroupValues.indexOf(b.name),
-          );
+          .sort((a, b) => muscleGroupValues.indexOf(a.name) - muscleGroupValues.indexOf(b.name));
 
         if (hydrated.length > 0) {
           setMuscleGroupOptions(hydrated);
@@ -243,12 +222,8 @@ export default function ExercisesScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await db
-                .delete(exercisesTable)
-                .where(eq(exercisesTable.id, exercise.id));
-              setExercises((previous) =>
-                previous.filter((item) => item.id !== exercise.id),
-              );
+              await db.delete(exercisesTable).where(eq(exercisesTable.id, exercise.id));
+              setExercises((previous) => previous.filter((item) => item.id !== exercise.id));
             } catch {
               // Keep state as-is when delete fails.
             }
@@ -259,39 +234,23 @@ export default function ExercisesScreen() {
   };
 
   return (
-    <ScrollView
-      style={{ backgroundColor: palette.page }}
-      contentContainerStyle={styles.container}
-    >
-      <Text
-        style={[styles.screenDescription, { color: palette.textSecondary }]}
-      >
+    <ScrollView style={{ backgroundColor: palette.page }} contentContainerStyle={styles.container}>
+      <Text style={[styles.screenDescription, { color: palette.textSecondary }]}>
         {t("exercises.subtitle")}
       </Text>
 
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: palette.card, borderColor: palette.border },
-        ]}
-      >
-        <View
-          style={[styles.cardAccentBar, { backgroundColor: palette.accent }]}
-        />
+      <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
+        <View style={[styles.cardAccentBar, { backgroundColor: palette.accent }]} />
         <Text style={[styles.cardTitle, { color: palette.textPrimary }]}>
           {t("exercises.createExercise")}
         </Text>
-        <View
-          style={[styles.titleDivider, { backgroundColor: palette.border }]}
-        />
+        <View style={[styles.titleDivider, { backgroundColor: palette.border }]} />
 
         <View
           style={[
             styles.inputShell,
             {
-              borderColor: exerciseNameFocused
-                ? palette.accent
-                : palette.inputBorder,
+              borderColor: exerciseNameFocused ? palette.accent : palette.inputBorder,
               borderWidth: exerciseNameFocused ? 2 : 1,
               backgroundColor: palette.inputBg,
             },
@@ -301,9 +260,7 @@ export default function ExercisesScreen() {
             style={[
               styles.inputPrompt,
               {
-                color: exerciseNameFocused
-                  ? palette.accent
-                  : palette.textSecondary,
+                color: exerciseNameFocused ? palette.accent : palette.textSecondary,
               },
             ]}
           >
@@ -338,12 +295,7 @@ export default function ExercisesScreen() {
                   },
                 ]}
               >
-                <Text
-                  style={[
-                    styles.tagText,
-                    { color: isActive ? "#ffffff" : palette.tagText },
-                  ]}
-                >
+                <Text style={[styles.tagText, { color: isActive ? "#ffffff" : palette.tagText }]}>
                   {t(`muscleGroups.${group.i18nKey}`)}
                 </Text>
               </Pressable>
@@ -351,21 +303,11 @@ export default function ExercisesScreen() {
           })}
         </View>
 
-        <PrimaryButton
-          label={t("exercises.addExercise")}
-          onPress={addExercise}
-        />
+        <PrimaryButton label={t("exercises.addExercise")} onPress={addExercise} />
       </View>
 
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: palette.card, borderColor: palette.border },
-        ]}
-      >
-        <View
-          style={[styles.cardAccentBar, { backgroundColor: palette.accent }]}
-        />
+      <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
+        <View style={[styles.cardAccentBar, { backgroundColor: palette.accent }]} />
         <View style={styles.cardHeaderRow}>
           <Text style={[styles.cardTitle, { color: palette.textPrimary }]}>
             {t("exercises.myExercises")}
@@ -377,9 +319,7 @@ export default function ExercisesScreen() {
             backgroundColor={palette.card}
           />
         </View>
-        <View
-          style={[styles.titleDivider, { backgroundColor: palette.border }]}
-        />
+        <View style={[styles.titleDivider, { backgroundColor: palette.border }]} />
 
         {userExercises.length === 0 ? (
           <Text style={[styles.emptyText, { color: palette.textSecondary }]}>
@@ -400,22 +340,11 @@ export default function ExercisesScreen() {
               >
                 <View style={styles.listItemHeaderRow}>
                   <View style={styles.listItemTextWrap}>
-                    <Text
-                      style={[
-                        styles.listItemTitle,
-                        { color: palette.textPrimary },
-                      ]}
-                    >
+                    <Text style={[styles.listItemTitle, { color: palette.textPrimary }]}>
                       {getExerciseLabel(exercise)}
                     </Text>
-                    <Text
-                      style={[
-                        styles.listItemSubtitle,
-                        { color: palette.textSecondary },
-                      ]}
-                    >
-                      {muscleGroupLabels.get(exercise.muscleGroup) ??
-                        exercise.muscleGroup}
+                    <Text style={[styles.listItemSubtitle, { color: palette.textSecondary }]}>
+                      {muscleGroupLabels.get(exercise.muscleGroup) ?? exercise.muscleGroup}
                     </Text>
                   </View>
                   <Pressable
@@ -428,12 +357,7 @@ export default function ExercisesScreen() {
                       },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.deleteButtonText,
-                        { color: palette.accent },
-                      ]}
-                    >
+                    <Text style={[styles.deleteButtonText, { color: palette.accent }]}>
                       {t("exercises.deleteExercise")}
                     </Text>
                   </Pressable>
@@ -444,15 +368,8 @@ export default function ExercisesScreen() {
         )}
       </View>
 
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: palette.card, borderColor: palette.border },
-        ]}
-      >
-        <View
-          style={[styles.cardAccentBar, { backgroundColor: palette.accent }]}
-        />
+      <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
+        <View style={[styles.cardAccentBar, { backgroundColor: palette.accent }]} />
         <View style={styles.cardHeaderRow}>
           <Text style={[styles.cardTitle, { color: palette.textPrimary }]}>
             {t("exercises.systemExercises")}
@@ -464,9 +381,7 @@ export default function ExercisesScreen() {
             backgroundColor={palette.card}
           />
         </View>
-        <View
-          style={[styles.titleDivider, { backgroundColor: palette.border }]}
-        />
+        <View style={[styles.titleDivider, { backgroundColor: palette.border }]} />
 
         <Text style={[styles.helperText, { color: palette.textSecondary }]}>
           {t("exercises.systemExercisesHint")}
@@ -489,19 +404,11 @@ export default function ExercisesScreen() {
                   },
                 ]}
               >
-                <Text
-                  style={[styles.listItemTitle, { color: palette.textPrimary }]}
-                >
+                <Text style={[styles.listItemTitle, { color: palette.textPrimary }]}>
                   {getExerciseLabel(exercise)}
                 </Text>
-                <Text
-                  style={[
-                    styles.listItemSubtitle,
-                    { color: palette.textSecondary },
-                  ]}
-                >
-                  {muscleGroupLabels.get(exercise.muscleGroup) ??
-                    exercise.muscleGroup}
+                <Text style={[styles.listItemSubtitle, { color: palette.textSecondary }]}>
+                  {muscleGroupLabels.get(exercise.muscleGroup) ?? exercise.muscleGroup}
                 </Text>
               </View>
             ))}

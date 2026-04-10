@@ -9,9 +9,7 @@ export default function RoutinesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.page }]}>
-      <Text style={[styles.title, { color: palette.textPrimary }]}>
-        {t("routines.title")}
-      </Text>
+      <Text style={[styles.title, { color: palette.textPrimary }]}>{t("routines.title")}</Text>
       <Text style={[styles.description, { color: palette.textSecondary }]}>
         {t("routines.subtitle")}
       </Text>
