@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import { integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const muscleGroups = sqliteTable("muscle_groups", {
@@ -96,3 +97,62 @@ export const sets = sqliteTable("sets", {
   completed: integer("completed", { mode: "boolean" }).notNull().default(false),
   timestamp: text("timestamp").notNull(),
 });
+
+export const exercisesRelations = relations(exercises, ({ many }) => ({
+  routineExercises: many(routineExercises),
+  workoutExercises: many(workoutExercises),
+}));
+
+export const routinesRelations = relations(routines, ({ many }) => ({
+  routineTagLinks: many(routineTagLinks),
+  routineExercises: many(routineExercises),
+}));
+
+export const routineTagsRelations = relations(routineTags, ({ many }) => ({
+  routineTagLinks: many(routineTagLinks),
+}));
+
+export const routineTagLinksRelations = relations(routineTagLinks, ({ one }) => ({
+  routine: one(routines, {
+    fields: [routineTagLinks.routineId],
+    references: [routines.id],
+  }),
+  tag: one(routineTags, {
+    fields: [routineTagLinks.tagId],
+    references: [routineTags.id],
+  }),
+}));
+
+export const routineExercisesRelations = relations(routineExercises, ({ one }) => ({
+  routine: one(routines, {
+    fields: [routineExercises.routineId],
+    references: [routines.id],
+  }),
+  exercise: one(exercises, {
+    fields: [routineExercises.exerciseId],
+    references: [exercises.id],
+  }),
+}));
+
+export const workoutsRelations = relations(workouts, ({ many }) => ({
+  workoutExercises: many(workoutExercises),
+}));
+
+export const workoutExercisesRelations = relations(workoutExercises, ({ one, many }) => ({
+  workout: one(workouts, {
+    fields: [workoutExercises.workoutId],
+    references: [workouts.id],
+  }),
+  exercise: one(exercises, {
+    fields: [workoutExercises.exerciseId],
+    references: [exercises.id],
+  }),
+  sets: many(sets),
+}));
+
+export const setsRelations = relations(sets, ({ one }) => ({
+  workoutExercise: one(workoutExercises, {
+    fields: [sets.workoutExerciseId],
+    references: [workoutExercises.id],
+  }),
+}));

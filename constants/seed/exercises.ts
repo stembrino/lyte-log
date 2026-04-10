@@ -1,6 +1,6 @@
 /**
  * Default exercise library seeded on first launch.
- * `i18nKey` maps to `exercises.library.<key>` in translations.ts.
+ * `i18nKey` maps to `exerciseLibrary.<key>` in translations.ts.
  * Custom exercises created by the user will have i18nKey = null and use `name` directly.
  */
 export const DEFAULT_EXERCISES = [

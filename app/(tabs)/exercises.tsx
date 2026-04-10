@@ -1,10 +1,11 @@
+import { AppCard } from "@/components/AppCard";
 import { Badge } from "@/components/Badge";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/i18n-provider";
 import { PrimaryButton } from "@/components/PrimaryButton";
-import { DEFAULT_EXERCISES } from "@/constants/exercises";
-import { DEFAULT_MUSCLE_GROUPS } from "@/constants/muscleGroups";
 import { monoFont } from "@/constants/retroTheme";
+import { DEFAULT_EXERCISES } from "@/constants/seed/exercises";
+import { DEFAULT_MUSCLE_GROUPS } from "@/constants/seed/muscleGroups";
 import { db } from "@/db/client";
 import { exercises as exercisesTable, muscleGroups as muscleGroupsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -239,11 +240,7 @@ export default function ExercisesScreen() {
         {t("exercises.subtitle")}
       </Text>
 
-      <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
-        <View style={[styles.cardAccentBar, { backgroundColor: palette.accent }]} />
-        <Text style={[styles.cardTitle, { color: palette.textPrimary }]}>
-          {t("exercises.createExercise")}
-        </Text>
+      <AppCard title={t("exercises.createExercise")}>
         <View style={[styles.titleDivider, { backgroundColor: palette.border }]} />
 
         <View
@@ -304,21 +301,19 @@ export default function ExercisesScreen() {
         </View>
 
         <PrimaryButton label={t("exercises.addExercise")} onPress={addExercise} />
-      </View>
+      </AppCard>
 
-      <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
-        <View style={[styles.cardAccentBar, { backgroundColor: palette.accent }]} />
-        <View style={styles.cardHeaderRow}>
-          <Text style={[styles.cardTitle, { color: palette.textPrimary }]}>
-            {t("exercises.myExercises")}
-          </Text>
+      <AppCard
+        title={t("exercises.myExercises")}
+        rightAdornment={
           <Badge
             value={userExercises.length}
             textColor={palette.accent}
             borderColor={palette.accent}
             backgroundColor={palette.card}
           />
-        </View>
+        }
+      >
         <View style={[styles.titleDivider, { backgroundColor: palette.border }]} />
 
         {userExercises.length === 0 ? (
@@ -366,21 +361,19 @@ export default function ExercisesScreen() {
             ))}
           </View>
         )}
-      </View>
+      </AppCard>
 
-      <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
-        <View style={[styles.cardAccentBar, { backgroundColor: palette.accent }]} />
-        <View style={styles.cardHeaderRow}>
-          <Text style={[styles.cardTitle, { color: palette.textPrimary }]}>
-            {t("exercises.systemExercises")}
-          </Text>
+      <AppCard
+        title={t("exercises.systemExercises")}
+        rightAdornment={
           <Badge
             value={systemExercises.length}
             textColor={palette.textSecondary}
             borderColor={palette.border}
             backgroundColor={palette.card}
           />
-        </View>
+        }
+      >
         <View style={[styles.titleDivider, { backgroundColor: palette.border }]} />
 
         <Text style={[styles.helperText, { color: palette.textSecondary }]}>
@@ -414,7 +407,7 @@ export default function ExercisesScreen() {
             ))}
           </View>
         )}
-      </View>
+      </AppCard>
     </ScrollView>
   );
 }
@@ -427,29 +420,6 @@ const styles = StyleSheet.create({
   screenDescription: {
     marginTop: 4,
     fontFamily: monoFont,
-  },
-  card: {
-    borderRadius: 2,
-    borderWidth: 1,
-    padding: 14,
-    gap: 10,
-  },
-  cardAccentBar: {
-    height: 2,
-    marginBottom: 2,
-  },
-  cardHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    fontFamily: monoFont,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
   },
   titleDivider: {
     height: 1,
