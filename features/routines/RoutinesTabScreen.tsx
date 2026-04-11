@@ -1,5 +1,4 @@
 import { AppCard } from "@/components/AppCard";
-import { Badge } from "@/components/Badge";
 import { ExpandedPanel } from "@/components/ExpandedPanel";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -357,11 +356,13 @@ export function RoutinesTabScreen() {
             onPress={() => setRoutineFilter("all")}
             style={[
               styles.filterButton,
+              styles.filterButtonRounded,
               {
                 backgroundColor: routineFilter === "all" ? palette.accent : palette.card,
                 borderColor: palette.border,
               },
             ]}
+            hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="All"
             accessibilityHint="Show all routine groups"
@@ -380,11 +381,13 @@ export function RoutinesTabScreen() {
             onPress={() => setRoutineFilter("favorites")}
             style={[
               styles.filterButton,
+              styles.filterButtonRounded,
               {
                 backgroundColor: routineFilter === "favorites" ? palette.accent : palette.card,
                 borderColor: palette.border,
               },
             ]}
+            hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="Favorites"
             accessibilityHint="Show only favorite groups"
@@ -400,13 +403,6 @@ export function RoutinesTabScreen() {
               {t("routines.filterFavorites")} ({favoriteCount})
             </Text>
           </Pressable>
-
-          <Badge
-            value={visibleGroups.length}
-            textColor={palette.accent}
-            borderColor={palette.accent}
-            backgroundColor={palette.card}
-          />
         </View>
 
         {loading ? (
@@ -427,36 +423,6 @@ export function RoutinesTabScreen() {
                       <Text style={[styles.groupTitle, { color: palette.textPrimary }]}>
                         {getGroupLabel(group)}
                       </Text>
-                      <Pressable
-                        onPress={() => {
-                          void toggleGroupFavorite(group.id);
-                        }}
-                        style={[
-                          styles.favoriteButton,
-                          {
-                            borderColor: "transparent",
-                            backgroundColor: "transparent",
-                          },
-                        ]}
-                        accessibilityRole="button"
-                        accessibilityLabel={
-                          group.isFavorite
-                            ? "Remove group from favorites"
-                            : "Mark group as favorite"
-                        }
-                        accessibilityHint="Toggle this routine group as favorite"
-                      >
-                        <Text
-                          style={[
-                            styles.favoriteButtonText,
-                            {
-                              color: group.isFavorite ? palette.accent : palette.textSecondary,
-                            },
-                          ]}
-                        >
-                          {group.isFavorite ? "★" : "☆"}
-                        </Text>
-                      </Pressable>
                     </View>
 
                     {getGroupDetail(group) ? (
@@ -466,12 +432,34 @@ export function RoutinesTabScreen() {
                     ) : null}
                   </View>
 
-                  <Badge
-                    value={group.routines.length}
-                    textColor={palette.accent}
-                    borderColor={palette.accent}
-                    backgroundColor={palette.card}
-                  />
+                  <Pressable
+                    onPress={() => {
+                      void toggleGroupFavorite(group.id);
+                    }}
+                    style={[
+                      styles.favoriteButton,
+                      {
+                        borderColor: "transparent",
+                        backgroundColor: "transparent",
+                      },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      group.isFavorite ? "Remove group from favorites" : "Mark group as favorite"
+                    }
+                    accessibilityHint="Toggle this routine group as favorite"
+                  >
+                    <Text
+                      style={[
+                        styles.favoriteButtonText,
+                        {
+                          color: group.isFavorite ? palette.accent : palette.textSecondary,
+                        },
+                      ]}
+                    >
+                      {group.isFavorite ? "★" : "☆"}
+                    </Text>
+                  </Pressable>
                 </View>
 
                 <View style={styles.groupRoutinesList}>
@@ -591,21 +579,27 @@ const styles = StyleSheet.create({
     marginTop: 16,
     flexDirection: "row",
     gap: 8,
+    alignItems: "center",
   },
   filterButton: {
-    minHeight: 44,
-    paddingHorizontal: 12,
+    minHeight: 34,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderWidth: 1,
     borderRadius: 2,
     justifyContent: "center",
     alignItems: "center",
   },
+  filterButtonRounded: {
+    borderRadius: 18,
+    paddingHorizontal: 12,
+  },
   filterButtonText: {
     fontFamily: monoFont,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: 0.6,
+    letterSpacing: 0.5,
   },
   favoriteButton: {
     minHeight: 32,

@@ -1,4 +1,5 @@
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
+import { useI18n } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
 import { useMemo, useState } from "react";
 import {
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { RequiredFieldsNotice } from "./RequiredFieldsNotice";
 
 type RoutineOption = {
   id: string;
@@ -38,17 +40,33 @@ export function CreateRoutineGroupModal({
   routines,
   onSubmit,
 }: CreateRoutineGroupModalProps) {
+  const { t } = useI18n();
   const palette = useRetroPalette();
   const [name, setName] = useState("");
   const [detail, setDetail] = useState("");
   const [description, setDescription] = useState("");
   const [selectedRoutineIds, setSelectedRoutineIds] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [showRequiredValidation, setShowRequiredValidation] = useState(false);
 
   const canSubmit = useMemo(
     () => name.trim().length > 0 && selectedRoutineIds.size > 0 && !submitting,
     [name, selectedRoutineIds, submitting],
   );
+
+  const missingRequiredFields = useMemo(() => {
+    const missing: string[] = [];
+
+    if (!name.trim()) {
+      missing.push(t("routines.groupFormMissingName"));
+    }
+
+    if (selectedRoutineIds.size === 0) {
+      missing.push(t("routines.groupFormMissingRoutines"));
+    }
+
+    return missing;
+  }, [name, selectedRoutineIds, t]);
 
   const handleToggleRoutine = (routineId: string) => {
     setSelectedRoutineIds((prev) => {
@@ -68,14 +86,17 @@ export function CreateRoutineGroupModal({
     setDescription("");
     setSelectedRoutineIds(new Set());
     setSubmitting(false);
+    setShowRequiredValidation(false);
     onClose();
   };
 
   const handleSubmit = async () => {
     if (!canSubmit) {
+      setShowRequiredValidation(true);
       return;
     }
 
+    setShowRequiredValidation(false);
     setSubmitting(true);
     try {
       await onSubmit({
@@ -103,14 +124,18 @@ export function CreateRoutineGroupModal({
             <Text style={[styles.closeButton, { color: palette.textPrimary }]}>✕</Text>
           </TouchableOpacity>
 
-          <Text style={[styles.headerTitle, { color: palette.textPrimary }]}>Create Group</Text>
+          <Text style={[styles.headerTitle, { color: palette.textPrimary }]}>
+            {t("routines.createGroup")}
+          </Text>
 
           <View style={styles.headerSpacer} />
         </View>
 
         <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
           <View style={styles.field}>
-            <Text style={[styles.label, { color: palette.textPrimary }]}>GROUP NAME *</Text>
+            <Text style={[styles.label, { color: palette.textPrimary }]}>
+              {t("routines.groupFormNameLabel")}
+            </Text>
             <TextInput
               style={[
                 styles.input,
@@ -120,16 +145,20 @@ export function CreateRoutineGroupModal({
                   backgroundColor: palette.card,
                 },
               ]}
-              placeholder="E.g., Push Pull Legs"
+              placeholder={t("routines.groupFormNamePlaceholder")}
               placeholderTextColor={palette.textSecondary}
               value={name}
-              onChangeText={setName}
+              onChangeText={(value) => {
+                setName(value);
+              }}
               maxLength={50}
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={[styles.label, { color: palette.textPrimary }]}>DETAIL - OPTIONAL</Text>
+            <Text style={[styles.label, { color: palette.textPrimary }]}>
+              {t("routines.groupFormDetailLabel")}
+            </Text>
             <TextInput
               style={[
                 styles.input,
@@ -139,7 +168,7 @@ export function CreateRoutineGroupModal({
                   backgroundColor: palette.card,
                 },
               ]}
-              placeholder="E.g., 3-day split"
+              placeholder={t("routines.groupFormDetailPlaceholder")}
               placeholderTextColor={palette.textSecondary}
               value={detail}
               onChangeText={setDetail}
@@ -149,7 +178,7 @@ export function CreateRoutineGroupModal({
 
           <View style={styles.field}>
             <Text style={[styles.label, { color: palette.textPrimary }]}>
-              DESCRIPTION - OPTIONAL
+              {t("routines.groupFormDescriptionLabel")}
             </Text>
             <TextInput
               style={[
@@ -161,7 +190,7 @@ export function CreateRoutineGroupModal({
                   backgroundColor: palette.card,
                 },
               ]}
-              placeholder="E.g., Weekly split for upper body focus"
+              placeholder={t("routines.groupFormDescriptionPlaceholder")}
               placeholderTextColor={palette.textSecondary}
               value={description}
               onChangeText={setDescription}
@@ -172,7 +201,9 @@ export function CreateRoutineGroupModal({
           </View>
 
           <View style={styles.field}>
-            <Text style={[styles.label, { color: palette.textPrimary }]}>ATTACH ROUTINES *</Text>
+            <Text style={[styles.label, { color: palette.textPrimary }]}>
+              {t("routines.groupFormAttachRoutinesLabel")}
+            </Text>
             <View style={styles.routinesList}>
               {routines.map((routine) => {
                 const selected = selectedRoutineIds.has(routine.id);
@@ -212,6 +243,17 @@ export function CreateRoutineGroupModal({
               })}
             </View>
           </View>
+
+          {showRequiredValidation ? (
+            <RequiredFieldsNotice
+              title={t("routines.groupFormValidationTitle")}
+              fields={missingRequiredFields}
+              borderColor={palette.accent}
+              backgroundColor={palette.card}
+              titleColor={palette.accent}
+              textColor={palette.textPrimary}
+            />
+          ) : null}
         </ScrollView>
 
         <View style={[styles.footer, { borderTopColor: palette.border }]}>
@@ -220,7 +262,9 @@ export function CreateRoutineGroupModal({
             onPress={resetAndClose}
             disabled={submitting}
           >
-            <Text style={[styles.buttonText, { color: palette.textPrimary }]}>Cancel</Text>
+            <Text style={[styles.buttonText, { color: palette.textPrimary }]}>
+              {t("routines.cancelButton")}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -228,9 +272,11 @@ export function CreateRoutineGroupModal({
             onPress={() => {
               void handleSubmit();
             }}
-            disabled={!canSubmit}
+            disabled={submitting}
           >
-            <Text style={[styles.buttonText, { color: palette.card }]}>Create Group</Text>
+            <Text style={[styles.buttonText, { color: palette.card }]}>
+              {t("routines.createGroup")}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
