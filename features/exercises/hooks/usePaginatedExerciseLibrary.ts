@@ -10,6 +10,7 @@ export type ExerciseLibraryItem = {
   id: string;
   name: string;
   muscleGroup: string;
+  isCustom: boolean;
 };
 
 type UsePaginatedExerciseLibraryParams = {
@@ -42,6 +43,7 @@ export function usePaginatedExerciseLibrary({
 
   const normalizedQuery = useMemo(() => debouncedQuery.trim().toLowerCase(), [debouncedQuery]);
   const excludeKey = useMemo(() => [...excludeIds].sort().join("|"), [excludeIds]);
+  const stableExcludeIds = useMemo(() => (excludeKey ? excludeKey.split("|") : []), [excludeKey]);
 
   const fetchPage = useCallback(
     async (nextPage: number, reset: boolean) => {
@@ -66,8 +68,8 @@ export function usePaginatedExerciseLibrary({
           );
         }
 
-        if (excludeIds.length > 0) {
-          conditions.push(notInArray(exercises.id, excludeIds));
+        if (stableExcludeIds.length > 0) {
+          conditions.push(notInArray(exercises.id, stableExcludeIds));
         }
 
         const whereClause =
@@ -82,6 +84,7 @@ export function usePaginatedExerciseLibrary({
             id: exercises.id,
             name: exercises.name,
             muscleGroup: exercises.muscleGroup,
+            isCustom: exercises.isCustom,
           })
           .from(exercises)
           .orderBy(asc(exercises.name))
@@ -117,6 +120,7 @@ export function usePaginatedExerciseLibrary({
           id: row.id,
           name: translationMap.get(row.id) ?? row.name,
           muscleGroup: row.muscleGroup,
+          isCustom: row.isCustom,
         }));
 
         if (requestVersion !== requestVersionRef.current) {
@@ -142,15 +146,19 @@ export function usePaginatedExerciseLibrary({
         }
       }
     },
-    [excludeIds, locale, normalizedQuery],
+    [locale, normalizedQuery, stableExcludeIds],
   );
 
-  useEffect(() => {
+  const reload = useCallback(async () => {
     setPage(0);
     setHasMore(true);
     setItems([]);
-    fetchPage(0, true);
-  }, [fetchPage, excludeKey]);
+    await fetchPage(0, true);
+  }, [fetchPage]);
+
+  useEffect(() => {
+    void reload();
+  }, [excludeKey, reload]);
 
   const loadMore = useCallback(() => {
     if (loadingInitial || loadingMore || !hasMore) {
@@ -166,5 +174,6 @@ export function usePaginatedExerciseLibrary({
     loadingInitial,
     loadingMore,
     loadMore,
+    reload,
   };
 }

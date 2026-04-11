@@ -4,7 +4,7 @@ import { monoFont } from "@/constants/retroTheme";
 import {
   usePaginatedExerciseLibrary,
   type ExerciseLibraryItem,
-} from "@/features/routines/hooks/usePaginatedExerciseLibrary";
+} from "@/features/exercises/hooks/usePaginatedExerciseLibrary";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BasicInfoScreen } from "./BasicInfoScreen";

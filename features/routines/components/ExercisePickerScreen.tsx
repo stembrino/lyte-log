@@ -1,7 +1,7 @@
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
-import type { ExerciseLibraryItem } from "@/features/routines/hooks/usePaginatedExerciseLibrary";
+import type { ExerciseLibraryItem } from "@/features/exercises/hooks/usePaginatedExerciseLibrary";
 import { useMemo } from "react";
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import type { SelectedRoutineExercise } from "./types";

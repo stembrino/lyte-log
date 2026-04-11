@@ -1,7 +1,7 @@
 import React from "react";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { act, create } from "react-test-renderer";
-import { usePaginatedExerciseLibrary } from "../usePaginatedExerciseLibrary";
+import { usePaginatedExerciseLibrary } from "../../../exercises/hooks/usePaginatedExerciseLibrary";
 
 jest.mock("@/db/client", () => ({
   db: {
