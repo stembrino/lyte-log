@@ -6,13 +6,11 @@ import { useEffect, useState } from "react";
 type SystemRoutineTag = {
   id: string;
   slug: string;
-  i18nKey: string;
 };
 
 type SystemRoutineExercise = {
   id: string;
   name: string;
-  i18nKey: string | null;
   exerciseOrder: number;
   setsTarget: number | null;
   repsTarget: string | null;
@@ -21,8 +19,9 @@ type SystemRoutineExercise = {
 export type SystemRoutine = {
   id: string;
   name: string;
-  i18nKey: string | null;
-  estimatedDurationMin: number | null;
+  detail: string | null;
+  description: string | null;
+  isFavorite: boolean;
   createdAt: string;
   tags: SystemRoutineTag[];
   exercises: SystemRoutineExercise[];
@@ -31,6 +30,7 @@ export type SystemRoutine = {
 type UseSystemRoutinesResult = {
   systemRoutines: SystemRoutine[];
   loading: boolean;
+  toggleFavorite: (routineId: string) => Promise<void>;
 };
 
 export function useSystemRoutines(): UseSystemRoutinesResult {
@@ -74,7 +74,6 @@ export function useSystemRoutines(): UseSystemRoutinesResult {
             acc.push({
               id: link.tag.id,
               slug: link.tag.slug,
-              i18nKey: link.tag.i18nKey,
             });
 
             return acc;
@@ -86,7 +85,6 @@ export function useSystemRoutines(): UseSystemRoutinesResult {
             return {
               id: entry.id,
               name: exercise?.name ?? entry.exerciseId,
-              i18nKey: exercise?.i18nKey ?? null,
               exerciseOrder: entry.exerciseOrder,
               setsTarget: entry.setsTarget,
               repsTarget: entry.repsTarget,
@@ -96,8 +94,9 @@ export function useSystemRoutines(): UseSystemRoutinesResult {
           return {
             id: routine.id,
             name: routine.name,
-            i18nKey: routine.i18nKey ?? null,
-            estimatedDurationMin: routine.estimatedDurationMin,
+            detail: routine.detail ?? null,
+            description: routine.description ?? null,
+            isFavorite: routine.isFavorite,
             createdAt: routine.createdAt,
             tags,
             exercises,
@@ -123,5 +122,34 @@ export function useSystemRoutines(): UseSystemRoutinesResult {
     };
   }, []);
 
-  return { systemRoutines, loading };
+  const toggleFavorite = async (routineId: string) => {
+    const routine = systemRoutines.find((item) => item.id === routineId);
+
+    if (!routine) {
+      return;
+    }
+
+    const nextFavoriteValue = !routine.isFavorite;
+
+    setSystemRoutines((prev) =>
+      prev.map((item) =>
+        item.id === routineId ? { ...item, isFavorite: nextFavoriteValue } : item,
+      ),
+    );
+
+    try {
+      await db
+        .update(routinesTable)
+        .set({ isFavorite: nextFavoriteValue })
+        .where(eq(routinesTable.id, routineId));
+    } catch {
+      setSystemRoutines((prev) =>
+        prev.map((item) =>
+          item.id === routineId ? { ...item, isFavorite: routine.isFavorite } : item,
+        ),
+      );
+    }
+  };
+
+  return { systemRoutines, loading, toggleFavorite };
 }

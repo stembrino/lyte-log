@@ -1,7 +1,7 @@
 import { Badge } from "@/components/Badge";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { monoFont } from "@/constants/retroTheme";
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 
 type ExpandedPanelProps = PropsWithChildren<{
@@ -10,6 +10,7 @@ type ExpandedPanelProps = PropsWithChildren<{
   count?: number;
   expanded: boolean;
   onToggle: () => void;
+  headerAction?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }>;
 
@@ -19,6 +20,7 @@ export function ExpandedPanel({
   count,
   expanded,
   onToggle,
+  headerAction,
   style,
   children,
 }: ExpandedPanelProps) {
@@ -52,6 +54,7 @@ export function ExpandedPanel({
         </View>
 
         <View style={styles.headerRight}>
+          {headerAction}
           {typeof count === "number" ? (
             <Badge
               value={count}

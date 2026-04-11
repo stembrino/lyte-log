@@ -21,7 +21,6 @@ Recommended columns:
 
 - `id` (text, primary key)
 - `name` (text, not null) -> fallback display name
-- `estimated_duration_min` (integer, nullable) -> estimated routine duration in minutes
 - `is_system` (boolean, not null, default false)
 - `i18n_key` (text, nullable for custom routines)
 - `search_en` (text, nullable)
@@ -31,7 +30,6 @@ Recommended columns:
 Notes:
 
 - `search_en` and `search_pt` store normalized tokens for fast search.
-- `estimated_duration_min` is easier to query/sort than a `Time` string.
 - Keep a denormalized search column strategy (`search_en`, `search_pt`) even when tags are normalized.
 
 ### 2) routine_tags table
@@ -85,7 +83,6 @@ Why this works now:
 
 - `id`: `rt-01`
 - `name`: `Pull Upper (Machine Focus)`
-- `estimated_duration_min`: `50`
 - `is_system`: `true`
 - `i18n_key`: `pullUpperMachine`
 - `search_en`: `pull upper machine back biceps lat pulldown seated cable row face pull`
@@ -161,14 +158,13 @@ For Phase 1:
 - Normalize tags now if you want to list all tags, count usage, and filter reliably.
 - Use many-to-many (`routine_tags` + `routine_tag_links`), not 1:1.
 - Keep denormalized `search_en` / `search_pt` on routines for fast text search.
-- Store routine duration as integer minutes (`estimated_duration_min`) instead of a `Time` text field.
 
 ## UI Component Division (Create Routine)
 
 - `features/routines/components/types.ts`
   - Shared `SelectedRoutineExercise` type used by modal and screen components.
 - `features/routines/components/BasicInfoScreen.tsx`
-  - Screen 1 UI only: name, estimated duration, and tags.
+  - Screen 1 UI only: name and tags.
   - Receives values + callbacks via props.
 - `features/routines/components/ExercisePickerScreen.tsx`
   - Screen 2 UI only: exercise search, selected exercises, sets/reps, and catalog list.

@@ -14,7 +14,7 @@ export type ExercisePickerScreenProps = {
   selectedExercises: SelectedRoutineExercise[];
   onRemoveExercise: (id: string) => void;
   onUpdateExerciseField: (id: string, field: "setsTarget" | "repsTarget", value: string) => void;
-  getExerciseLabel: (e: { i18nKey: string | null; name: string }) => string;
+  getExerciseLabel: (e: { name: string }) => string;
   pagedExercises: ExerciseLibraryItem[];
   hasMoreExercises: boolean;
   loadingInitialExercises: boolean;

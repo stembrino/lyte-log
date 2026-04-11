@@ -1,10 +1,16 @@
 import { relations } from "drizzle-orm";
 import { integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+export const gyms = sqliteTable("gyms", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull(),
+});
+
 export const muscleGroups = sqliteTable("muscle_groups", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(),
-  i18nKey: text("i18n_key").notNull().unique(),
 });
 
 export const exercises = sqliteTable("exercises", {
@@ -12,9 +18,6 @@ export const exercises = sqliteTable("exercises", {
   name: text("name").notNull(),
   muscleGroup: text("muscle_group").notNull(),
   isCustom: integer("is_custom", { mode: "boolean" }).notNull().default(false),
-  /** i18n key used to look up the translated name (e.g. "benchPress").
-   *  Null for user-created custom exercises — those use `name` directly. */
-  i18nKey: text("i18n_key"),
   /** Localized search index (normalized) for pt-BR queries. */
   searchPt: text("search_pt"),
   /** Localized search index (normalized) for en-US queries. */
@@ -26,15 +29,29 @@ export const workouts = sqliteTable("workouts", {
   date: text("date").notNull(),
   duration: integer("duration"), // minutes, nullable until workout ends
   notes: text("notes"),
+  gymId: text("gym_id").references(() => gyms.id, { onDelete: "set null" }),
   createdAt: text("created_at").notNull(),
 });
 
 export const routines = sqliteTable("routines", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  estimatedDurationMin: integer("estimated_duration_min"),
+  detail: text("detail"),
+  description: text("description"),
   isSystem: integer("is_system", { mode: "boolean" }).notNull().default(false),
-  i18nKey: text("i18n_key"),
+  isFavorite: integer("is_favorite", { mode: "boolean" }).notNull().default(false),
+  searchPt: text("search_pt"),
+  searchEn: text("search_en"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const routineGroups = sqliteTable("routine_groups", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  detail: text("detail"),
+  description: text("description"),
+  isSystem: integer("is_system", { mode: "boolean" }).notNull().default(false),
+  isFavorite: integer("is_favorite", { mode: "boolean" }).notNull().default(false),
   searchPt: text("search_pt"),
   searchEn: text("search_en"),
   createdAt: text("created_at").notNull(),
@@ -43,7 +60,6 @@ export const routines = sqliteTable("routines", {
 export const routineTags = sqliteTable("routine_tags", {
   id: text("id").primaryKey(),
   slug: text("slug").notNull().unique(),
-  i18nKey: text("i18n_key").notNull().unique(),
   searchPt: text("search_pt"),
   searchEn: text("search_en"),
 });
@@ -76,6 +92,41 @@ export const routineExercises = sqliteTable("routine_exercises", {
   repsTarget: text("reps_target"),
 });
 
+export const routineGroupRoutines = sqliteTable(
+  "routine_group_routines",
+  {
+    routineGroupId: text("routine_group_id")
+      .notNull()
+      .references(() => routineGroups.id, { onDelete: "cascade" }),
+    routineId: text("routine_id")
+      .notNull()
+      .references(() => routines.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    label: text("label"),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.routineGroupId, table.routineId] }),
+  }),
+);
+
+export const entityTranslations = sqliteTable(
+  "entity_translations",
+  {
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    field: text("field").notNull(),
+    locale: text("locale").notNull(),
+    value: text("value").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({
+      columns: [table.entityType, table.entityId, table.field, table.locale],
+    }),
+  }),
+);
+
 export const workoutExercises = sqliteTable("workout_exercises", {
   id: text("id").primaryKey(),
   workoutId: text("workout_id")
@@ -106,6 +157,11 @@ export const exercisesRelations = relations(exercises, ({ many }) => ({
 export const routinesRelations = relations(routines, ({ many }) => ({
   routineTagLinks: many(routineTagLinks),
   routineExercises: many(routineExercises),
+  routineGroupRoutines: many(routineGroupRoutines),
+}));
+
+export const routineGroupsRelations = relations(routineGroups, ({ many }) => ({
+  routineGroupRoutines: many(routineGroupRoutines),
 }));
 
 export const routineTagsRelations = relations(routineTags, ({ many }) => ({
@@ -134,7 +190,26 @@ export const routineExercisesRelations = relations(routineExercises, ({ one }) =
   }),
 }));
 
-export const workoutsRelations = relations(workouts, ({ many }) => ({
+export const routineGroupRoutinesRelations = relations(routineGroupRoutines, ({ one }) => ({
+  routineGroup: one(routineGroups, {
+    fields: [routineGroupRoutines.routineGroupId],
+    references: [routineGroups.id],
+  }),
+  routine: one(routines, {
+    fields: [routineGroupRoutines.routineId],
+    references: [routines.id],
+  }),
+}));
+
+export const gymsRelations = relations(gyms, ({ many }) => ({
+  workouts: many(workouts),
+}));
+
+export const workoutsRelations = relations(workouts, ({ one, many }) => ({
+  gym: one(gyms, {
+    fields: [workouts.gymId],
+    references: [gyms.id],
+  }),
   workoutExercises: many(workoutExercises),
 }));
 

@@ -9,14 +9,17 @@ import { useCallback, useMemo, useState } from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BasicInfoScreen } from "./BasicInfoScreen";
 import { ExercisePickerScreen } from "./ExercisePickerScreen";
-import type { SelectedRoutineExercise } from "./types";
+import type { RoutineGroupOption, SelectedRoutineExercise } from "./types";
 
 interface CreateRoutineModalProps {
   visible: boolean;
   onClose: () => void;
+  routineGroups: RoutineGroupOption[];
   onSubmit: (routineData: {
+    groupId: string;
     name: string;
-    estimatedDurationMin?: number;
+    detail?: string;
+    description?: string;
     tagIds: string[];
     exercises: {
       exerciseId: string;
@@ -24,18 +27,25 @@ interface CreateRoutineModalProps {
       setsTarget?: number;
       repsTarget?: number;
     }[];
-  }) => void;
+  }) => Promise<void>;
 }
 
 type Screen = "basic" | "exercises";
 
-export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutineModalProps) {
+export function CreateRoutineModal({
+  visible,
+  onClose,
+  routineGroups,
+  onSubmit,
+}: CreateRoutineModalProps) {
   const { t, locale } = useI18n();
   const palette = useRetroPalette();
 
   const [screen, setScreen] = useState<Screen>("basic");
   const [name, setName] = useState("");
-  const [duration, setDuration] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [detail, setDetail] = useState("");
+  const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedExercises, setSelectedExercises] = useState<SelectedRoutineExercise[]>([]);
@@ -45,11 +55,7 @@ export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutine
     [selectedExercises],
   );
 
-  const getExerciseLabel = useCallback(
-    (exercise: { i18nKey: string | null; name: string }) =>
-      exercise.i18nKey ? t(`exerciseLibrary.${exercise.i18nKey}`) : exercise.name,
-    [t],
-  );
+  const getExerciseLabel = useCallback((exercise: { name: string }) => exercise.name, []);
 
   const {
     items: pagedExercises,
@@ -76,7 +82,7 @@ export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutine
   };
 
   const handleNext = () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !selectedGroupId) return;
     setScreen("exercises");
   };
 
@@ -84,17 +90,14 @@ export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutine
     setScreen("basic");
   };
 
-  const handleCreate = () => {
-    if (!name.trim()) return;
+  const handleCreate = async () => {
+    if (!name.trim() || !selectedGroupId) return;
 
-    const parsedDuration = duration ? parseInt(duration, 10) : undefined;
-
-    onSubmit({
+    await onSubmit({
+      groupId: selectedGroupId,
       name: name.trim(),
-      estimatedDurationMin:
-        typeof parsedDuration === "number" && Number.isFinite(parsedDuration)
-          ? parsedDuration
-          : undefined,
+      detail: detail.trim() || undefined,
+      description: description.trim() || undefined,
       tagIds: Array.from(selectedTags),
       exercises: selectedExercises.map((exercise) => {
         const parsedSets = parseInt(exercise.setsTarget, 10);
@@ -109,7 +112,9 @@ export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutine
     });
 
     setName("");
-    setDuration("");
+    setSelectedGroupId(null);
+    setDetail("");
+    setDescription("");
     setSelectedTags(new Set());
     setSelectedExercises([]);
     setSearchQuery("");
@@ -122,7 +127,6 @@ export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutine
       {
         exerciseId: exercise.id,
         name: exercise.name,
-        i18nKey: exercise.i18nKey,
         exerciseOrder: prev.length + 1,
         setsTarget: "3",
         repsTarget: "10",
@@ -152,7 +156,9 @@ export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutine
 
   const handleModalClose = () => {
     setName("");
-    setDuration("");
+    setSelectedGroupId(null);
+    setDetail("");
+    setDescription("");
     setSelectedTags(new Set());
     setSelectedExercises([]);
     setSearchQuery("");
@@ -186,10 +192,16 @@ export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutine
           <BasicInfoScreen
             name={name}
             onChangeName={setName}
-            duration={duration}
-            onChangeDuration={setDuration}
+            routineGroups={routineGroups}
+            selectedGroupId={selectedGroupId}
+            onSelectGroup={setSelectedGroupId}
+            detail={detail}
+            onChangeDetail={setDetail}
+            description={description}
+            onChangeDescription={setDescription}
             selectedTags={selectedTags}
             onToggleTag={handleToggleTag}
+            locale={locale}
             palette={palette}
             t={t}
           />
@@ -226,7 +238,7 @@ export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutine
               <TouchableOpacity
                 style={[styles.button, styles.primaryButton, { backgroundColor: palette.accent }]}
                 onPress={handleNext}
-                disabled={!name.trim()}
+                disabled={!name.trim() || !selectedGroupId}
               >
                 <Text style={[styles.buttonText, { color: palette.card }]}>
                   {t("routines.nextButton")} →
@@ -247,7 +259,9 @@ export function CreateRoutineModal({ visible, onClose, onSubmit }: CreateRoutine
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.primaryButton, { backgroundColor: palette.accent }]}
-                onPress={handleCreate}
+                onPress={() => {
+                  void handleCreate();
+                }}
               >
                 <Text style={[styles.buttonText, { color: palette.card }]}>
                   {t("routines.createButton")} ✓

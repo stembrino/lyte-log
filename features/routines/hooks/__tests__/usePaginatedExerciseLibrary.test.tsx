@@ -14,15 +14,23 @@ jest.mock("@/db/schema", () => ({
     id: "id",
     name: "name",
     muscleGroup: "muscleGroup",
-    i18nKey: "i18nKey",
     searchPt: "searchPt",
     searchEn: "searchEn",
+  },
+  entityTranslations: {
+    entityId: "entityId",
+    entityType: "entityType",
+    field: "field",
+    locale: "locale",
+    value: "value",
   },
 }));
 
 jest.mock("drizzle-orm", () => ({
   and: (...conditions) => ({ op: "and", conditions }),
   asc: (column) => ({ op: "asc", column }),
+  eq: (column, value) => ({ op: "eq", column, value }),
+  inArray: (column, values) => ({ op: "inArray", column, values }),
   like: (column, value) => ({ op: "like", column, value }),
   notInArray: (column, values) => ({ op: "notInArray", column, values }),
   or: (...conditions) => ({ op: "or", conditions }),
@@ -34,7 +42,6 @@ type ExerciseItem = {
   id: string;
   name: string;
   muscleGroup: string;
-  i18nKey: string | null;
 };
 
 type HookParams = {
@@ -50,7 +57,6 @@ function makeItems(count: number, prefix: string): ExerciseItem[] {
     id: `${prefix}-${index + 1}`,
     name: `${prefix} Exercise ${index + 1}`,
     muscleGroup: "Chest",
-    i18nKey: null,
   }));
 }
 

@@ -3,12 +3,15 @@ import { Badge } from "@/components/Badge";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { FALLBACK_MUSCLE_GROUPS } from "@/constants/fallback/muscleGroups";
 import { monoFont } from "@/constants/retroTheme";
-import { DEFAULT_EXERCISES } from "@/constants/seed/exercises";
-import { DEFAULT_MUSCLE_GROUPS } from "@/constants/seed/muscleGroups";
 import { db } from "@/db/client";
-import { exercises as exercisesTable, muscleGroups as muscleGroupsTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import {
+  entityTranslations,
+  exercises as exercisesTable,
+  muscleGroups as muscleGroupsTable,
+} from "@/db/schema";
+import { and, eq, inArray } from "drizzle-orm";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -26,14 +29,13 @@ type Exercise = {
   id: string;
   name: string;
   muscleGroup: MuscleGroup;
-  i18nKey?: string;
   isCustom: boolean;
 };
 
 type MuscleGroupOption = {
   id: string;
   name: MuscleGroup;
-  i18nKey: string;
+  label: string;
 };
 
 const muscleGroupValues: MuscleGroup[] = [
@@ -51,22 +53,14 @@ function isMuscleGroup(value: string): value is MuscleGroup {
   return muscleGroupValues.includes(value as MuscleGroup);
 }
 
-const initialMuscleGroupOptions: MuscleGroupOption[] = DEFAULT_MUSCLE_GROUPS.map((group) => ({
+const initialMuscleGroupOptions: MuscleGroupOption[] = FALLBACK_MUSCLE_GROUPS.map((group) => ({
   id: group.id,
   name: group.name as MuscleGroup,
-  i18nKey: group.i18nKey,
+  label: group.labelEn,
 }));
 
-const defaultExerciseI18nKeyById = new Map(
-  DEFAULT_EXERCISES.map((exercise) => [exercise.id, exercise.i18nKey]),
-);
-
-const defaultExerciseI18nKeyByName = new Map(
-  DEFAULT_EXERCISES.map((exercise) => [exercise.name.toLowerCase(), exercise.i18nKey]),
-);
-
 export default function ExercisesScreen() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const palette = useRetroPalette();
 
   const [exerciseName, setExerciseName] = useState("");
@@ -81,15 +75,36 @@ export default function ExercisesScreen() {
 
     db.select()
       .from(muscleGroupsTable)
-      .then((rows) => {
+      .then(async (rows) => {
         if (!mounted) return;
+
+        const ids = rows.map((row) => row.id);
+        const translationRows =
+          ids.length === 0
+            ? []
+            : await db
+                .select({
+                  entityId: entityTranslations.entityId,
+                  value: entityTranslations.value,
+                })
+                .from(entityTranslations)
+                .where(
+                  and(
+                    eq(entityTranslations.entityType, "muscle_group"),
+                    eq(entityTranslations.field, "name"),
+                    eq(entityTranslations.locale, locale),
+                    inArray(entityTranslations.entityId, ids),
+                  ),
+                );
+
+        const labelMap = new Map(translationRows.map((row) => [row.entityId, row.value]));
 
         const hydrated = rows
           .filter((row) => isMuscleGroup(row.name))
           .map((row) => ({
             id: row.id,
             name: row.name as MuscleGroup,
-            i18nKey: row.i18nKey,
+            label: labelMap.get(row.id) ?? row.name,
           }))
           .sort((a, b) => muscleGroupValues.indexOf(a.name) - muscleGroupValues.indexOf(b.name));
 
@@ -104,27 +119,43 @@ export default function ExercisesScreen() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     let mounted = true;
 
     db.select()
       .from(exercisesTable)
-      .then((rows) => {
+      .then(async (rows) => {
         if (!mounted) return;
+
+        const ids = rows.map((row) => row.id);
+        const translationRows =
+          ids.length === 0
+            ? []
+            : await db
+                .select({
+                  entityId: entityTranslations.entityId,
+                  value: entityTranslations.value,
+                })
+                .from(entityTranslations)
+                .where(
+                  and(
+                    eq(entityTranslations.entityType, "exercise"),
+                    eq(entityTranslations.field, "name"),
+                    eq(entityTranslations.locale, locale),
+                    inArray(entityTranslations.entityId, ids),
+                  ),
+                );
+
+        const labelMap = new Map(translationRows.map((row) => [row.entityId, row.value]));
 
         const hydrated = rows
           .filter((row) => isMuscleGroup(row.muscleGroup))
           .map((row) => ({
             id: row.id,
-            name: row.name,
+            name: labelMap.get(row.id) ?? row.name,
             muscleGroup: row.muscleGroup as MuscleGroup,
-            i18nKey:
-              row.i18nKey ??
-              defaultExerciseI18nKeyById.get(row.id) ??
-              defaultExerciseI18nKeyByName.get(row.name.toLowerCase()) ??
-              undefined,
             isCustom: row.isCustom,
           }));
 
@@ -137,15 +168,12 @@ export default function ExercisesScreen() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [locale]);
 
-  const muscleGroupLabels = useMemo(() => {
-    const labels = new Map<MuscleGroup, string>();
-    for (const group of muscleGroupOptions) {
-      labels.set(group.name, t(`muscleGroups.${group.i18nKey}`));
-    }
-    return labels;
-  }, [muscleGroupOptions, t]);
+  const muscleGroupLabels = useMemo(
+    () => new Map(muscleGroupOptions.map((group) => [group.name, group.label])),
+    [muscleGroupOptions],
+  );
 
   const addExercise = async () => {
     const name = exerciseName.trim();
@@ -181,7 +209,6 @@ export default function ExercisesScreen() {
         name: newExercise.name,
         muscleGroup: newExercise.muscleGroup,
         isCustom: true,
-        i18nKey: null,
       });
 
       setExercises((previous) => [newExercise, ...previous]);
@@ -194,8 +221,7 @@ export default function ExercisesScreen() {
     }
   };
 
-  const getExerciseLabel = (exercise: Exercise) =>
-    exercise.i18nKey ? t(`exerciseLibrary.${exercise.i18nKey}`) : exercise.name;
+  const getExerciseLabel = (exercise: Exercise) => exercise.name;
 
   const userExercises = useMemo(
     () => exercises.filter((exercise) => exercise.isCustom),
@@ -293,7 +319,7 @@ export default function ExercisesScreen() {
                 ]}
               >
                 <Text style={[styles.tagText, { color: isActive ? "#ffffff" : palette.tagText }]}>
-                  {t(`muscleGroups.${group.i18nKey}`)}
+                  {group.label}
                 </Text>
               </Pressable>
             );
