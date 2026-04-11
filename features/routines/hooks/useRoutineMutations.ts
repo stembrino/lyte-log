@@ -12,7 +12,7 @@ import { and, eq } from "drizzle-orm";
 import { useCallback } from "react";
 
 export type RoutineSubmitPayload = {
-  groupId?: string;
+  groupId: string | null;
   name: string;
   detail?: string;
   description?: string;
@@ -136,7 +136,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
           createdAt,
         });
 
-        if (routineData.groupId) {
+        if (routineData.groupId !== null) {
           const currentLinks = await tx
             .select({ routineGroupId: routineGroupRoutines.routineGroupId })
             .from(routineGroupRoutines)
@@ -226,7 +226,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
 
         await tx.delete(routineGroupRoutines).where(eq(routineGroupRoutines.routineId, routineId));
 
-        if (routineData.groupId) {
+        if (routineData.groupId !== null) {
           const currentLinks = await tx
             .select({ routineGroupId: routineGroupRoutines.routineGroupId })
             .from(routineGroupRoutines)

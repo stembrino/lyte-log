@@ -23,7 +23,7 @@ interface CreateRoutineModalProps {
 type Screen = "basic" | "exercises";
 
 export type RoutineSubmitPayload = {
-  groupId?: string;
+  groupId: string | null;
   name: string;
   detail?: string;
   description?: string;
@@ -124,7 +124,7 @@ export function CreateRoutineModal({
     if (!name.trim()) return;
 
     await onSubmit({
-      groupId: selectedGroupId ?? undefined,
+      groupId: selectedGroupId,
       name: name.trim(),
       detail: detail.trim() || undefined,
       description: description.trim() || undefined,

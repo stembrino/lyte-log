@@ -258,7 +258,7 @@ export function RoutinesTabScreen() {
       return;
     }
 
-    const groupLink = await db.query.routineGroupRoutines.findFirst({
+    const groupLinks = await db.query.routineGroupRoutines.findMany({
       where: eq(routineGroupRoutines.routineId, routineId),
       orderBy: (entry, { asc }) => [asc(entry.position)],
     });
@@ -266,7 +266,7 @@ export function RoutinesTabScreen() {
     setEditingRoutineId(routine.id);
     setRoutineInitialValues({
       name: routine.name,
-      selectedGroupId: groupLink?.routineGroupId ?? null,
+      selectedGroupId: groupLinks[0]?.routineGroupId ?? null,
       detail: routine.detail ?? "",
       description: routine.description ?? "",
       tagIds: routine.routineTagLinks.map((tagLink) => tagLink.tagId),
