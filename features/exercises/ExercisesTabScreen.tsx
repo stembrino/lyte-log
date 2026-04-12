@@ -8,6 +8,7 @@ import { ExerciseCard } from "./components/ExerciseCard";
 import { ExercisesEmptyState } from "./components/ExercisesEmptyState";
 import { ExercisesListHeader } from "./components/ExercisesListHeader";
 import { useExerciseMutations } from "./hooks/useExerciseMutations";
+import { useMuscleGroups } from "./hooks/useMuscleGroups";
 import type { ExerciseLibraryItem } from "./hooks/usePaginatedExerciseLibrary";
 import { usePaginatedExerciseLibrary } from "./hooks/usePaginatedExerciseLibrary";
 
@@ -24,7 +25,8 @@ export default function ExercisesTabScreen() {
       locale,
       excludeIds: [],
     });
-  const { deleteExercise } = useExerciseMutations(reload);
+  const { items: muscleGroups } = useMuscleGroups();
+  const { createExercise, deleteExercise } = useExerciseMutations(reload);
 
   const handleDelete = useCallback(
     (item: ExerciseLibraryItem) => {
@@ -57,6 +59,13 @@ export default function ExercisesTabScreen() {
     return;
   }, []);
 
+  const handleCreateExercise = useCallback(
+    async (payload: { name: string; muscleGroup: string }) => {
+      await createExercise(payload);
+    },
+    [createExercise],
+  );
+
   const handleToggleCard = useCallback((itemId: string) => {
     setExpandedExerciseId((current) => (current === itemId ? null : itemId));
   }, []);
@@ -74,7 +83,6 @@ export default function ExercisesTabScreen() {
               onToggle={handleToggleCard}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              editDisabled
             />
           </View>
         )}
@@ -105,6 +113,8 @@ export default function ExercisesTabScreen() {
       <CreateExerciseModal
         visible={createModalVisible}
         onClose={() => setCreateModalVisible(false)}
+        muscleGroups={muscleGroups}
+        onSubmit={handleCreateExercise}
       />
     </View>
   );

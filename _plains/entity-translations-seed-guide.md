@@ -125,3 +125,18 @@ If a label is missing in one locale:
 1. Verify the row exists in `entity_translations` for that locale.
 2. Verify the hook query filters by correct locale and field.
 3. Verify fallback value exists in base table.
+
+## After beta (exercise roadmap note)
+
+Planned exercise enhancements after beta:
+
+- Add custom exercise update flow.
+- Add translatable exercise instructional fields:
+  - `description`
+  - `howTo`
+
+When implemented, include these fields in:
+
+- exercise base table schema/migrations
+- `entity_translations` read/write mapping
+- seed generation for system exercise content

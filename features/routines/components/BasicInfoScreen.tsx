@@ -1,5 +1,6 @@
 import { CharacterCounter } from "@/components/CharacterCounter";
 import { Chip } from "@/components/Chip";
+import { MultiSelectChipGroup } from "@/components/MultiSelectChipGroup";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { FALLBACK_ROUTINE_TAGS } from "@/constants/fallback/routineTags";
@@ -168,16 +169,14 @@ export function BasicInfoScreen({
           <Text style={[styles.label, { color: palette.textPrimary }]}>
             {t("routines.formTagsLabel")}
           </Text>
-          <View style={styles.tagList}>
-            {FALLBACK_ROUTINE_TAGS.map((tag) => (
-              <Chip
-                key={tag.id}
-                label={locale === "pt-BR" ? tag.labelPt : tag.labelEn}
-                selected={selectedTags.has(tag.id)}
-                onPress={() => onToggleTag(tag.id)}
-              />
-            ))}
-          </View>
+          <MultiSelectChipGroup
+            options={FALLBACK_ROUTINE_TAGS.map((tag) => ({
+              id: tag.id,
+              label: locale === "pt-BR" ? tag.labelPt : tag.labelEn,
+            }))}
+            selectedIds={selectedTags}
+            onToggle={onToggleTag}
+          />
         </View>
       </View>
     </ScrollView>

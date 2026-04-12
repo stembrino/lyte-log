@@ -119,7 +119,6 @@ Current columns that still make sense:
 - description
 - is_system
 - is_favorite
-- i18n_key
 - search_pt
 - search_en
 - created_at
@@ -138,7 +137,6 @@ routine_groups {
   description: text nullable
   is_system: boolean not null default false
   is_favorite: boolean not null default false
-  i18n_key: text nullable
   search_pt: text nullable
   search_en: text nullable
   created_at: text not null

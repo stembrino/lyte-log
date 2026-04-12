@@ -29,7 +29,6 @@ jest.mock("drizzle-orm", () => ({
   and: (...conditions: unknown[]) => ({ op: "and", conditions }),
   asc: (column: unknown) => ({ op: "asc", column }),
   eq: (column: unknown, value: unknown) => ({ op: "eq", column, value }),
-  inArray: (column: unknown, values: unknown) => ({ op: "inArray", column, values }),
   like: (column: unknown, value: unknown) => ({ op: "like", column, value }),
   notInArray: (column: unknown, values: unknown) => ({ op: "notInArray", column, values }),
   or: (...conditions: unknown[]) => ({ op: "or", conditions }),
@@ -37,31 +36,16 @@ jest.mock("drizzle-orm", () => ({
 
 const mockDb = jest.requireMock("@/db/client").db as { select: jest.Mock };
 
-type ExerciseRow = {
-  id: string;
-  name: string;
-  muscleGroup: string;
-  isCustom: boolean;
-};
-
 function createQueryBuilder(result: Promise<unknown> | unknown) {
   const resultPromise = Promise.resolve(result);
 
-  const builder: {
-    from: jest.Mock;
-    orderBy: jest.Mock;
-    limit: jest.Mock;
-    offset: jest.Mock;
-    where: jest.Mock;
-    then: Promise<unknown>["then"];
-    catch: Promise<unknown>["catch"];
-    finally: Promise<unknown>["finally"];
-  } = {
+  const builder: any = {
     from: jest.fn(() => builder),
+    leftJoin: jest.fn(() => builder),
+    where: jest.fn(() => builder),
     orderBy: jest.fn(() => builder),
     limit: jest.fn(() => builder),
     offset: jest.fn(() => builder),
-    where: jest.fn(() => resultPromise),
     then: resultPromise.then.bind(resultPromise),
     catch: resultPromise.catch.bind(resultPromise),
     finally: resultPromise.finally.bind(resultPromise),
@@ -75,19 +59,36 @@ describe("usePaginatedExerciseLibrary", () => {
     mockDb.select.mockReset();
   });
 
-  it("loads initial items", async () => {
-    const baseRows: ExerciseRow[] = [
-      { id: "ex-1", name: "Bench Press", muscleGroup: "Chest", isCustom: true },
-      { id: "ex-2", name: "Row", muscleGroup: "Back", isCustom: false },
+  it("loads initial items with translations from single joined query", async () => {
+    const joinedRows = [
+      {
+        id: "ex-1",
+        name: "Bench Press",
+        muscleGroup: "Chest",
+        isCustom: true,
+        translatedName: "Supino Reto",
+      },
+      {
+        id: "ex-2",
+        name: "Row",
+        muscleGroup: "Back",
+        isCustom: false,
+        translatedName: null,
+      },
     ];
 
-    mockDb.select.mockImplementation((selection: Record<string, unknown>) => {
-      if ("entityId" in selection) {
-        return createQueryBuilder([]);
-      }
-
-      return createQueryBuilder(baseRows);
-    });
+    mockDb.select.mockReturnValue(
+      createQueryBuilder(
+        Promise.resolve(joinedRows).then((results) =>
+          results.map((row) => ({
+            id: row.id,
+            name: row.translatedName ?? row.name,
+            muscleGroup: row.muscleGroup,
+            isCustom: row.isCustom,
+          })),
+        ),
+      ),
+    );
 
     const { result, unmount } = renderHook(() =>
       usePaginatedExerciseLibrary({
@@ -100,8 +101,9 @@ describe("usePaginatedExerciseLibrary", () => {
     await waitFor(() => {
       expect(result.current.loadingInitial).toBe(false);
       expect(result.current.items).toHaveLength(2);
-      expect(result.current.items[0]?.name).toBe("Bench Press");
+      expect(result.current.items[0]?.name).toBe("Supino Reto");
       expect(result.current.items[0]?.isCustom).toBe(true);
+      expect(result.current.items[1]?.name).toBe("Row");
       expect(result.current.hasMore).toBe(false);
     });
 

@@ -1,7 +1,7 @@
 import type { AppLocale } from "@/components/providers/i18n-provider";
 import { db } from "@/db/client";
 import { entityTranslations, exercises } from "@/db/schema";
-import { and, asc, eq, inArray, like, notInArray, or } from "drizzle-orm";
+import { and, asc, eq, like, notInArray, or } from "drizzle-orm";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const PAGE_SIZE = 20;
@@ -79,49 +79,36 @@ export function usePaginatedExerciseLibrary({
               ? conditions[0]
               : and(...conditions);
 
-        const baseQuery = db
+        const rows = await db
           .select({
             id: exercises.id,
             name: exercises.name,
             muscleGroup: exercises.muscleGroup,
             isCustom: exercises.isCustom,
+            translatedName: entityTranslations.value,
           })
           .from(exercises)
+          .leftJoin(
+            entityTranslations,
+            and(
+              eq(entityTranslations.entityId, exercises.id),
+              eq(entityTranslations.entityType, "exercise"),
+              eq(entityTranslations.field, "name"),
+              eq(entityTranslations.locale, locale),
+            ),
+          )
+          .where(whereClause)
           .orderBy(asc(exercises.name))
           .limit(PAGE_SIZE)
-          .offset(nextPage * PAGE_SIZE);
-
-        const baseRows = whereClause ? await baseQuery.where(whereClause) : await baseQuery;
-
-        const translationRows =
-          baseRows.length === 0
-            ? []
-            : await db
-                .select({
-                  entityId: entityTranslations.entityId,
-                  value: entityTranslations.value,
-                })
-                .from(entityTranslations)
-                .where(
-                  and(
-                    eq(entityTranslations.entityType, "exercise"),
-                    eq(entityTranslations.field, "name"),
-                    eq(entityTranslations.locale, locale),
-                    inArray(
-                      entityTranslations.entityId,
-                      baseRows.map((row) => row.id),
-                    ),
-                  ),
-                );
-
-        const translationMap = new Map(translationRows.map((row) => [row.entityId, row.value]));
-
-        const rows = baseRows.map((row) => ({
-          id: row.id,
-          name: translationMap.get(row.id) ?? row.name,
-          muscleGroup: row.muscleGroup,
-          isCustom: row.isCustom,
-        }));
+          .offset(nextPage * PAGE_SIZE)
+          .then((results) =>
+            results.map((row) => ({
+              id: row.id,
+              name: row.translatedName ?? row.name,
+              muscleGroup: row.muscleGroup,
+              isCustom: row.isCustom,
+            })),
+          );
 
         if (requestVersion !== requestVersionRef.current) {
           return;

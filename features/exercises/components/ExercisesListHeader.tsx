@@ -38,11 +38,6 @@ export function ExercisesListHeader({ count, query, onChangeQuery, onPressCreate
           {t("exercises.libraryHint")}
         </Text>
       </View>
-      <ControlledSearchInput
-        value={query}
-        onChangeText={onChangeQuery}
-        placeholder={t("routines.searchExercisePlaceholder")}
-      />
       <Pressable
         style={[styles.createButton, { backgroundColor: palette.accent }]}
         onPress={onPressCreate}
@@ -50,6 +45,11 @@ export function ExercisesListHeader({ count, query, onChangeQuery, onPressCreate
       >
         <Text style={styles.createLabel}>{t("exercises.createExercise")}</Text>
       </Pressable>
+      <ControlledSearchInput
+        value={query}
+        onChangeText={onChangeQuery}
+        placeholder={t("routines.searchExercisePlaceholder")}
+      />
     </View>
   );
 }

@@ -11,17 +11,9 @@ type Props = {
   onToggle: (itemId: string) => void;
   onEdit: (item: ExerciseLibraryItem) => void;
   onDelete: (item: ExerciseLibraryItem) => void;
-  editDisabled?: boolean;
 };
 
-export function ExerciseCard({
-  item,
-  expanded,
-  onToggle,
-  onEdit,
-  onDelete,
-  editDisabled = false,
-}: Props) {
+export function ExerciseCard({ item, expanded, onToggle, onEdit, onDelete }: Props) {
   const { t } = useI18n();
   const palette = useRetroPalette();
   const sourceLabel = item.isCustom ? t("exercises.customBadge") : t("exercises.systemBadge");
@@ -70,27 +62,24 @@ export function ExerciseCard({
 
           {!item.isCustom ? (
             <View style={styles.systemNotice}>
-              <Text style={[styles.systemNoticeText, { color: palette.textSecondary }]}>
-                {t("exercises.systemDeleteNotice")}
+              <Text style={[styles.systemNoticeText, { color: palette.accent }]}>
+                {t("exercises.systemReadOnlyNotice")}
               </Text>
             </View>
           ) : null}
 
           <View style={styles.actions}>
-            <Pressable
-              style={[
-                styles.actionButton,
-                { borderColor: palette.border },
-                editDisabled ? styles.actionButtonDisabled : null,
-              ]}
-              onPress={() => onEdit(item)}
-              accessibilityLabel={t("routines.editAction")}
-              disabled={editDisabled}
-            >
-              <Text style={[styles.actionLabel, { color: palette.textPrimary }]}>
-                {t("routines.editAction")}
-              </Text>
-            </Pressable>
+            {item.isCustom ? (
+              <Pressable
+                style={[styles.actionButton, { borderColor: palette.border }]}
+                onPress={() => onEdit(item)}
+                accessibilityLabel={t("routines.editAction")}
+              >
+                <Text style={[styles.actionLabel, { color: palette.textPrimary }]}>
+                  {t("routines.editAction")}
+                </Text>
+              </Pressable>
+            ) : null}
 
             {item.isCustom ? (
               <Pressable

@@ -42,7 +42,7 @@ export function ControlledSearchInput({
       <FontAwesome name="search" size={14} color={palette.textSecondary} />
       <TextInput
         testID="controlled-search-input-field"
-        style={styles.input}
+        style={[styles.input, { color: palette.textPrimary }]}
         placeholder={placeholder}
         placeholderTextColor={palette.textSecondary}
         value={value}

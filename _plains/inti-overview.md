@@ -110,45 +110,9 @@ App configuration and preferences.
 
 ## 🗄️ Database Schema (Drizzle)
 
-### Tables Structure
+Schema documentation was moved to a dedicated file:
 
-```
-users
-├── id (PK)
-├── name
-├── weight (kg)
-├── height (cm)
-├── created_at
-
-workouts
-├── id (PK)
-├── user_id (FK)
-├── date
-├── duration (minutes)
-├── notes
-├── created_at
-
-exercises
-├── id (PK)
-├── name
-├── muscle_group (chest, back, legs, etc)
-├── is_custom (boolean)
-├── created_by (user_id if custom)
-
-workout_exercises
-├── id (PK)
-├── workout_id (FK)
-├── exercise_id (FK)
-├── order (sequence)
-
-sets
-├── id (PK)
-├── workout_exercise_id (FK)
-├── reps
-├── weight (kg)
-├── completed (boolean)
-├── timestamp
-```
+- `_plains/database-schema.md`
 
 ---
 
