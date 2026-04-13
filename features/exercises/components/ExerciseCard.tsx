@@ -46,7 +46,7 @@ export function ExerciseCard({ item, expanded, onToggle, onEdit, onDelete }: Pro
           </View>
         </View>
 
-        <Text style={[styles.chevron, { color: palette.accent }]}>{expanded ? "v" : ">"}</Text>
+        <Text style={[styles.chevron, { color: palette.accent }]}>{expanded ? "-" : "+"}</Text>
       </Pressable>
 
       {expanded ? (

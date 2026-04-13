@@ -1,3 +1,4 @@
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { monoFont } from "@/constants/retroTheme";
 import { useState } from "react";
@@ -37,14 +38,12 @@ export function ActionMenu({ actions, accessibilityLabel, dismissLabel }: Action
           {
             borderColor: palette.border,
             backgroundColor: pressed ? palette.listSelected : palette.card,
+            opacity: pressed ? 0.9 : 1,
+            transform: [{ scale: pressed ? 0.96 : 1 }],
           },
         ]}
       >
-        <View style={styles.triggerDots}>
-          <View style={[styles.triggerDot, { backgroundColor: palette.textPrimary }]} />
-          <View style={[styles.triggerDot, { backgroundColor: palette.textPrimary }]} />
-          <View style={[styles.triggerDot, { backgroundColor: palette.textPrimary }]} />
-        </View>
+        <FontAwesome name="ellipsis-h" size={14} color={palette.textPrimary} />
       </Pressable>
 
       <Modal
@@ -115,24 +114,12 @@ export function ActionMenu({ actions, accessibilityLabel, dismissLabel }: Action
 
 const styles = StyleSheet.create({
   trigger: {
-    minWidth: 34,
-    minHeight: 28,
+    width: 36,
+    height: 36,
     borderWidth: 1,
-    borderRadius: 2,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 8,
-  },
-  triggerDots: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 3,
-  },
-  triggerDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
   },
   overlay: {
     flex: 1,

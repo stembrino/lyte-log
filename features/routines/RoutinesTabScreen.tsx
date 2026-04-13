@@ -174,7 +174,7 @@ export function RoutinesTabScreen() {
                   ]}
                   onPress={openCreateRoutine}
                 >
-                  <Text style={[styles.addButtonText, { color: palette.card }]}>
+                  <Text style={[styles.addButtonText, { color: palette.textPrimary }]}>
                     + {t("routines.addRoutineButton")}
                   </Text>
                 </TouchableOpacity>

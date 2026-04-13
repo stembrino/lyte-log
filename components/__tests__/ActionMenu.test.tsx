@@ -14,6 +14,8 @@ jest.mock("@/components/hooks/useRetroPalette", () => ({
   }),
 }));
 
+jest.mock("@expo/vector-icons/FontAwesome", () => "MockFontAwesome");
+
 describe("ActionMenu", () => {
   it("opens the menu and runs the selected action", () => {
     const onEdit = jest.fn();
