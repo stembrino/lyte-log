@@ -1,16 +1,16 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { DEFAULT_EXERCISES } from "@/constants/seed/exercises";
-import { DEFAULT_MUSCLE_GROUPS } from "@/constants/seed/muscleGroups";
+import { DEFAULT_EXERCISES } from "@/db/patches/data/exercises";
+import { DEFAULT_MUSCLE_GROUPS } from "@/db/patches/data/muscleGroups";
 import {
   DEFAULT_ROUTINE_GROUP_ROUTINES,
   DEFAULT_ROUTINE_GROUPS,
-} from "@/constants/seed/routineGroups";
+} from "@/db/patches/data/routineGroups";
 import {
   DEFAULT_ROUTINE_EXERCISES,
   DEFAULT_ROUTINE_TAG_LINKS,
   DEFAULT_ROUTINES,
-} from "@/constants/seed/routines";
-import { DEFAULT_ROUTINE_TAGS } from "@/constants/seed/routineTags";
+} from "@/db/patches/data/routines";
+import { DEFAULT_ROUTINE_TAGS } from "@/db/patches/data/routineTags";
 import { count, eq, isNull, or } from "drizzle-orm";
 import { db } from "./client";
 import {
@@ -29,6 +29,11 @@ import { DEFAULT_ENTITY_TRANSLATIONS } from "./seed-data/entityTranslations";
 // Bump this version whenever search index logic or labelPt/labelEn data changes.
 const EXERCISE_SEARCH_INDEX_VERSION = "v1";
 const EXERCISE_SEARCH_INDEX_KEY = "exercise_search_index_version";
+
+type SeedDatabaseOptions = {
+  database?: typeof db;
+  includeRoutineGroups?: boolean;
+};
 
 // NOTE: entity_translations seed rows must come from db/seed-data/entityTranslations.ts,
 // never from constants/translations.ts.
@@ -101,7 +106,7 @@ function buildBackfillTranslationRows(args: {
   }[];
 }) {
   const rows: {
-    entityType: "routine" | "routine_group";
+    entityType: "exercise" | "muscle_group" | "routine" | "routine_group" | "routine_tag";
     entityId: string;
     field: "name" | "detail" | "description";
     locale: "pt-BR" | "en-US";
@@ -234,8 +239,11 @@ function buildBackfillTranslationRows(args: {
 /**
  * Inserts default database data on first launch.
  */
-export async function seedDatabase(): Promise<void> {
-  await db
+export async function seedDatabase(options: SeedDatabaseOptions = {}): Promise<void> {
+  const database = options.database ?? db;
+  const includeRoutineGroups = options.includeRoutineGroups ?? false;
+
+  await database
     .insert(muscleGroups)
     .values(
       DEFAULT_MUSCLE_GROUPS.map((group) => ({
@@ -245,7 +253,7 @@ export async function seedDatabase(): Promise<void> {
     )
     .onConflictDoNothing({ target: muscleGroups.id });
 
-  await db
+  await database
     .insert(routineTags)
     .values(
       DEFAULT_ROUTINE_TAGS.map((tag) => ({
@@ -256,9 +264,9 @@ export async function seedDatabase(): Promise<void> {
     )
     .onConflictDoNothing({ target: routineTags.id });
 
-  const [exerciseRow] = await db.select({ total: count() }).from(exercises);
+  const [exerciseRow] = await database.select({ total: count() }).from(exercises);
   if (exerciseRow.total === 0) {
-    await db.insert(exercises).values(
+    await database.insert(exercises).values(
       DEFAULT_EXERCISES.map((exercise) => ({
         id: exercise.id,
         name: exercise.name,
@@ -271,13 +279,13 @@ export async function seedDatabase(): Promise<void> {
     const currentVersion = await AsyncStorage.getItem(EXERCISE_SEARCH_INDEX_KEY);
 
     if (currentVersion !== EXERCISE_SEARCH_INDEX_VERSION) {
-      const labelMap = new Map(
+      const labelMap = new Map<string, { labelPt: string; labelEn: string }>(
         DEFAULT_EXERCISES.map((e) => [e.id, { labelPt: e.labelPt, labelEn: e.labelEn }]),
       );
 
       // Re-index system exercises from DEFAULT_EXERCISES (source of truth).
       // Only backfill custom exercises that have NULL search columns.
-      const rowsToIndex = await db
+      const rowsToIndex = await database
         .select({
           id: exercises.id,
           name: exercises.name,
@@ -300,7 +308,10 @@ export async function seedDatabase(): Promise<void> {
           labelEn: labels?.labelEn ?? row.name,
         });
 
-        await db.update(exercises).set({ searchPt, searchEn }).where(eq(exercises.id, row.id));
+        await database
+          .update(exercises)
+          .set({ searchPt, searchEn })
+          .where(eq(exercises.id, row.id));
       }
 
       await AsyncStorage.setItem(EXERCISE_SEARCH_INDEX_KEY, EXERCISE_SEARCH_INDEX_VERSION);
@@ -312,7 +323,7 @@ export async function seedDatabase(): Promise<void> {
     }
   }
 
-  await db
+  await database
     .insert(routines)
     .values(
       DEFAULT_ROUTINES.map((routine) => ({
@@ -327,41 +338,49 @@ export async function seedDatabase(): Promise<void> {
     )
     .onConflictDoNothing({ target: routines.id });
 
-  await db
-    .insert(routineGroups)
-    .values(
-      DEFAULT_ROUTINE_GROUPS.map((group) => ({
-        id: group.id,
-        name: group.name,
-        detail: group.detail,
-        description: group.description,
-        isSystem: group.isSystem,
-        createdAt: group.createdAt,
-        ...buildRoutineGroupSearchIndex(group),
-      })),
-    )
-    .onConflictDoNothing({ target: routineGroups.id });
+  if (includeRoutineGroups) {
+    await database
+      .insert(routineGroups)
+      .values(
+        DEFAULT_ROUTINE_GROUPS.map((group) => ({
+          id: group.id,
+          name: group.name,
+          detail: group.detail,
+          description: group.description,
+          isSystem: group.isSystem,
+          createdAt: group.createdAt,
+          ...buildRoutineGroupSearchIndex(group),
+        })),
+      )
+      .onConflictDoNothing({ target: routineGroups.id });
+  }
 
-  await db
+  await database
     .insert(routineTagLinks)
     .values(DEFAULT_ROUTINE_TAG_LINKS.map((link) => ({ ...link })))
     .onConflictDoNothing({ target: [routineTagLinks.routineId, routineTagLinks.tagId] });
 
-  await db
+  await database
     .insert(routineExercises)
     .values(DEFAULT_ROUTINE_EXERCISES.map((exercise) => ({ ...exercise })))
     .onConflictDoNothing({ target: routineExercises.id });
 
-  await db
-    .insert(routineGroupRoutines)
-    .values(DEFAULT_ROUTINE_GROUP_ROUTINES.map((entry) => ({ ...entry })))
-    .onConflictDoNothing({
-      target: [routineGroupRoutines.routineGroupId, routineGroupRoutines.routineId],
-    });
+  if (includeRoutineGroups) {
+    await database
+      .insert(routineGroupRoutines)
+      .values(DEFAULT_ROUTINE_GROUP_ROUTINES.map((entry) => ({ ...entry })))
+      .onConflictDoNothing({
+        target: [routineGroupRoutines.routineGroupId, routineGroupRoutines.routineId],
+      });
+  }
 
-  await db
+  const translationSeedRows = includeRoutineGroups
+    ? Array.from(DEFAULT_ENTITY_TRANSLATIONS)
+    : Array.from(DEFAULT_ENTITY_TRANSLATIONS).filter((row) => row.entityType !== "routine_group");
+
+  await database
     .insert(entityTranslations)
-    .values(DEFAULT_ENTITY_TRANSLATIONS)
+    .values(translationSeedRows)
     .onConflictDoNothing({
       target: [
         entityTranslations.entityType,
@@ -371,7 +390,7 @@ export async function seedDatabase(): Promise<void> {
       ],
     });
 
-  const existingRoutines = await db
+  const existingRoutines = await database
     .select({
       id: routines.id,
       name: routines.name,
@@ -381,36 +400,38 @@ export async function seedDatabase(): Promise<void> {
     })
     .from(routines);
 
-  const existingExercises = await db
+  const existingExercises = await database
     .select({
       id: exercises.id,
       name: exercises.name,
     })
     .from(exercises);
 
-  const existingMuscleGroups = await db
+  const existingMuscleGroups = await database
     .select({
       id: muscleGroups.id,
       name: muscleGroups.name,
     })
     .from(muscleGroups);
 
-  const existingRoutineTags = await db
+  const existingRoutineTags = await database
     .select({
       id: routineTags.id,
       slug: routineTags.slug,
     })
     .from(routineTags);
 
-  const existingRoutineGroups = await db
-    .select({
-      id: routineGroups.id,
-      name: routineGroups.name,
-      detail: routineGroups.detail,
-      description: routineGroups.description,
-      createdAt: routineGroups.createdAt,
-    })
-    .from(routineGroups);
+  const existingRoutineGroups = includeRoutineGroups
+    ? await database
+        .select({
+          id: routineGroups.id,
+          name: routineGroups.name,
+          detail: routineGroups.detail,
+          description: routineGroups.description,
+          createdAt: routineGroups.createdAt,
+        })
+        .from(routineGroups)
+    : [];
 
   const backfillRows = buildBackfillTranslationRows({
     routinesRows: existingRoutines,
@@ -421,7 +442,7 @@ export async function seedDatabase(): Promise<void> {
   });
 
   if (backfillRows.length > 0) {
-    await db
+    await database
       .insert(entityTranslations)
       .values(backfillRows)
       .onConflictDoNothing({
@@ -435,7 +456,7 @@ export async function seedDatabase(): Promise<void> {
   }
 
   if (__DEV__) {
-    const missingSearchRows = await db
+    const missingSearchRows = await database
       .select({
         id: exercises.id,
         name: exercises.name,
@@ -449,7 +470,7 @@ export async function seedDatabase(): Promise<void> {
     if (missingSearchRows.length > 0) {
       console.log("[seed] rows missing search fields:", missingSearchRows.slice(0, 5));
     } else {
-      const [sample] = await db
+      const [sample] = await database
         .select({
           id: exercises.id,
           name: exercises.name,

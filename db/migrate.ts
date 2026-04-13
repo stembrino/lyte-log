@@ -120,6 +120,11 @@ export function runMigrations(database: SQLiteDatabase): void {
       completed             INTEGER NOT NULL DEFAULT 0,
       timestamp             TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS __data_patches (
+      id          TEXT PRIMARY KEY NOT NULL,
+      applied_at  TEXT NOT NULL
+    );
   `);
 
   ensureExercisesSearchColumns(database);

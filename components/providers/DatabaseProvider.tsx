@@ -1,10 +1,10 @@
 import { expoDb } from "@/db/client";
 import { runMigrations } from "@/db/migrate";
-import { seedDatabase } from "@/db/seed";
+import { runDataPatches } from "@/db/patchManager";
 import { type PropsWithChildren, useEffect, useState } from "react";
 
 /**
- * Runs DDL migrations (sync) then seeds default data (async) before
+ * Runs DDL migrations (sync) then executes data patches (async) before
  * rendering any children. Keeps the splash screen up until ready.
  */
 export function DatabaseProvider({ children }: PropsWithChildren) {
@@ -16,13 +16,13 @@ export function DatabaseProvider({ children }: PropsWithChildren) {
     // Synchronous — creates tables before first query lands.
     runMigrations(expoDb);
 
-    // Asynchronous — inserts seed rows only on first launch.
-    seedDatabase()
+    // Asynchronous — executes each data patch exactly once.
+    runDataPatches()
       .then(() => {
         if (mounted) setReady(true);
       })
       .catch((e) => {
-        console.error("[db] seed error:", e);
+        console.error("[db] patch error:", e);
         if (mounted) setReady(true); // still open the app on seed failure
       });
 

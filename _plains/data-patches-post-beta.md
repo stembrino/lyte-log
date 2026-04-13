@@ -1,135 +1,74 @@
 # Data Patches Strategy (Post-Beta)
 
 Date: 2026-04-12
-Status: Proposed
+Status: Implemented (baseline)
 Scope: SQLite data seed, backfill, and one-time data fixes
 
 ## Summary
 
-The proposed approach is valid and recommended for LyteLog post-beta.
+LyteLog now uses a data patch manager with persistent patch tracking in SQLite.
 
-Using a `__data_patches` table to track applied data patches is a strong pattern for:
+Current behavior:
 
-- deterministic boot behavior
-- avoiding repeated heavy seed/backfill work
-- replacing AsyncStorage-based data-version coordination
-- safer production migrations of data behavior
+1. App boot runs schema migrations first.
+2. Then it runs ordered data patches.
+3. Each patch executes only once.
+4. Applied patch ids are recorded in \_\_data_patches.
+5. Patch execution is transactional per patch.
 
-## Why this is a good fit for LyteLog
+This gives deterministic startup behavior and avoids repeating heavy data work on every launch.
 
-Current app characteristics:
+## Current Architecture
 
-- local SQLite via Expo + Drizzle
-- initial seed plus conditional re-index/backfill logic
-- growing domain data (exercises, routines, translations)
+Execution path:
 
-Main benefits:
+1. [components/providers/DatabaseProvider.tsx](components/providers/DatabaseProvider.tsx)
+2. [db/migrate.ts](db/migrate.ts)
+3. [db/patchManager.ts](db/patchManager.ts)
+4. [db/patches/v001_initial_seed.ts](db/patches/v001_initial_seed.ts)
 
-1. Better startup performance
+Tracking table:
 
-- patch is executed only once
-- no repeated large insert checks per app open
+1. \_\_data_patches
+2. columns: id (PK), applied_at
 
-2. Correctness and atomicity
+Data source ownership:
 
-- version state lives in the same DB as data
-- avoids DB vs AsyncStorage desync scenarios
+1. Startup data now lives under db-owned modules in [db/patches/data](db/patches/data)
+2. Startup seed no longer imports constants/seed
+3. constants/seed folder was removed
 
-3. Clear change history
+## Patch Naming Convention
 
-- each data change is isolated by patch id
-- easier audits and rollback strategy design
+Use monotonic, zero-padded ids:
 
-4. Safer post-beta evolution
+1. v001_initial_seed
+2. v002_exercises_batch_001
+3. v003_routines_batch_001
 
-- add new seed/fix logic with new patch file instead of mutating legacy seed path
+Rules:
 
-## Proposed model
+1. Never modify behavior of a released patch id.
+2. Add a new patch for every incremental data change.
+3. Keep ids ordered and unique.
 
-## 1) Patch tracking table
+## Current Baseline Patch
 
-Suggested schema:
+v001 currently:
 
-- table: `__data_patches`
-- columns:
-  - `id` (PK)
-  - `applied_at`
+1. Executes seed flow through patch manager.
+2. Seeds baseline entities.
+3. Routine groups are disabled in patch options (includeRoutineGroups: false).
 
-Example ids:
+## Notes
 
-- `v1_initial_seed`
-- `v2_exercise_search_reindex`
-- `v3_exercise_translation_backfill`
+1. Schema migrations and data patches remain separate concerns.
+2. UI fallback constants are separate from DB startup data.
+3. AsyncStorage search-index version logic still exists in seed baseline and can be moved to dedicated patches later.
 
-## 2) Patch manager
+## Next Incremental Steps (Optional)
 
-Suggested structure:
-
-- `db/patches/v1_initial_seed.ts`
-- `db/patches/v2_exercise_search_reindex.ts`
-- `db/patchManager.ts`
-
-Manager behavior:
-
-- ensure patch table exists
-- iterate ordered patch list
-- run patch only if id not present
-- record id on success
-
-## 3) Execution point
-
-Run patch manager after schema migrations and before app ready state.
-
-## Important implementation notes for LyteLog
-
-1. Keep schema migrations and data patches separate
-
-- schema migrations: structural DB changes
-- data patches: seed/backfill/fix logic
-
-2. Use transaction per patch
-
-- each patch should be atomic
-- either fully applied or not marked as applied
-
-3. Do not overuse one giant patch
-
-- keep patches small and domain-focused
-- example: one patch for search index, another for translation backfill
-
-4. Dev-only data patches
-
-- allowed, but must be explicitly gated
-- never mix production critical patch ids with dev-only ids
-
-5. Preserve fallback behavior
-
-- UI/runtime should still handle missing translation rows gracefully
-
-## Risks and mitigations
-
-Risk: patch ordering bugs
-
-- Mitigation: explicit ordered list + id naming convention (`v1_`, `v2_`)
-
-Risk: partial patch failure
-
-- Mitigation: wrap in transaction and only mark applied at end
-
-Risk: duplicated business logic between seed and patches
-
-- Mitigation: move reusable builders to shared helpers
-
-## Post-beta adoption plan (incremental)
-
-1. Add `__data_patches` table via migration.
-2. Add patch manager and run it during app boot (after migrations).
-3. Move current one-time reindex/backfill logic into versioned patches.
-4. Keep existing seed path temporarily as fallback for safety.
-5. After one stable release, simplify legacy seed checks.
-
-## Decision
-
-Recommended: YES.
-
-This architecture is valid for LyteLog and should be adopted post-beta to improve startup performance, reliability, and maintainability.
+1. Add v002 for exercise batch additions.
+2. Add v003 for routines batch additions.
+3. Add dedicated patch for search index reindex/backfill and retire AsyncStorage key usage.
+4. Add minimal tests around patch ordering and idempotency.

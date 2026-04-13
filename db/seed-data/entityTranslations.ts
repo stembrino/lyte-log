@@ -1,8 +1,8 @@
-import { DEFAULT_EXERCISES } from "@/constants/seed/exercises";
-import { DEFAULT_MUSCLE_GROUPS } from "@/constants/seed/muscleGroups";
-import { DEFAULT_ROUTINE_GROUPS } from "@/constants/seed/routineGroups";
-import { DEFAULT_ROUTINES } from "@/constants/seed/routines";
-import { DEFAULT_ROUTINE_TAGS } from "@/constants/seed/routineTags";
+import { DEFAULT_EXERCISES } from "@/db/patches/data/exercises";
+import { DEFAULT_MUSCLE_GROUPS } from "@/db/patches/data/muscleGroups";
+import { DEFAULT_ROUTINE_GROUPS } from "@/db/patches/data/routineGroups";
+import { DEFAULT_ROUTINES } from "@/db/patches/data/routines";
+import { DEFAULT_ROUTINE_TAGS } from "@/db/patches/data/routineTags";
 
 /**
  * Seed source for entity_translations.

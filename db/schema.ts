@@ -150,6 +150,11 @@ export const sets = sqliteTable("sets", {
   timestamp: text("timestamp").notNull(),
 });
 
+export const dataPatches = sqliteTable("__data_patches", {
+  id: text("id").primaryKey(),
+  appliedAt: text("applied_at").notNull(),
+});
+
 export const exercisesRelations = relations(exercises, ({ many }) => ({
   routineExercises: many(routineExercises),
   workoutExercises: many(workoutExercises),
