@@ -55,16 +55,6 @@ export function PrepareWorkoutScreen() {
     );
   }, [routine]);
 
-  const handleChangeExerciseField = (
-    id: string,
-    field: "setsTarget" | "repsTarget",
-    value: string,
-  ) => {
-    setEditableExercises((prev) =>
-      prev.map((exercise) => (exercise.id === id ? { ...exercise, [field]: value } : exercise)),
-    );
-  };
-
   const handleReorderExercises = (nextItems: EditableWorkoutExercise[]) => {
     setEditableExercises(
       nextItems.map((exercise, index) => ({ ...exercise, exerciseOrder: index + 1 })),
@@ -207,10 +197,7 @@ export function PrepareWorkoutScreen() {
             <PrepareWorkoutExercisesForm
               items={editableExercises}
               locale={locale}
-              setsPlaceholder={t("routines.setsPlaceholder")}
-              repsPlaceholder={t("routines.repsPlaceholder")}
               reorderHint={t("workouts.prepareWorkoutReorderHint")}
-              onChangeField={handleChangeExerciseField}
               onReorder={handleReorderExercises}
               palette={palette}
             />

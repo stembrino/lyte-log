@@ -4,7 +4,7 @@ import DraggableFlatList, {
   ScaleDecorator,
   type RenderItemParams,
 } from "react-native-draggable-flatlist";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export type EditableWorkoutExercise = {
   id: string;
@@ -17,8 +17,6 @@ export type EditableWorkoutExercise = {
 type PrepareWorkoutExercisesFormProps = {
   items: EditableWorkoutExercise[];
   locale: AppLocale;
-  setsPlaceholder: string;
-  repsPlaceholder: string;
   reorderHint: string;
   palette: {
     card: string;
@@ -29,18 +27,14 @@ type PrepareWorkoutExercisesFormProps = {
     page: string;
     listSelected: string;
   };
-  onChangeField: (id: string, field: "setsTarget" | "repsTarget", value: string) => void;
   onReorder: (nextItems: EditableWorkoutExercise[]) => void;
 };
 
 export function PrepareWorkoutExercisesForm({
   items,
   locale,
-  setsPlaceholder,
-  repsPlaceholder,
   reorderHint,
   palette,
-  onChangeField,
   onReorder,
 }: PrepareWorkoutExercisesFormProps) {
   const renderItem = ({ item, drag, isActive }: RenderItemParams<EditableWorkoutExercise>) => {
@@ -65,41 +59,6 @@ export function PrepareWorkoutExercisesForm({
 
           <View style={styles.exerciseCopy}>
             <Text style={[styles.exerciseName, { color: palette.textPrimary }]}>{item.name}</Text>
-
-            <View style={styles.fieldsRow}>
-              <TextInput
-                style={[
-                  styles.smallInput,
-                  {
-                    borderColor: palette.border,
-                    color: palette.textPrimary,
-                    backgroundColor: palette.page,
-                  },
-                ]}
-                placeholder={setsPlaceholder}
-                placeholderTextColor={palette.textSecondary}
-                value={item.setsTarget}
-                onChangeText={(value) => onChangeField(item.id, "setsTarget", value)}
-                keyboardType="number-pad"
-                maxLength={2}
-              />
-              <TextInput
-                style={[
-                  styles.smallInput,
-                  {
-                    borderColor: palette.border,
-                    color: palette.textPrimary,
-                    backgroundColor: palette.page,
-                  },
-                ]}
-                placeholder={repsPlaceholder}
-                placeholderTextColor={palette.textSecondary}
-                value={item.repsTarget}
-                onChangeText={(value) => onChangeField(item.id, "repsTarget", value)}
-                keyboardType="number-pad"
-                maxLength={3}
-              />
-            </View>
           </View>
         </View>
       </ScaleDecorator>
@@ -176,25 +135,12 @@ const styles = StyleSheet.create({
   },
   exerciseCopy: {
     flex: 1,
-    gap: 6,
+    gap: 2,
   },
   exerciseName: {
     fontFamily: monoFont,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.2,
-  },
-  fieldsRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  smallInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    fontFamily: monoFont,
-    fontSize: 13,
   },
 });
