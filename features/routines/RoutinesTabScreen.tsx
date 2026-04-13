@@ -1,4 +1,5 @@
 import { AppCard } from "@/components/AppCard";
+import { ActionMenu } from "@/components/ActionMenu";
 import { ControlledSearchInput } from "@/components/ControlledSearchInput";
 import { ExpandedPanel } from "@/components/ExpandedPanel";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
@@ -15,7 +16,6 @@ import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { CreateRoutineModal, type RoutineFormInitialValues } from "./components/CreateRoutineModal";
-import { HeaderActionButton } from "./components/HeaderActionButton";
 
 export function RoutinesTabScreen() {
   const router = useRouter();
@@ -212,20 +212,25 @@ export function RoutinesTabScreen() {
               expanded={Boolean(expandedRoutineIds[item.id])}
               onToggle={() => toggleRoutine(item.id)}
               headerAction={
-                <View style={styles.headerActionRow}>
-                  <HeaderActionButton
-                    label={t("routines.editAction")}
-                    onPress={() => {
-                      void openEditRoutine(item.id);
-                    }}
-                    palette={palette}
-                  />
-                  <HeaderActionButton
-                    label={t("routines.deleteAction")}
-                    onPress={() => handleDeleteRoutine(item.id, item.name)}
-                    palette={palette}
-                  />
-                </View>
+                <ActionMenu
+                  accessibilityLabel={t("routines.routineActionsButton")}
+                  dismissLabel={t("routines.closeActionsButton")}
+                  actions={[
+                    {
+                      key: "edit",
+                      label: t("routines.editAction"),
+                      onPress: () => {
+                        void openEditRoutine(item.id);
+                      },
+                    },
+                    {
+                      key: "delete",
+                      label: t("routines.deleteAction"),
+                      onPress: () => handleDeleteRoutine(item.id, item.name),
+                      destructive: true,
+                    },
+                  ]}
+                />
               }
               style={[styles.routinePanel, { borderColor: palette.border }]}
             >
@@ -342,11 +347,6 @@ const styles = StyleSheet.create({
   },
   routineCard: {
     gap: 8,
-  },
-  headerActionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
   },
   routinePanel: {
     gap: 0,
