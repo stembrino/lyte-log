@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { runDevOnlyResetExercisesToBaseline } from "@/db/devOnly/resetExercisesToBaseline.devOnly";
 import { DEFAULT_EXERCISES } from "@/db/patches/data/exercises";
 import { DEFAULT_MUSCLE_GROUPS } from "@/db/patches/data/muscleGroups";
 import {
@@ -12,7 +13,7 @@ import {
 } from "@/db/patches/data/routines";
 import { DEFAULT_ROUTINE_TAGS } from "@/db/patches/data/routineTags";
 import { count, eq, isNull, or } from "drizzle-orm";
-import { db } from "./client";
+import { db, expoDb } from "./client";
 import {
   entityTranslations,
   exercises,
@@ -242,6 +243,8 @@ function buildBackfillTranslationRows(args: {
 export async function seedDatabase(options: SeedDatabaseOptions = {}): Promise<void> {
   const database = options.database ?? db;
   const includeRoutineGroups = options.includeRoutineGroups ?? false;
+
+  runDevOnlyResetExercisesToBaseline(expoDb, "seed");
 
   await database
     .insert(muscleGroups)

@@ -1,3 +1,4 @@
+import { runDevOnlyResetExercisesToBaseline } from "@/db/devOnly/resetExercisesToBaseline.devOnly";
 import type { SQLiteDatabase } from "expo-sqlite";
 
 /**
@@ -133,6 +134,10 @@ export function runMigrations(database: SQLiteDatabase): void {
   ensureWorkoutsGymIdColumn(database);
   ensureWorkoutsStatusColumn(database);
   removeLegacyI18nColumns(database);
+
+  if (__DEV__) {
+    runDevOnlyResetExercisesToBaseline(database, "migrate");
+  }
 }
 
 function getTableColumns(database: SQLiteDatabase, tableName: string): Set<string> {
