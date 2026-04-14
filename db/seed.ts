@@ -275,6 +275,7 @@ export async function seedDatabase(options: SeedDatabaseOptions = {}): Promise<v
         name: exercise.name,
         muscleGroup: exercise.muscleGroup,
         isCustom: exercise.isCustom,
+        imageUrl: exercise.imageUrl ?? null,
         ...buildSearchIndex(exercise),
       })),
     );

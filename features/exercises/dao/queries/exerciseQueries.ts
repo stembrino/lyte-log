@@ -10,6 +10,7 @@ export type ExerciseLibraryItem = {
   name: string;
   muscleGroup: string;
   isCustom: boolean;
+  imageUrl: string | null;
 };
 
 type GetExerciseLibraryPageArgs = {
@@ -68,6 +69,7 @@ export async function getExerciseLibraryPage({
       name: exercises.name,
       muscleGroup: exercises.muscleGroup,
       isCustom: exercises.isCustom,
+      imageUrl: exercises.imageUrl,
       translatedName: entityTranslations.value,
     })
     .from(exercises)
@@ -90,6 +92,7 @@ export async function getExerciseLibraryPage({
     name: row.translatedName ?? row.name,
     muscleGroup: row.muscleGroup,
     isCustom: row.isCustom,
+    imageUrl: row.imageUrl,
   }));
 }
 

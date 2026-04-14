@@ -21,7 +21,8 @@ export function runMigrations(database: SQLiteDatabase): void {
       muscle_group     TEXT NOT NULL,
       is_custom        INTEGER NOT NULL DEFAULT 0,
       search_pt        TEXT,
-      search_en        TEXT
+      search_en        TEXT,
+      image_url        TEXT
     );
 
     CREATE TABLE IF NOT EXISTS gyms (
@@ -134,6 +135,7 @@ export function runMigrations(database: SQLiteDatabase): void {
   ensureWorkoutsGymIdColumn(database);
   ensureWorkoutsStatusColumn(database);
   removeLegacyI18nColumns(database);
+  ensureExercisesImageUrlColumn(database);
 
   if (__DEV__) {
     runDevOnlyResetExercisesToBaseline(database, "migrate");
@@ -219,9 +221,18 @@ function removeLegacyI18nColumns(database: SQLiteDatabase): void {
         muscle_group TEXT NOT NULL,
         is_custom INTEGER NOT NULL DEFAULT 0,
         search_pt TEXT,
-        search_en TEXT
+        search_en TEXT,
+        image_url TEXT
       );`,
-      targetColumns: ["id", "name", "muscle_group", "is_custom", "search_pt", "search_en"],
+      targetColumns: [
+        "id",
+        "name",
+        "muscle_group",
+        "is_custom",
+        "search_pt",
+        "search_en",
+        "image_url",
+      ],
       sourceByColumn: {
         id: "id",
         name: "name",
@@ -229,6 +240,7 @@ function removeLegacyI18nColumns(database: SQLiteDatabase): void {
         is_custom: "is_custom",
         search_pt: "search_pt",
         search_en: "search_en",
+        image_url: "image_url",
       },
     });
 
@@ -343,6 +355,21 @@ function ensureExercisesSearchColumns(database: SQLiteDatabase): void {
     }
   } catch {
     // Ignore column backfill failures; app can still run without search index.
+  }
+}
+
+function ensureExercisesImageUrlColumn(database: SQLiteDatabase): void {
+  try {
+    const rows = (database as any).getAllSync("PRAGMA table_info(exercises);") as {
+      name: string;
+    }[];
+    const columnNames = new Set(rows.map((row) => row.name));
+
+    if (!columnNames.has("image_url")) {
+      database.execSync("ALTER TABLE exercises ADD COLUMN image_url TEXT;");
+    }
+  } catch {
+    // Ignore backfill failures; app can still run without images.
   }
 }
 

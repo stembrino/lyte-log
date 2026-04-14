@@ -1,6 +1,7 @@
 /**
  * Default exercise library seeded on first launch.
  * Dynamic localized labels are injected via entity_translations.
+ * Image URLs are optional; null means no image available.
  */
 export const DEFAULT_EXERCISES = [
   // Chest
@@ -11,6 +12,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Supino Reto",
     labelEn: "Bench Press",
+    imageUrl: "https://wger.de/media/exercise-images/192/Bench-press-1.png",
   },
   {
     id: "ex-02",
@@ -19,6 +21,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Supino Inclinado",
     labelEn: "Incline Bench Press",
+    imageUrl: "https://wger.de/media/exercise-images/41/Incline-bench-press-1.png",
   },
   {
     id: "ex-03",
@@ -27,14 +30,16 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Crucifixo",
     labelEn: "Dumbbell Fly",
+    imageUrl: null,
   },
   {
     id: "ex-04",
     name: "Push-Up",
     muscleGroup: "Chest",
     isCustom: false,
-    labelPt: "Flexao",
+    labelPt: "Flexão de Braços",
     labelEn: "Push-Up",
+    imageUrl: null,
   },
 
   // Back
@@ -43,8 +48,9 @@ export const DEFAULT_EXERCISES = [
     name: "Deadlift",
     muscleGroup: "Back",
     isCustom: false,
-    labelPt: "Terra",
+    labelPt: "Levantamento Terra",
     labelEn: "Deadlift",
+    imageUrl: null,
   },
   {
     id: "ex-06",
@@ -53,6 +59,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Barra Fixa",
     labelEn: "Pull-Up",
+    imageUrl: null,
   },
   {
     id: "ex-07",
@@ -61,6 +68,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Remada Curvada",
     labelEn: "Barbell Row",
+    imageUrl: null,
   },
   {
     id: "ex-08",
@@ -69,6 +77,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Puxada Frontal",
     labelEn: "Lat Pulldown",
+    imageUrl: null,
   },
   {
     id: "ex-09",
@@ -77,6 +86,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Remada Sentada",
     labelEn: "Seated Cable Row",
+    imageUrl: null,
   },
 
   // Legs
@@ -87,6 +97,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Agachamento",
     labelEn: "Squat",
+    imageUrl: null,
   },
   {
     id: "ex-11",
@@ -95,38 +106,43 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Leg Press",
     labelEn: "Leg Press",
+    imageUrl: null,
   },
   {
     id: "ex-12",
     name: "Romanian Deadlift",
     muscleGroup: "Legs",
     isCustom: false,
-    labelPt: "Terra Romeno",
+    labelPt: "Levantamento Terra Romeno",
     labelEn: "Romanian Deadlift",
+    imageUrl: "https://wger.de/media/exercise-images/161/Dead-lifts-2.png",
   },
   {
     id: "ex-13",
     name: "Leg Curl",
     muscleGroup: "Legs",
     isCustom: false,
-    labelPt: "Flexora",
+    labelPt: "Cadeira Flexora",
     labelEn: "Leg Curl",
+    imageUrl: "https://wger.de/media/exercise-images/154/lying-leg-curl-machine-large-1.png",
   },
   {
     id: "ex-14",
     name: "Leg Extension",
     muscleGroup: "Legs",
     isCustom: false,
-    labelPt: "Extensora",
+    labelPt: "Cadeira Extensora",
     labelEn: "Leg Extension",
+    imageUrl: null,
   },
   {
     id: "ex-15",
     name: "Calf Raise",
     muscleGroup: "Legs",
     isCustom: false,
-    labelPt: "Panturrilha",
+    labelPt: "Elevação de Panturrilha",
     labelEn: "Calf Raise",
+    imageUrl: null,
   },
 
   // Shoulders
@@ -137,6 +153,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Desenvolvimento",
     labelEn: "Overhead Press",
+    imageUrl: "https://wger.de/media/exercise-images/53/Shoulder-press-machine-2.png",
   },
   {
     id: "ex-17",
@@ -145,6 +162,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Elevacao Lateral",
     labelEn: "Lateral Raise",
+    imageUrl: "https://wger.de/media/exercise-images/148/lateral-dumbbell-raises-large-2.png",
   },
   {
     id: "ex-18",
@@ -153,14 +171,16 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Elevacao Frontal",
     labelEn: "Front Raise",
+    imageUrl: null,
   },
   {
     id: "ex-19",
     name: "Face Pull",
     muscleGroup: "Shoulders",
     isCustom: false,
-    labelPt: "Face Pull",
+    labelPt: "Puxada Alta",
     labelEn: "Face Pull",
+    imageUrl: null,
   },
 
   // Arms
@@ -171,6 +191,7 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Rosca Direta",
     labelEn: "Barbell Curl",
+    imageUrl: "https://wger.de/media/exercise-images/74/Bicep-curls-1.png",
   },
   {
     id: "ex-21",
@@ -179,97 +200,34 @@ export const DEFAULT_EXERCISES = [
     isCustom: false,
     labelPt: "Rosca Martelo",
     labelEn: "Hammer Curl",
+    imageUrl: "https://wger.de/media/exercise-images/86/Bicep-hammer-curl-1.png",
   },
   {
     id: "ex-22",
     name: "Tricep Dip",
     muscleGroup: "Arms",
     isCustom: false,
-    labelPt: "Mergulho Triceps",
+    labelPt: "Mergulho",
     labelEn: "Tricep Dip",
+    imageUrl: null,
   },
   {
     id: "ex-23",
     name: "Tricep Pushdown",
     muscleGroup: "Arms",
     isCustom: false,
-    labelPt: "Puxada Triceps",
+    labelPt: "Extensão Triceps na Polia",
     labelEn: "Tricep Pushdown",
+    imageUrl: null,
   },
   {
     id: "ex-24",
     name: "Skull Crusher",
     muscleGroup: "Arms",
     isCustom: false,
-    labelPt: "Triceps Testa",
+    labelPt: "Extensão na Testa",
     labelEn: "Skull Crusher",
-  },
-
-  // Core
-  {
-    id: "ex-25",
-    name: "Plank",
-    muscleGroup: "Core",
-    isCustom: false,
-    labelPt: "Prancha",
-    labelEn: "Plank",
-  },
-  {
-    id: "ex-26",
-    name: "Crunch",
-    muscleGroup: "Core",
-    isCustom: false,
-    labelPt: "Abdominal",
-    labelEn: "Crunch",
-  },
-  {
-    id: "ex-27",
-    name: "Cable Crunch",
-    muscleGroup: "Core",
-    isCustom: false,
-    labelPt: "Abdominal Polia",
-    labelEn: "Cable Crunch",
-  },
-  {
-    id: "ex-28",
-    name: "Hanging Leg Raise",
-    muscleGroup: "Core",
-    isCustom: false,
-    labelPt: "Elevacao de Pernas",
-    labelEn: "Hanging Leg Raise",
-  },
-
-  // Full Body
-  {
-    id: "ex-29",
-    name: "Clean and Press",
-    muscleGroup: "Full Body",
-    isCustom: false,
-    labelPt: "Levantamento e Desenvolvimento",
-    labelEn: "Clean and Press",
-  },
-  {
-    id: "ex-30",
-    name: "Kettlebell Swing",
-    muscleGroup: "Full Body",
-    isCustom: false,
-    labelPt: "Swing com Kettlebell",
-    labelEn: "Kettlebell Swing",
-  },
-  {
-    id: "ex-31",
-    name: "Burpee",
-    muscleGroup: "Full Body",
-    isCustom: false,
-    labelPt: "Burpee",
-    labelEn: "Burpee",
-  },
-  {
-    id: "ex-32",
-    name: "Thruster",
-    muscleGroup: "Full Body",
-    isCustom: false,
-    labelPt: "Thruster",
-    labelEn: "Thruster",
+    imageUrl:
+      "https://wger.de/media/exercise-images/84/Lying-close-grip-triceps-press-to-chin-1.png",
   },
 ] as const;

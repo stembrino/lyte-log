@@ -22,6 +22,8 @@ export const exercises = sqliteTable("exercises", {
   searchPt: text("search_pt"),
   /** Localized search index (normalized) for en-US queries. */
   searchEn: text("search_en"),
+  /** Exercise image URL (wger or custom). */
+  imageUrl: text("image_url"),
 });
 
 export const workouts = sqliteTable("workouts", {
