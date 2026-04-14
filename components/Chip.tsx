@@ -27,7 +27,7 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
             },
           ]}
         >
-          <Text style={[styles.text, { color: selected ? palette.card : palette.textPrimary }]}>
+          <Text style={[styles.text, { color: selected ? palette.onAccent : palette.textPrimary }]}>
             {selected ? "[x] " : "[ ] "}
             {label}
           </Text>

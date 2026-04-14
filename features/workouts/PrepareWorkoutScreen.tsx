@@ -8,6 +8,8 @@ import {
   PrepareWorkoutExercisesForm,
   type EditableWorkoutExercise,
 } from "@/features/workouts/components/prepare/PrepareWorkoutExercisesForm";
+import { PrepareWorkoutExercisePickerModal } from "@/features/workouts/components/prepare/PrepareWorkoutExercisePickerModal";
+import type { ExerciseLibraryItem } from "@/features/exercises/hooks/usePaginatedExerciseLibrary";
 import { startWorkout } from "@/features/workouts/dao/mutations/workoutMutations";
 import { useGymPicker } from "@/features/workouts/hooks/useGymPicker";
 import { useSelectedRoutine } from "@/features/workouts/hooks/useSelectedRoutine";
@@ -37,6 +39,7 @@ export function PrepareWorkoutScreen() {
   } = useGymPicker();
   const [editableExercises, setEditableExercises] = useState<EditableWorkoutExercise[]>([]);
   const [isStarting, setIsStarting] = useState(false);
+  const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
 
   useEffect(() => {
     if (!routine) {
@@ -47,6 +50,7 @@ export function PrepareWorkoutScreen() {
     setEditableExercises(
       routine.exercises.map((exercise, index) => ({
         id: exercise.id,
+        exerciseId: exercise.exerciseId,
         name: exercise.name,
         exerciseOrder: exercise.exerciseOrder ?? index + 1,
         setsTarget: exercise.setsTarget?.toString() ?? "",
@@ -59,6 +63,20 @@ export function PrepareWorkoutScreen() {
     setEditableExercises(
       nextItems.map((exercise, index) => ({ ...exercise, exerciseOrder: index + 1 })),
     );
+  };
+
+  const handleAddExercise = (exercise: ExerciseLibraryItem) => {
+    setEditableExercises((prev) => [
+      ...prev,
+      {
+        id: `new-${exercise.id}`,
+        exerciseId: exercise.id,
+        name: exercise.name,
+        exerciseOrder: prev.length + 1,
+        setsTarget: "3",
+        repsTarget: "10",
+      },
+    ]);
   };
 
   const handleStartWorkout = async () => {
@@ -77,7 +95,7 @@ export function PrepareWorkoutScreen() {
         .slice()
         .sort((a, b) => a.exerciseOrder - b.exerciseOrder)
         .map((exercise) => {
-          const exerciseId = exerciseIdByRoutineExerciseId.get(exercise.id);
+          const exerciseId = exercise.exerciseId ?? exerciseIdByRoutineExerciseId.get(exercise.id);
           if (!exerciseId) {
             return null;
           }
@@ -189,19 +207,21 @@ export function PrepareWorkoutScreen() {
             {t("routines.exercisesTitle")}
           </Text>
 
-          {routine.exercises.length === 0 ? (
+          {editableExercises.length === 0 ? (
             <Text style={[styles.statusText, { color: palette.textSecondary }]}>
               {t("workouts.prepareWorkoutNoExercises")}
             </Text>
-          ) : (
-            <PrepareWorkoutExercisesForm
-              items={editableExercises}
-              locale={locale}
-              reorderHint={t("workouts.prepareWorkoutReorderHint")}
-              onReorder={handleReorderExercises}
-              palette={palette}
-            />
-          )}
+          ) : null}
+
+          <PrepareWorkoutExercisesForm
+            items={editableExercises}
+            locale={locale}
+            reorderHint={t("workouts.prepareWorkoutReorderHint")}
+            addButtonAccessibilityLabel={t("workouts.addExerciseAccessibilityLabel")}
+            onReorder={handleReorderExercises}
+            onPressAddExercise={() => setIsExercisePickerOpen(true)}
+            palette={palette}
+          />
         </View>
       )}
 
@@ -237,6 +257,20 @@ export function PrepareWorkoutScreen() {
         emptyLabel={t("workouts.gymEmptyState")}
         onSelectGym={setSelectedGymId}
         onAddGym={addGym}
+      />
+
+      <PrepareWorkoutExercisePickerModal
+        isOpen={isExercisePickerOpen}
+        onClose={() => setIsExercisePickerOpen(false)}
+        locale={locale}
+        excludeExerciseIds={editableExercises.map((exercise) => exercise.exerciseId ?? exercise.id)}
+        onAddExercise={handleAddExercise}
+        title={t("workouts.addExercisePickerTitle")}
+        hint={t("workouts.addExercisePickerHint")}
+        searchPlaceholder={t("routines.searchExercisePlaceholder")}
+        addButtonLabel={t("routines.addExerciseButton")}
+        emptyLabel={t("routines.noExerciseResults")}
+        loadingLabel={t("routines.loading")}
       />
     </View>
   );

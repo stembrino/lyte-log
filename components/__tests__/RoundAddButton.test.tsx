@@ -15,11 +15,11 @@ describe("RoundAddButton", () => {
   it("renders the plus icon and calls onPress", () => {
     const onPress = jest.fn();
 
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText } = render(
       <RoundAddButton accessibilityLabel="Add set" onPress={onPress} />,
     );
 
-    expect(getByText("+")).toBeTruthy();
+    expect(getByLabelText("Add set")).toBeTruthy();
 
     fireEvent.press(getByLabelText("Add set"));
 

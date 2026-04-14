@@ -1,5 +1,5 @@
-import { monoFont } from "@/constants/retroTheme";
-import { Pressable, StyleSheet, Text } from "react-native";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Pressable, StyleSheet } from "react-native";
 import { useRetroPalette } from "./hooks/useRetroPalette";
 
 type RoundAddButtonProps = {
@@ -34,18 +34,12 @@ export function RoundAddButton({
         isSmall ? styles.buttonSmall : null,
         {
           borderColor: palette.accent,
-          backgroundColor: disabled
-            ? palette.listSelected
-            : pressed
-              ? palette.accentPressed
-              : palette.accent,
+          backgroundColor: pressed ? palette.listSelected : "transparent",
           opacity: disabled ? 0.7 : 1,
         },
       ]}
     >
-      <Text style={[styles.icon, isSmall ? styles.iconSmall : null, { color: palette.onAccent }]}>
-        +
-      </Text>
+      <FontAwesome name="plus" size={isSmall ? 16 : 20} color={palette.accent} />
     </Pressable>
   );
 }
@@ -63,15 +57,5 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-  },
-  icon: {
-    fontFamily: monoFont,
-    fontSize: 24,
-    fontWeight: "700",
-    lineHeight: 24,
-  },
-  iconSmall: {
-    fontSize: 20,
-    lineHeight: 20,
   },
 });

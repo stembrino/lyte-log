@@ -7,11 +7,13 @@ import {
   type ActiveWorkoutRow,
 } from "@/features/workouts/dao/queries/workoutQueries";
 import {
+  addWorkoutSet,
   cancelWorkout,
   finishWorkout,
   updateWorkoutSet,
   updateWorkoutSetCompleted,
 } from "@/features/workouts/dao/mutations/workoutMutations";
+import { RoundAddButton } from "@/components/RoundAddButton";
 import { WorkoutStatusDot } from "@/features/workouts/components/WorkoutStatusDot";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
@@ -174,6 +176,45 @@ export function InProgressWorkoutScreen() {
       });
     } catch {
       Alert.alert(t("workouts.updateSetErrorTitle"), t("workouts.updateSetErrorBody"));
+    }
+  };
+
+  const handleAddSet = async (workoutExerciseId: string) => {
+    try {
+      const createdSet = await addWorkoutSet({
+        workoutExerciseId,
+        reps: 0,
+        weight: 0,
+      });
+
+      setWorkout((prev) => {
+        if (!prev) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          exercises: prev.exercises.map((exercise) =>
+            exercise.id === workoutExerciseId
+              ? {
+                  ...exercise,
+                  sets: [...exercise.sets, createdSet],
+                }
+              : exercise,
+          ),
+        };
+      });
+
+      setRepsDraftBySetId((prev) => ({
+        ...prev,
+        [createdSet.id]: "",
+      }));
+      setWeightDraftBySetId((prev) => ({
+        ...prev,
+        [createdSet.id]: "",
+      }));
+    } catch {
+      Alert.alert(t("workouts.addSetErrorTitle"), t("workouts.addSetErrorBody"));
     }
   };
 
@@ -442,6 +483,16 @@ export function InProgressWorkoutScreen() {
                     </View>
                   </>
                 )}
+
+                <View style={styles.addSetButtonRow}>
+                  <RoundAddButton
+                    size="small"
+                    accessibilityLabel={t("workouts.addSetAccessibilityLabel")}
+                    onPress={() => {
+                      void handleAddSet(exercise.id);
+                    }}
+                  />
+                </View>
               </View>
             ))
           : null}
@@ -454,7 +505,7 @@ export function InProgressWorkoutScreen() {
             ]}
             onPress={handleFinishWorkoutPress}
           >
-            <Text style={[styles.primaryButtonText, { color: palette.page }]}>
+            <Text style={[styles.primaryButtonText, { color: palette.onAccent }]}>
               {finishing ? t("routines.loading") : t("workouts.finishWorkoutCta")}
             </Text>
           </TouchableOpacity>
@@ -626,6 +677,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 0,
+  },
+  addSetButtonRow: {
+    marginTop: 4,
+    alignItems: "center",
+    justifyContent: "center",
   },
   actionsRow: {
     marginTop: 6,

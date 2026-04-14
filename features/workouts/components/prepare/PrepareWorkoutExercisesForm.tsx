@@ -1,4 +1,5 @@
 import { monoFont } from "@/constants/retroTheme";
+import { RoundAddButton } from "@/components/RoundAddButton";
 import type { AppLocale } from "@/constants/translations";
 import DraggableFlatList, {
   ScaleDecorator,
@@ -8,6 +9,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export type EditableWorkoutExercise = {
   id: string;
+  exerciseId?: string;
   name: string;
   exerciseOrder: number;
   setsTarget: string;
@@ -18,6 +20,7 @@ type PrepareWorkoutExercisesFormProps = {
   items: EditableWorkoutExercise[];
   locale: AppLocale;
   reorderHint: string;
+  addButtonAccessibilityLabel: string;
   palette: {
     card: string;
     border: string;
@@ -28,14 +31,17 @@ type PrepareWorkoutExercisesFormProps = {
     listSelected: string;
   };
   onReorder: (nextItems: EditableWorkoutExercise[]) => void;
+  onPressAddExercise: () => void;
 };
 
 export function PrepareWorkoutExercisesForm({
   items,
   locale,
   reorderHint,
+  addButtonAccessibilityLabel,
   palette,
   onReorder,
+  onPressAddExercise,
 }: PrepareWorkoutExercisesFormProps) {
   const renderItem = ({ item, drag, isActive }: RenderItemParams<EditableWorkoutExercise>) => {
     return (
@@ -80,6 +86,15 @@ export function PrepareWorkoutExercisesForm({
         removeClippedSubviews={false}
         containerStyle={styles.listContainer}
         contentContainerStyle={styles.listContent}
+        ListFooterComponent={
+          <View style={styles.addFooter}>
+            <RoundAddButton
+              size="small"
+              accessibilityLabel={addButtonAccessibilityLabel}
+              onPress={onPressAddExercise}
+            />
+          </View>
+        }
       />
     </View>
   );
@@ -142,5 +157,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.2,
+  },
+  addFooter: {
+    paddingTop: 2,
+    paddingBottom: 8,
+    alignItems: "center",
   },
 });

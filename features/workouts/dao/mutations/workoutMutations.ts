@@ -116,6 +116,40 @@ export async function updateWorkoutSetCompleted(args: {
     .where(eq(sets.id, args.setId));
 }
 
+export async function addWorkoutSet(args: {
+  workoutExerciseId: string;
+  reps?: number;
+  weight?: number;
+}): Promise<{
+  id: string;
+  reps: number;
+  weight: number;
+  completed: boolean;
+  timestamp: string;
+}> {
+  const timestamp = new Date().toISOString();
+  const setId = `set-${args.workoutExerciseId}-${Date.now()}-${Math.floor(Math.random() * 1_000)}`;
+  const reps = args.reps ?? 0;
+  const weight = args.weight ?? 0;
+
+  await db.insert(sets).values({
+    id: setId,
+    workoutExerciseId: args.workoutExerciseId,
+    reps,
+    weight,
+    completed: false,
+    timestamp,
+  });
+
+  return {
+    id: setId,
+    reps,
+    weight,
+    completed: false,
+    timestamp,
+  };
+}
+
 export async function updateWorkoutStatus(args: {
   workoutId: string;
   status: "in_progress" | "paused";
