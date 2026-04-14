@@ -1,9 +1,11 @@
 import { Badge } from "@/components/Badge";
+import { AvatarWithPreview } from "@/components/AvatarWithPreview";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { ExerciseLibraryItem } from "../hooks/usePaginatedExerciseLibrary";
+import { resolveExerciseImageSource } from "../utils/exerciseImageSource";
 
 type Props = {
   item: ExerciseLibraryItem;
@@ -17,6 +19,7 @@ export function ExerciseCard({ item, expanded, onToggle, onEdit, onDelete }: Pro
   const { t } = useI18n();
   const palette = useRetroPalette();
   const sourceLabel = item.isCustom ? t("exercises.customBadge") : t("exercises.systemBadge");
+  const imageSource = resolveExerciseImageSource(item.id, item.imageUrl);
 
   return (
     <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
@@ -30,6 +33,13 @@ export function ExerciseCard({ item, expanded, onToggle, onEdit, onDelete }: Pro
           { backgroundColor: pressed ? palette.listSelected : palette.card },
         ]}
       >
+        <AvatarWithPreview
+          label={item.name}
+          size="lg"
+          imageSource={imageSource}
+          previewTitle={item.name}
+        />
+
         <View style={styles.info}>
           <Text style={[styles.name, { color: palette.textPrimary }]}>{item.name}</Text>
           <View style={styles.metaRow}>
@@ -59,21 +69,6 @@ export function ExerciseCard({ item, expanded, onToggle, onEdit, onDelete }: Pro
               {item.muscleGroup}
             </Text>
           </View>
-
-          {item.imageUrl ? (
-            <View
-              style={[
-                styles.imageContainer,
-                { backgroundColor: "#ffffff", borderColor: palette.border },
-              ]}
-            >
-              <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="contain" />
-            </View>
-          ) : (
-            <Text style={[styles.imageFallbackText, { color: palette.textSecondary }]}>
-              {t("exercises.imageUnavailable")}
-            </Text>
-          )}
 
           {!item.isCustom ? (
             <View style={styles.systemNotice}>
@@ -207,27 +202,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
     textTransform: "uppercase",
-  },
-  imageContainer: {
-    alignSelf: "center",
-    borderRadius: 4,
-    width: 112,
-    height: 112,
-    borderWidth: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 6,
-    overflow: "hidden",
-  },
-  image: {
-    width: 92,
-    height: 92,
-  },
-  imageFallbackText: {
-    fontFamily: monoFont,
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginTop: 2,
   },
 });

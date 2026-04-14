@@ -11,6 +11,8 @@ jest.mock("@/components/hooks/useRetroPalette", () => ({
   }),
 }));
 
+jest.mock("@expo/vector-icons/FontAwesome", () => "MockFontAwesome");
+
 describe("RoundAddButton", () => {
   it("renders the plus icon and calls onPress", () => {
     const onPress = jest.fn();

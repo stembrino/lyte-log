@@ -1,6 +1,8 @@
-import { monoFont } from "@/constants/retroTheme";
+import { AvatarWithPreview } from "@/components/AvatarWithPreview";
 import { RoundAddButton } from "@/components/RoundAddButton";
+import { monoFont } from "@/constants/retroTheme";
 import type { AppLocale } from "@/constants/translations";
+import { resolveExerciseImageSource } from "@/features/exercises/utils/exerciseImageSource";
 import DraggableFlatList, {
   ScaleDecorator,
   type RenderItemParams,
@@ -44,6 +46,8 @@ export function PrepareWorkoutExercisesForm({
   onPressAddExercise,
 }: PrepareWorkoutExercisesFormProps) {
   const renderItem = ({ item, drag, isActive }: RenderItemParams<EditableWorkoutExercise>) => {
+    const imageSource = resolveExerciseImageSource(item.exerciseId ?? item.id, null);
+
     return (
       <ScaleDecorator>
         <View
@@ -58,6 +62,13 @@ export function PrepareWorkoutExercisesForm({
           <Pressable onLongPress={drag} delayLongPress={120} style={styles.dragHandle}>
             <Text style={[styles.dragHandleText, { color: palette.textSecondary }]}>::</Text>
           </Pressable>
+
+          <AvatarWithPreview
+            label={item.name}
+            size="md"
+            imageSource={imageSource}
+            previewTitle={item.name}
+          />
 
           <Text style={[styles.exerciseOrder, { color: palette.accent }]}>
             {item.exerciseOrder}.
@@ -144,7 +155,7 @@ const styles = StyleSheet.create({
     fontFamily: monoFont,
     fontSize: 11,
     fontWeight: "700",
-    width: 20,
+    width: 24,
     textAlign: "right",
     letterSpacing: 0.2,
   },

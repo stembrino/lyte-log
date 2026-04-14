@@ -1,12 +1,14 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Avatar } from "@/components/Avatar";
 import { ControlledSearchInput } from "@/components/ControlledSearchInput";
+import { useRetroPalette } from "@/components/hooks/useRetroPalette";
+import type { AppLocale } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
+import { resolveExerciseImageSource } from "@/features/exercises/utils/exerciseImageSource";
 import {
   usePaginatedExerciseLibrary,
   type ExerciseLibraryItem,
 } from "@/features/exercises/hooks/usePaginatedExerciseLibrary";
-import type { AppLocale } from "@/components/providers/i18n-provider";
-import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useEffect, useState } from "react";
 import { FlatList, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -98,31 +100,36 @@ export function PrepareWorkoutExercisePickerModal({
                 <Text style={[styles.paginationHint, { color: palette.textSecondary }]}>...</Text>
               ) : null
             }
-            renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.catalogItem,
-                  { borderColor: palette.border, backgroundColor: palette.page },
-                ]}
-              >
-                <View style={styles.catalogCopy}>
-                  <Text style={[styles.catalogTitle, { color: palette.textPrimary }]}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.catalogMeta, { color: palette.textSecondary }]}>
-                    {item.muscleGroup}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.addExerciseButton, { backgroundColor: palette.accent }]}
-                  onPress={() => handleAddExercise(item)}
+            renderItem={({ item }) => {
+              const imageSource = resolveExerciseImageSource(item.id, item.imageUrl);
+
+              return (
+                <View
+                  style={[
+                    styles.catalogItem,
+                    { borderColor: palette.border, backgroundColor: palette.page },
+                  ]}
                 >
-                  <Text style={[styles.addExerciseButtonText, { color: palette.card }]}>
-                    {addButtonLabel}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
+                  <Avatar label={item.name} size="lg" imageSource={imageSource} />
+                  <View style={styles.catalogCopy}>
+                    <Text style={[styles.catalogTitle, { color: palette.textPrimary }]}>
+                      {item.name}
+                    </Text>
+                    <Text style={[styles.catalogMeta, { color: palette.textSecondary }]}>
+                      {item.muscleGroup}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.addExerciseButton, { backgroundColor: palette.accent }]}
+                    onPress={() => handleAddExercise(item)}
+                  >
+                    <Text style={[styles.addExerciseButtonText, { color: palette.card }]}>
+                      {addButtonLabel}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            }}
           />
         </View>
       </View>

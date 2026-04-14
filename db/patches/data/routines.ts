@@ -32,7 +32,7 @@ export const DEFAULT_ROUTINE_EXERCISES = [
   {
     id: "rte-debug-01",
     routineId: "routine-debug-01",
-    exerciseId: "ex-08", // Lat Pulldown
+    exerciseId: "ex-04-back", // Lat Pulldown
     exerciseOrder: 1,
     setsTarget: 3,
     repsTarget: "10-12",
@@ -40,7 +40,7 @@ export const DEFAULT_ROUTINE_EXERCISES = [
   {
     id: "rte-debug-02",
     routineId: "routine-debug-01",
-    exerciseId: "ex-09", // Seated Cable Row
+    exerciseId: "ex-05-back", // Seated Cable Row
     exerciseOrder: 2,
     setsTarget: 3,
     repsTarget: "10-12",
@@ -48,7 +48,7 @@ export const DEFAULT_ROUTINE_EXERCISES = [
   {
     id: "rte-debug-03",
     routineId: "routine-debug-02",
-    exerciseId: "ex-01", // Bench Press
+    exerciseId: "ex-01-chest", // Bench Press
     exerciseOrder: 1,
     setsTarget: 3,
     repsTarget: "8-10",
@@ -56,7 +56,7 @@ export const DEFAULT_ROUTINE_EXERCISES = [
   {
     id: "rte-debug-04",
     routineId: "routine-debug-02",
-    exerciseId: "ex-16", // Overhead Press
+    exerciseId: "ex-01-shoulders", // Overhead Press
     exerciseOrder: 2,
     setsTarget: 3,
     repsTarget: "8-10",
