@@ -4,12 +4,13 @@ import { AvatarWithPreview } from "../AvatarWithPreview";
 
 jest.mock("../Avatar", () => ({
   Avatar: ({ label }: { label: string }) => {
+    // eslint-disable-next-line
     const { Text } = require("react-native");
     return <Text>{label}</Text>;
   },
 }));
 
-const mockImagePreviewModal = jest.fn(() => null);
+const mockImagePreviewModal = jest.fn((_) => null);
 
 jest.mock("../ImagePreviewModal", () => ({
   ImagePreviewModal: (props: unknown) => mockImagePreviewModal(props),
@@ -41,12 +42,12 @@ describe("AvatarWithPreview", () => {
 
     fireEvent.press(trigger);
 
-    const lastCallProps = mockImagePreviewModal.mock.calls.at(-1)?.[0] as {
-      isOpen: boolean;
-      title?: string;
-    };
-
-    expect(lastCallProps?.title).toBe("Bench Press");
-    expect(lastCallProps?.isOpen).toBe(true);
+    expect(mockImagePreviewModal).toHaveBeenCalled();
+    expect(mockImagePreviewModal).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        title: "Bench Press",
+        isOpen: true,
+      }),
+    );
   });
 });
