@@ -96,8 +96,6 @@ export function PrepareWorkoutExercisePickerModal({
             </Pressable>
           </View>
 
-          <Text style={[styles.hint, { color: palette.textSecondary }]}>{hint}</Text>
-
           <ControlledSearchInput
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -255,11 +253,6 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: "center",
     justifyContent: "center",
-  },
-  hint: {
-    fontFamily: monoFont,
-    fontSize: 12,
-    letterSpacing: 0.2,
   },
   filterSection: {
     gap: 8,
