@@ -34,6 +34,7 @@ export const workouts = sqliteTable("workouts", {
   notes: text("notes"),
   gymId: text("gym_id").references(() => gyms.id, { onDelete: "set null" }),
   createdAt: text("created_at").notNull(),
+  deletedAt: text("deleted_at"),
 });
 
 export const routines = sqliteTable("routines", {

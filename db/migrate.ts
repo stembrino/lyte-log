@@ -136,6 +136,7 @@ export function runMigrations(database: SQLiteDatabase): void {
   ensureWorkoutsStatusColumn(database);
   removeLegacyI18nColumns(database);
   ensureExercisesImageUrlColumn(database);
+  ensureWorkoutsDeletedAtColumn(database);
 
   if (__DEV__) {
     runDevOnlyResetExercisesToBaseline(database, "migrate");
@@ -442,5 +443,20 @@ function ensureWorkoutsStatusColumn(database: SQLiteDatabase): void {
     );
   } catch {
     // Ignore backfill/index failures; app can still run without status support.
+  }
+}
+
+function ensureWorkoutsDeletedAtColumn(database: SQLiteDatabase): void {
+  try {
+    const rows = (database as any).getAllSync("PRAGMA table_info(workouts);") as {
+      name: string;
+    }[];
+    const columnNames = new Set(rows.map((row) => row.name));
+
+    if (!columnNames.has("deleted_at")) {
+      database.execSync("ALTER TABLE workouts ADD COLUMN deleted_at TEXT;");
+    }
+  } catch {
+    // Ignore backfill failures; app can still run without soft-delete support.
   }
 }

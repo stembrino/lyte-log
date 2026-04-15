@@ -313,3 +313,10 @@ export async function finishWorkout(workoutId: string): Promise<void> {
     })
     .where(eq(workouts.id, workoutId));
 }
+
+export async function softDeleteWorkout(workoutId: string): Promise<void> {
+  await db
+    .update(workouts)
+    .set({ deletedAt: new Date().toISOString() })
+    .where(eq(workouts.id, workoutId));
+}
