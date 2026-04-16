@@ -1,7 +1,8 @@
 import type { AppLocale } from "@/components/providers/i18n-provider";
 import { db } from "@/db/client";
-import { entityTranslations, exercises, muscleGroups } from "@/db/schema";
-import { and, asc, count, eq, inArray, like, notInArray, or } from "drizzle-orm";
+import { exercises, muscleGroups } from "@/db/schema";
+import { getEntityFieldTranslationsMap } from "@/features/translations/dao/queries/translationQueries";
+import { and, asc, count, inArray, like, notInArray, or } from "drizzle-orm";
 
 const PAGE_SIZE = 20;
 
@@ -83,26 +84,23 @@ export async function getExerciseLibraryPage({
       muscleGroup: exercises.muscleGroup,
       isCustom: exercises.isCustom,
       imageUrl: exercises.imageUrl,
-      translatedName: entityTranslations.value,
     })
     .from(exercises)
-    .leftJoin(
-      entityTranslations,
-      and(
-        eq(entityTranslations.entityId, exercises.id),
-        eq(entityTranslations.entityType, "exercise"),
-        eq(entityTranslations.field, "name"),
-        eq(entityTranslations.locale, locale),
-      ),
-    )
     .where(whereClause)
     .orderBy(asc(exercises.name))
     .limit(PAGE_SIZE)
     .offset(page * PAGE_SIZE);
 
+  const translationMap = await getEntityFieldTranslationsMap({
+    locale,
+    entityType: "exercise",
+    field: "name",
+    entityIds: rows.map((row) => row.id),
+  });
+
   return rows.map((row) => ({
     id: row.id,
-    name: row.translatedName ?? row.name,
+    name: translationMap.get(row.id) ?? row.name,
     muscleGroup: row.muscleGroup,
     isCustom: row.isCustom,
     imageUrl: row.imageUrl,

@@ -1,7 +1,11 @@
 import type { AppLocale } from "@/constants/translations";
 import { db } from "@/db/client";
-import { entityTranslations, routines as routinesTable } from "@/db/schema";
-import { and, count, eq, inArray, like, or } from "drizzle-orm";
+import { routines as routinesTable } from "@/db/schema";
+import {
+  buildTranslationKey,
+  getTranslationsMap,
+} from "@/features/translations/dao/queries/translationQueries";
+import { count, like, or } from "drizzle-orm";
 
 const ROUTINE_PAGE_SIZE = 20;
 
@@ -49,15 +53,6 @@ export type RoutineGroupItem = {
   routines: RoutineItem[];
 };
 
-// Translation helpers
-function buildTranslationKey(
-  entityType: "routine" | "routine_group" | "exercise",
-  entityId: string,
-  field: "name" | "detail" | "description",
-): string {
-  return `${entityType}:${entityId}:${field}`;
-}
-
 type TranslationMap = Map<string, string>;
 
 function pickTranslated(
@@ -92,37 +87,12 @@ async function loadTranslations(
     return new Map();
   }
 
-  const translationRows = await db
-    .select({
-      entityType: entityTranslations.entityType,
-      entityId: entityTranslations.entityId,
-      field: entityTranslations.field,
-      value: entityTranslations.value,
-    })
-    .from(entityTranslations)
-    .where(
-      and(
-        eq(entityTranslations.locale, locale),
-        inArray(entityTranslations.entityType, ["routine", "routine_group", "exercise"]),
-        inArray(entityTranslations.field, ["name", "detail", "description"]),
-        inArray(entityTranslations.entityId, [
-          ...uniqueGroupIds,
-          ...uniqueRoutineIds,
-          ...uniqueExerciseIds,
-        ]),
-      ),
-    );
-
-  return new Map(
-    translationRows.map((row) => [
-      buildTranslationKey(
-        row.entityType as "routine" | "routine_group" | "exercise",
-        row.entityId,
-        row.field as "name" | "detail" | "description",
-      ),
-      row.value,
-    ]),
-  );
+  return getTranslationsMap({
+    locale,
+    entityTypes: ["routine", "routine_group", "exercise"],
+    fields: ["name", "detail", "description"],
+    entityIds: [...uniqueGroupIds, ...uniqueRoutineIds, ...uniqueExerciseIds],
+  });
 }
 
 function mapRoutine(

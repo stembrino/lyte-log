@@ -1,5 +1,7 @@
 import { db } from "@/db/client";
+import type { AppLocale } from "@/constants/translations";
 import { workouts } from "@/db/schema";
+import { getEntityFieldTranslationsMap } from "@/features/translations/dao/queries/translationQueries";
 import { desc, inArray } from "drizzle-orm";
 
 export const WORKOUT_ACTIVE_STATUSES = ["in_progress", "paused"] as const;
@@ -38,7 +40,7 @@ export type ActiveWorkoutRow = {
 /**
  * Fast check for any active workout (in progress or paused), newest first.
  */
-export async function getActiveWorkout(): Promise<ActiveWorkoutRow | null> {
+export async function getActiveWorkout(locale?: AppLocale): Promise<ActiveWorkoutRow | null> {
   const row = await db.query.workouts.findFirst({
     where: inArray(workouts.status, WORKOUT_ACTIVE_STATUSES),
     orderBy: [desc(workouts.createdAt)],
@@ -71,6 +73,16 @@ export async function getActiveWorkout(): Promise<ActiveWorkoutRow | null> {
     return null;
   }
 
+  const exerciseIds = row.workoutExercises.map((workoutExercise) => workoutExercise.exercise.id);
+  const translationMap = locale
+    ? await getEntityFieldTranslationsMap({
+        locale,
+        entityType: "exercise",
+        field: "name",
+        entityIds: exerciseIds,
+      })
+    : new Map<string, string>();
+
   return {
     id: row.id,
     status: row.status as WorkoutStatus,
@@ -84,7 +96,7 @@ export async function getActiveWorkout(): Promise<ActiveWorkoutRow | null> {
       exerciseOrder: workoutExercise.exerciseOrder,
       exercise: {
         id: workoutExercise.exercise.id,
-        name: workoutExercise.exercise.name,
+        name: translationMap.get(workoutExercise.exercise.id) ?? workoutExercise.exercise.name,
         muscleGroup: workoutExercise.exercise.muscleGroup,
       },
       sets: workoutExercise.sets.map((set) => ({

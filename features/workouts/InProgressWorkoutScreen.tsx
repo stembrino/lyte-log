@@ -87,7 +87,7 @@ export function InProgressWorkoutScreen() {
         setLoading(true);
 
         try {
-          const current = await getActiveWorkout();
+          const current = await getActiveWorkout(locale);
 
           if (!active) {
             return;
@@ -106,7 +106,7 @@ export function InProgressWorkoutScreen() {
       return () => {
         active = false;
       };
-    }, []),
+    }, [locale]),
   );
 
   const formatWeight = (value: number) => {

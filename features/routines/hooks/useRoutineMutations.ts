@@ -1,14 +1,18 @@
 import type { AppLocale } from "@/constants/translations";
 import { db } from "@/db/client";
 import {
-  entityTranslations,
   routineExercises,
   routineGroupRoutines,
   routineGroups,
   routines,
   routineTagLinks,
 } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import {
+  deleteEntityTranslationsByEntity,
+  syncOptionalEntityTranslation,
+  upsertEntityTranslation,
+} from "@/features/translations/dao/mutations/translationMutations";
+import { eq } from "drizzle-orm";
 import { useCallback } from "react";
 
 export type RoutineSubmitPayload = {
@@ -32,85 +36,12 @@ export type GroupSubmitPayload = {
   routineIds: string[];
 };
 
-type DbLike = Pick<typeof db, "insert" | "update" | "delete" | "select">;
-
 function normalizeSearchText(value: string): string {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-}
-
-async function upsertEntityTranslation(
-  client: DbLike,
-  args: {
-    entityType: "routine" | "routine_group";
-    entityId: string;
-    field: "name" | "detail" | "description";
-    locale: AppLocale;
-    value: string;
-    now: string;
-  },
-) {
-  await client
-    .insert(entityTranslations)
-    .values({
-      entityType: args.entityType,
-      entityId: args.entityId,
-      field: args.field,
-      locale: args.locale,
-      value: args.value,
-      createdAt: args.now,
-      updatedAt: args.now,
-    })
-    .onConflictDoUpdate({
-      target: [
-        entityTranslations.entityType,
-        entityTranslations.entityId,
-        entityTranslations.field,
-        entityTranslations.locale,
-      ],
-      set: {
-        value: args.value,
-        updatedAt: args.now,
-      },
-    });
-}
-
-async function syncOptionalTranslation(
-  client: DbLike,
-  args: {
-    entityType: "routine" | "routine_group";
-    entityId: string;
-    field: "detail" | "description";
-    locale: AppLocale;
-    value: string | null;
-    now: string;
-  },
-) {
-  if (args.value) {
-    await upsertEntityTranslation(client, {
-      entityType: args.entityType,
-      entityId: args.entityId,
-      field: args.field,
-      locale: args.locale,
-      value: args.value,
-      now: args.now,
-    });
-    return;
-  }
-
-  await client
-    .delete(entityTranslations)
-    .where(
-      and(
-        eq(entityTranslations.entityType, args.entityType),
-        eq(entityTranslations.entityId, args.entityId),
-        eq(entityTranslations.field, args.field),
-        eq(entityTranslations.locale, args.locale),
-      ),
-    );
 }
 
 export function useRoutineMutations(locale: AppLocale, reload: () => Promise<void>) {
@@ -182,7 +113,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
           now: createdAt,
         });
 
-        await syncOptionalTranslation(tx, {
+        await syncOptionalEntityTranslation(tx, {
           entityType: "routine",
           entityId: routineId,
           field: "detail",
@@ -191,7 +122,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
           now: createdAt,
         });
 
-        await syncOptionalTranslation(tx, {
+        await syncOptionalEntityTranslation(tx, {
           entityType: "routine",
           entityId: routineId,
           field: "description",
@@ -276,7 +207,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
           now,
         });
 
-        await syncOptionalTranslation(tx, {
+        await syncOptionalEntityTranslation(tx, {
           entityType: "routine",
           entityId: routineId,
           field: "detail",
@@ -285,7 +216,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
           now,
         });
 
-        await syncOptionalTranslation(tx, {
+        await syncOptionalEntityTranslation(tx, {
           entityType: "routine",
           entityId: routineId,
           field: "description",
@@ -330,7 +261,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
           now: createdAt,
         });
 
-        await syncOptionalTranslation(tx, {
+        await syncOptionalEntityTranslation(tx, {
           entityType: "routine_group",
           entityId: groupId,
           field: "detail",
@@ -339,7 +270,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
           now: createdAt,
         });
 
-        await syncOptionalTranslation(tx, {
+        await syncOptionalEntityTranslation(tx, {
           entityType: "routine_group",
           entityId: groupId,
           field: "description",
@@ -408,7 +339,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
           now,
         });
 
-        await syncOptionalTranslation(tx, {
+        await syncOptionalEntityTranslation(tx, {
           entityType: "routine_group",
           entityId: groupId,
           field: "detail",
@@ -417,7 +348,7 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
           now,
         });
 
-        await syncOptionalTranslation(tx, {
+        await syncOptionalEntityTranslation(tx, {
           entityType: "routine_group",
           entityId: groupId,
           field: "description",
@@ -438,14 +369,10 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
         await tx.delete(routineGroupRoutines).where(eq(routineGroupRoutines.routineId, routineId));
         await tx.delete(routineTagLinks).where(eq(routineTagLinks.routineId, routineId));
         await tx.delete(routineExercises).where(eq(routineExercises.routineId, routineId));
-        await tx
-          .delete(entityTranslations)
-          .where(
-            and(
-              eq(entityTranslations.entityType, "routine"),
-              eq(entityTranslations.entityId, routineId),
-            ),
-          );
+        await deleteEntityTranslationsByEntity(tx, {
+          entityType: "routine",
+          entityId: routineId,
+        });
         await tx.delete(routines).where(eq(routines.id, routineId));
       });
 
@@ -460,14 +387,10 @@ export function useRoutineMutations(locale: AppLocale, reload: () => Promise<voi
         await tx
           .delete(routineGroupRoutines)
           .where(eq(routineGroupRoutines.routineGroupId, groupId));
-        await tx
-          .delete(entityTranslations)
-          .where(
-            and(
-              eq(entityTranslations.entityType, "routine_group"),
-              eq(entityTranslations.entityId, groupId),
-            ),
-          );
+        await deleteEntityTranslationsByEntity(tx, {
+          entityType: "routine_group",
+          entityId: groupId,
+        });
         await tx.delete(routineGroups).where(eq(routineGroups.id, groupId));
       });
 

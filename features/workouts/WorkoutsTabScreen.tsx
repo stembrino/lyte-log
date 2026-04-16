@@ -18,7 +18,7 @@ export function WorkoutsTabScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ skipActiveRedirect?: string | string[] }>();
   const colorScheme = useColorScheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const palette = getRetroPalette(colorScheme);
   const [isSelectRoutineModalOpen, setIsSelectRoutineModalOpen] = useState(false);
   const [checkingActiveWorkout, setCheckingActiveWorkout] = useState(true);
@@ -41,7 +41,7 @@ export function WorkoutsTabScreen() {
         setCheckingActiveWorkout(true);
 
         try {
-          const current = await getActiveWorkout();
+          const current = await getActiveWorkout(locale);
 
           if (!active) {
             return;
@@ -70,7 +70,7 @@ export function WorkoutsTabScreen() {
       return () => {
         active = false;
       };
-    }, [router, skipActiveRedirect]),
+    }, [locale, router, skipActiveRedirect]),
   );
 
   const handleStartWorkoutPress = () => {
