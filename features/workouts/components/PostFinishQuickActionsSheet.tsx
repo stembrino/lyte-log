@@ -19,8 +19,11 @@ type PostFinishQuickActionsSheetProps = {
   isOpen: boolean;
   showSaveAsRoutine: boolean;
   savingAsRoutine: boolean;
+  currentGymName: string | null;
+  updatingGym: boolean;
   defaultRoutineName: string;
   onClose: () => void;
+  onManageGym: () => void;
   onSaveAsRoutine: (name: string) => void;
   onCopyWorkoutAsText: () => void;
 };
@@ -29,8 +32,11 @@ export function PostFinishQuickActionsSheet({
   isOpen,
   showSaveAsRoutine,
   savingAsRoutine,
+  currentGymName,
+  updatingGym,
   defaultRoutineName,
   onClose,
+  onManageGym,
   onSaveAsRoutine,
   onCopyWorkoutAsText,
 }: PostFinishQuickActionsSheetProps) {
@@ -99,6 +105,22 @@ export function PostFinishQuickActionsSheet({
             >
               <Text style={[styles.actionButtonText, { color: palette.textPrimary }]}>
                 {savingAsRoutine ? t("routines.loading") : t("workouts.postFinishSaveAsRoutineCta")}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {!isNamingRoutine ? (
+            <TouchableOpacity
+              style={[styles.actionButton, { borderColor: palette.border }]}
+              onPress={onManageGym}
+              disabled={updatingGym}
+            >
+              <Text style={[styles.actionButtonText, { color: palette.textPrimary }]}>
+                {updatingGym
+                  ? t("routines.loading")
+                  : currentGymName
+                    ? `${t("workouts.gymFieldLabel")}: ${currentGymName}`
+                    : t("workouts.postFinishSelectGymCta")}
               </Text>
             </TouchableOpacity>
           ) : null}

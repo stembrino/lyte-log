@@ -17,15 +17,19 @@ import {
   removeWorkoutExercise,
   removeWorkoutSet,
   saveWorkoutAsRoutine,
+  updateWorkoutGym,
   updateWorkoutSet,
   updateWorkoutSetCompleted,
 } from "@/features/workouts/dao/mutations/workoutMutations";
 import { RoundAddButton } from "@/components/RoundAddButton";
+import { SelectGymModal } from "@/features/workouts/components/SelectGymModal";
 import { WorkoutStatusDot } from "@/features/workouts/components/WorkoutStatusDot";
 import { PrepareWorkoutExercisePickerModal } from "@/features/workouts/components/prepare/PrepareWorkoutExercisePickerModal";
+import { createGym } from "@/features/workouts/dao/queries/gymQueries";
+import { useGymPicker } from "@/features/workouts/hooks/useGymPicker";
 import { PostFinishQuickActionsSheet } from "./components/PostFinishQuickActionsSheet";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Keyboard,
   Share,
@@ -57,8 +61,22 @@ export function InProgressWorkoutScreen() {
   const [deletingExerciseId, setDeletingExerciseId] = useState<string | null>(null);
   const [deletingSetId, setDeletingSetId] = useState<string | null>(null);
   const [isPostFinishPanelOpen, setIsPostFinishPanelOpen] = useState(false);
+  const [isPostFinishGymModalOpen, setIsPostFinishGymModalOpen] = useState(false);
   const [savingAsRoutine, setSavingAsRoutine] = useState(false);
+  const [updatingGym, setUpdatingGym] = useState(false);
   const { showAlert, showConfirm, alertElement } = useGlobalAlert();
+  const {
+    gyms,
+    selectedGym,
+    selectedGymId,
+    setSelectedGymId,
+    loading: loadingGyms,
+    reload: reloadGyms,
+  } = useGymPicker({ autoSelectDefault: false });
+
+  useEffect(() => {
+    setSelectedGymId(workout?.gymId ?? null);
+  }, [setSelectedGymId, workout?.gymId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -140,6 +158,7 @@ export function InProgressWorkoutScreen() {
 
   const handleClosePostFinishPanel = () => {
     setIsPostFinishPanelOpen(false);
+    setIsPostFinishGymModalOpen(false);
     handleMinimizeWorkout();
   };
 
@@ -197,6 +216,72 @@ export function InProgressWorkoutScreen() {
         message: t("workouts.copyWorkoutTextErrorBody"),
         buttonLabel: t("workouts.postFinishCloseCta"),
       });
+    }
+  };
+
+  const handleAssignWorkoutGym = async (
+    gymId: string | null,
+    gymOverride?: { id: string; name: string } | null,
+  ) => {
+    if (!workout || updatingGym) {
+      return;
+    }
+
+    setUpdatingGym(true);
+
+    try {
+      await updateWorkoutGym({
+        workoutId: workout.id,
+        gymId,
+      });
+
+      const nextGym =
+        gymId === null
+          ? null
+          : (gymOverride ??
+            gyms.find((gym) => gym.id === gymId) ??
+            (selectedGymId === gymId && selectedGym
+              ? { id: selectedGym.id, name: selectedGym.name }
+              : null));
+
+      setSelectedGymId(gymId);
+      setWorkout((prev) =>
+        prev
+          ? {
+              ...prev,
+              gymId,
+              gym: nextGym,
+            }
+          : prev,
+      );
+      setIsPostFinishGymModalOpen(false);
+    } catch {
+      showAlert({
+        title: t("workouts.postFinishGymUpdateErrorTitle"),
+        message: t("workouts.postFinishGymUpdateErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
+    } finally {
+      setUpdatingGym(false);
+    }
+  };
+
+  const handleCreateGymForCompletedWorkout = async (name: string) => {
+    try {
+      const created = await createGym(name);
+      await reloadGyms();
+      await handleAssignWorkoutGym(created.id, {
+        id: created.id,
+        name: created.name,
+      });
+      return true;
+    } catch {
+      showAlert({
+        title: t("workouts.postFinishGymCreateErrorTitle"),
+        message: t("workouts.postFinishGymCreateErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
+      return false;
     }
   };
 
@@ -917,15 +1002,35 @@ export function InProgressWorkoutScreen() {
       <PostFinishQuickActionsSheet
         isOpen={isPostFinishPanelOpen}
         savingAsRoutine={savingAsRoutine}
+        currentGymName={workout?.gym?.name ?? null}
         showSaveAsRoutine={shouldSuggestSaveAsRoutine}
+        updatingGym={updatingGym}
         defaultRoutineName={buildDefaultRoutineName()}
         onClose={handleClosePostFinishPanel}
+        onManageGym={() => setIsPostFinishGymModalOpen(true)}
         onSaveAsRoutine={(name) => {
           void handleSaveAsRoutine(name);
         }}
         onCopyWorkoutAsText={() => {
           void handleCopyWorkoutAsText();
         }}
+      />
+
+      <SelectGymModal
+        isOpen={isPostFinishGymModalOpen}
+        onClose={() => setIsPostFinishGymModalOpen(false)}
+        gyms={gyms}
+        selectedGymId={selectedGymId}
+        loading={loadingGyms || updatingGym}
+        title={t("workouts.selectGymModalTitle")}
+        noneLabel={t("workouts.gymNoneOption")}
+        addPlaceholder={t("workouts.gymAddPlaceholder")}
+        addButtonLabel={t("workouts.gymAddButton")}
+        emptyLabel={t("workouts.gymEmptyState")}
+        onSelectGym={(gymId) => {
+          void handleAssignWorkoutGym(gymId);
+        }}
+        onAddGym={handleCreateGymForCompletedWorkout}
       />
 
       {alertElement}

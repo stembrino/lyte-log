@@ -304,6 +304,18 @@ export async function updateWorkoutStatus(args: {
     .where(eq(workouts.id, args.workoutId));
 }
 
+export async function updateWorkoutGym(args: {
+  workoutId: string;
+  gymId: string | null;
+}): Promise<void> {
+  await db
+    .update(workouts)
+    .set({
+      gymId: args.gymId,
+    })
+    .where(eq(workouts.id, args.workoutId));
+}
+
 export async function finishWorkout(workoutId: string): Promise<void> {
   const [workout] = await db
     .select({

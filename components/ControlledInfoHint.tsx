@@ -1,4 +1,6 @@
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { monoFont } from "@/constants/retroTheme";
+import type { ComponentProps } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 type ControlledInfoHintProps = {
@@ -11,6 +13,7 @@ type ControlledInfoHintProps = {
   cardBackgroundColor: string;
   borderColor: string;
   textColor: string;
+  iconName?: ComponentProps<typeof FontAwesome>["name"];
 };
 
 export function ControlledInfoHint({
@@ -23,6 +26,7 @@ export function ControlledInfoHint({
   cardBackgroundColor,
   borderColor,
   textColor,
+  iconName,
 }: ControlledInfoHintProps) {
   return (
     <>
@@ -33,7 +37,11 @@ export function ControlledInfoHint({
         hitSlop={8}
         style={[styles.trigger, { borderColor: tintColor, backgroundColor: tintColor }]}
       >
-        <Text style={[styles.triggerText, { color: cardBackgroundColor }]}>?</Text>
+        {iconName ? (
+          <FontAwesome name={iconName} size={11} color={cardBackgroundColor} />
+        ) : (
+          <Text style={[styles.triggerText, { color: cardBackgroundColor }]}>?</Text>
+        )}
       </Pressable>
 
       <Modal
@@ -68,16 +76,16 @@ export function ControlledInfoHint({
 
 const styles = StyleSheet.create({
   trigger: {
-    width: 22,
-    height: 22,
+    width: 18,
+    height: 18,
     borderWidth: 1,
-    borderRadius: 11,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },
   triggerText: {
     fontFamily: monoFont,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "700",
     textTransform: "uppercase",
   },
@@ -93,11 +101,11 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    maxWidth: 360,
+    maxWidth: 288,
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 16,
-    gap: 12,
+    borderRadius: 5,
+    padding: 12,
+    gap: 8,
     elevation: 6,
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -105,19 +113,19 @@ const styles = StyleSheet.create({
   },
   message: {
     fontFamily: monoFont,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 16,
   },
   dismissButton: {
     alignSelf: "flex-end",
     borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderRadius: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
   },
   dismissText: {
     fontFamily: monoFont,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.5,

@@ -1,6 +1,10 @@
 import { createGym, getGyms, type GymItem } from "@/features/workouts/dao/queries/gymQueries";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+type UseGymPickerOptions = {
+  autoSelectDefault?: boolean;
+};
+
 type UseGymPickerResult = {
   gyms: GymItem[];
   selectedGymId: string | null;
@@ -20,11 +24,12 @@ function pickDefaultGymId(items: GymItem[]): string | null {
   return defaultGym?.id ?? items[0]?.id ?? null;
 }
 
-export function useGymPicker(): UseGymPickerResult {
+export function useGymPicker(options?: UseGymPickerOptions): UseGymPickerResult {
   const [gyms, setGyms] = useState<GymItem[]>([]);
   const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const hasAutoSelectedRef = useRef(false);
+  const autoSelectDefault = options?.autoSelectDefault ?? true;
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -33,7 +38,7 @@ export function useGymPicker(): UseGymPickerResult {
       const rows = await getGyms();
       setGyms(rows);
 
-      if (!hasAutoSelectedRef.current) {
+      if (autoSelectDefault && !hasAutoSelectedRef.current) {
         const defaultGymId = pickDefaultGymId(rows);
         setSelectedGymId(defaultGymId);
         hasAutoSelectedRef.current = true;
@@ -41,7 +46,7 @@ export function useGymPicker(): UseGymPickerResult {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [autoSelectDefault]);
 
   useEffect(() => {
     void reload();

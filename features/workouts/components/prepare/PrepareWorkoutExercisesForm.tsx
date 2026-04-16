@@ -1,7 +1,6 @@
 import { AvatarWithPreview } from "@/components/AvatarWithPreview";
 import { RoundAddButton } from "@/components/RoundAddButton";
 import { monoFont } from "@/constants/retroTheme";
-import type { AppLocale } from "@/constants/translations";
 import { resolveExerciseImageSource } from "@/features/exercises/utils/exerciseImageSource";
 import DraggableFlatList, {
   ScaleDecorator,
@@ -21,8 +20,6 @@ export type EditableWorkoutExercise = {
 
 type PrepareWorkoutExercisesFormProps = {
   items: EditableWorkoutExercise[];
-  locale: AppLocale;
-  reorderHint: string;
   addButtonAccessibilityLabel: string;
   removeButtonLabel: string;
   palette: {
@@ -41,8 +38,6 @@ type PrepareWorkoutExercisesFormProps = {
 
 export function PrepareWorkoutExercisesForm({
   items,
-  locale,
-  reorderHint,
   addButtonAccessibilityLabel,
   removeButtonLabel,
   palette,
@@ -101,12 +96,6 @@ export function PrepareWorkoutExercisesForm({
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.hint, { color: palette.textSecondary }]}>
-        {reorderHint}
-        {locale === "pt-BR"
-          ? " (segure qualquer linha e arraste)"
-          : " (long press any row and drag)"}
-      </Text>
       <DraggableFlatList
         data={items}
         keyExtractor={(item) => item.id}
@@ -135,11 +124,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     gap: 8,
-  },
-  hint: {
-    fontFamily: monoFont,
-    fontSize: 11,
-    letterSpacing: 0.2,
   },
   listContainer: {
     flex: 1,

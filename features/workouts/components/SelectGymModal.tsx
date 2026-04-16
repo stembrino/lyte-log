@@ -26,7 +26,7 @@ type SelectGymModalProps = {
   addButtonLabel: string;
   emptyLabel: string;
   onSelectGym: (gymId: string | null) => void;
-  onAddGym: (name: string) => Promise<void>;
+  onAddGym: (name: string) => Promise<boolean | void>;
 };
 
 export function SelectGymModal({
@@ -52,8 +52,11 @@ export function SelectGymModal({
       return;
     }
 
-    await onAddGym(trimmed);
-    setDraftGymName("");
+    const shouldClear = await onAddGym(trimmed);
+
+    if (shouldClear !== false) {
+      setDraftGymName("");
+    }
   };
 
   return (

@@ -58,7 +58,9 @@ export function SelectRoutineModal({
       <View style={[styles.overlay, { backgroundColor: "rgba(0, 0, 0, 0.5)" }]}>
         <View style={[styles.container, { backgroundColor: palette.card }]}>
           <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: palette.textPrimary }]}>Start Workout</Text>
+            <Text style={[styles.headerTitle, { color: palette.textPrimary }]}>
+              {t("workouts.startWorkoutShortCta")}
+            </Text>
             <Pressable onPress={onClose} hitSlop={8}>
               <Text style={[styles.closeButton, { color: palette.textPrimary }]}>✕</Text>
             </Pressable>
@@ -68,7 +70,7 @@ export function SelectRoutineModal({
             <ControlledSearchInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder={t("routines.searchExercisePlaceholder")}
+              placeholder={t("workouts.startWorkoutSearchPlaceholder")}
               variant="compact"
             />
 

@@ -1,5 +1,6 @@
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Chip } from "@/components/Chip";
+import { ControlledInfoHint } from "@/components/ControlledInfoHint";
 import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -29,6 +30,8 @@ export function PrepareWorkoutScreen() {
   const routineIdParam = params.routineId;
   const routineId = Array.isArray(routineIdParam) ? routineIdParam[0] : routineIdParam;
   const [isGymModalOpen, setIsGymModalOpen] = useState(false);
+  const [isGymInfoOpen, setIsGymInfoOpen] = useState(false);
+  const [isExercisesInfoOpen, setIsExercisesInfoOpen] = useState(false);
 
   const { routine, loading } = useSelectedRoutine(routineId ?? null, locale);
   const {
@@ -161,19 +164,35 @@ export function PrepareWorkoutScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: palette.page }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: palette.page, paddingTop: Math.max(16, insets.top + 8) },
+      ]}
+    >
       <Text style={[styles.title, { color: palette.textPrimary }]}>
         {t("workouts.prepareWorkoutTitle")}
       </Text>
       <View
         style={[styles.gymSection, { borderColor: palette.border, backgroundColor: palette.card }]}
       >
-        <Text style={[styles.gymLabel, { color: palette.textPrimary }]}>
-          {t("workouts.gymFieldLabel")}
-        </Text>
-        <Text style={[styles.gymHint, { color: palette.textSecondary }]}>
-          {t("workouts.gymFieldHint")}
-        </Text>
+        <View style={styles.gymLabelRow}>
+          <Text style={[styles.gymLabel, { color: palette.textPrimary }]}>
+            {t("workouts.gymFieldLabel")}
+          </Text>
+          <ControlledInfoHint
+            visible={isGymInfoOpen}
+            onVisibleChange={setIsGymInfoOpen}
+            message={t("workouts.gymFieldHint")}
+            dismissLabel={t("routines.infoHintDismiss")}
+            triggerAccessibilityLabel={t("workouts.gymFieldInfoButtonLabel")}
+            tintColor={palette.accent}
+            cardBackgroundColor={palette.card}
+            borderColor={palette.border}
+            textColor={palette.textPrimary}
+            iconName="info"
+          />
+        </View>
 
         <View style={styles.gymSelectionRow}>
           <Chip
@@ -212,9 +231,23 @@ export function PrepareWorkoutScreen() {
             </Text>
           ) : null}
 
-          <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
-            {t("routines.exercisesTitle")}
-          </Text>
+          <View style={styles.sectionTitleRow}>
+            <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
+              {t("routines.exercisesTitle")}
+            </Text>
+            <ControlledInfoHint
+              visible={isExercisesInfoOpen}
+              onVisibleChange={setIsExercisesInfoOpen}
+              message={t("workouts.prepareWorkoutExercisesInfo")}
+              dismissLabel={t("routines.infoHintDismiss")}
+              triggerAccessibilityLabel={t("workouts.prepareWorkoutExercisesInfoButtonLabel")}
+              tintColor={palette.accent}
+              cardBackgroundColor={palette.card}
+              borderColor={palette.border}
+              textColor={palette.textPrimary}
+              iconName="info"
+            />
+          </View>
 
           {editableExercises.length === 0 ? (
             <Text style={[styles.statusText, { color: palette.textSecondary }]}>
@@ -224,8 +257,6 @@ export function PrepareWorkoutScreen() {
 
           <PrepareWorkoutExercisesForm
             items={editableExercises}
-            locale={locale}
-            reorderHint={t("workouts.prepareWorkoutReorderHint")}
             addButtonAccessibilityLabel={t("workouts.addExerciseAccessibilityLabel")}
             removeButtonLabel={t("routines.removeExerciseButton")}
             onReorder={handleReorderExercises}
@@ -320,10 +351,10 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
-  gymHint: {
-    fontFamily: monoFont,
-    fontSize: 11,
-    letterSpacing: 0.2,
+  gymLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   gymSelectionRow: {
     flexDirection: "row",
@@ -372,12 +403,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   sectionTitle: {
-    marginTop: 6,
     fontFamily: monoFont,
     fontSize: 12,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.6,
+  },
+  sectionTitleRow: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   statusText: {
     fontFamily: monoFont,
