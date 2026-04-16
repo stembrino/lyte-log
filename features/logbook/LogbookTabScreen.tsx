@@ -1,4 +1,5 @@
 import { Chip } from "@/components/Chip";
+import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
@@ -10,7 +11,6 @@ import { softDeleteWorkout } from "@/features/workouts/dao/mutations/workoutMuta
 import { useCallback, useMemo } from "react";
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -28,6 +28,7 @@ type GroupedWorkouts = {
 export function LogbookTabScreen() {
   const palette = useRetroPalette();
   const { t, locale } = useI18n();
+  const { showConfirm, alertElement } = useGlobalAlert();
   const {
     items,
     gymGroups,
@@ -42,18 +43,18 @@ export function LogbookTabScreen() {
 
   const handleDeletePress = useCallback(
     (workoutId: string) => {
-      Alert.alert(t("performance.logbookDeleteTitle"), t("performance.logbookDeleteBody"), [
-        { text: t("exercises.cancel"), style: "cancel" },
-        {
-          text: t("performance.logbookDeleteConfirm"),
-          style: "destructive",
-          onPress: () => {
-            void softDeleteWorkout(workoutId).then(() => reload());
-          },
+      showConfirm({
+        title: t("performance.logbookDeleteTitle"),
+        message: t("performance.logbookDeleteBody"),
+        cancelLabel: t("exercises.cancel"),
+        confirmLabel: t("performance.logbookDeleteConfirm"),
+        confirmVariant: "destructive",
+        onConfirm: () => {
+          void softDeleteWorkout(workoutId).then(() => reload());
         },
-      ]);
+      });
     },
-    [t, reload],
+    [t, reload, showConfirm],
   );
 
   const totalCount = useMemo(() => {
@@ -187,6 +188,8 @@ export function LogbookTabScreen() {
           </TouchableOpacity>
         ) : null}
       </ScrollView>
+
+      {alertElement}
     </View>
   );
 }

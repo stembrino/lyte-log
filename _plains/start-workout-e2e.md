@@ -13,6 +13,7 @@ This flow starts from the `Workouts` tab and covers:
 - Prepare workout decisions
 - In-progress workout decisions
 - Finish or cancel workout
+- Post-workout quick actions panel
 
 It reflects the current implemented app behavior.
 
@@ -75,7 +76,28 @@ flowchart TD
     AB -->|Finish| H
     AB -->|Cancel| I
 
-    H --> J
+    H --> AH[Open post-workout quick actions panel]
+    AH --> AI{Workout started without routine?}
+    AI -->|Yes| AJ[Show Save as Routine button]
+    AI -->|No| AK[Hide Save as Routine button]
+
+    AJ --> AL{User taps Save as Routine?}
+    AL -->|Yes| AM[Expand inline name input pre-filled with default name]
+    AL -->|No| AO
+
+    AM --> AM1{User action on name input}
+    AM1 -->|Confirm name| AM2[Persist routine and show success feedback]
+    AM1 -->|Cancel| AO
+
+    AM2 --> AO
+    AK --> AO
+
+    AO{User action on panel}
+    AO -->|Copy/Share as text| AP[Open native share sheet with workout summary]
+    AO -->|Close panel| AQ[Dismiss panel and return to Workouts tab]
+
+    AP --> AQ
+    AQ --> J
     I --> J
 ```
 
@@ -156,6 +178,23 @@ flowchart TD
 - `Cancel Workout` marks the workout as canceled.
 - Both paths return the user to the Workouts area.
 
+### 10. Post-workout quick actions panel
+
+- After `Finish Workout`, the keyboard is dismissed and a bottom sheet Modal opens.
+- The panel provides quick actions tied to the completed workout.
+- If the workout was started without a routine:
+  - show `Save as Routine` button
+  - tapping it expands an inline name input pre-filled with a default name (e.g. `Treino 15/04/2026`)
+  - the input has a clear (×) icon inside it
+  - the user can confirm with `SALVAR` or go back with `VOLTAR`
+  - on confirm, the routine is persisted with exercises, sets, and average reps as targets
+  - success or error feedback is shown via Alert
+- Always provides `Copy/Share workout as text`:
+  - builds a readable text version (gym, exercises, sets, reps, weight)
+  - opens the native share sheet
+- `FECHAR` dismisses the panel and returns the user to the Workouts area.
+- The panel uses a transparent `Modal` with `KeyboardAvoidingView` so it rises correctly with the keyboard.
+
 ## Current UX Intent
 
 The current flow is optimized for fast workout start:
@@ -168,5 +207,9 @@ The current flow is optimized for fast workout start:
 ## Notes
 
 - The current flow does not require routine creation before starting a workout.
-- The post-workout flow for saving a completed workout as a routine is not included here.
-- This document is intended to describe the implemented behavior, not future ideas.
+- A post-workout quick actions panel is shown after finishing a workout (bottom sheet via transparent Modal).
+- This document describes the current implemented behavior.
+
+## Pending / Future Extensions
+
+- Time adjustment action in the post-workout panel (not yet implemented).

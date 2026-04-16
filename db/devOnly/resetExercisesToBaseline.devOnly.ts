@@ -81,7 +81,7 @@ export function runDevOnlyResetExercisesToBaseline(database: SQLiteDatabase, sou
     }).join("\n");
 
     database.execSync(`
-      BEGIN TRANSACTION;
+      SAVEPOINT reset_baseline;
       DELETE FROM routine_exercises
       WHERE exercise_id NOT IN (${baselineIdsSql});
       DELETE FROM workout_exercises
@@ -92,7 +92,7 @@ export function runDevOnlyResetExercisesToBaseline(database: SQLiteDatabase, sou
       DELETE FROM exercises WHERE id NOT IN (${baselineIdsSql});
       ${seedSyncSql}
       ${translationSyncSql}
-      COMMIT;
+      RELEASE reset_baseline;
     `);
 
     const afterCount = getExercisesCount(database);
@@ -104,7 +104,7 @@ export function runDevOnlyResetExercisesToBaseline(database: SQLiteDatabase, sou
     console.error(`DEV [${source}] reset failed.`, error);
 
     try {
-      database.execSync("ROLLBACK;");
+      database.execSync("ROLLBACK TO SAVEPOINT reset_baseline; RELEASE reset_baseline;");
     } catch {
       // no-op
     }

@@ -1,5 +1,6 @@
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useColorScheme } from "@/components/hooks/useColorScheme";
+import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { AvatarWithPreview } from "@/components/AvatarWithPreview";
 import { monoFont } from "@/constants/retroTheme";
@@ -15,16 +16,19 @@ import {
   finishWorkout,
   removeWorkoutExercise,
   removeWorkoutSet,
+  saveWorkoutAsRoutine,
   updateWorkoutSet,
   updateWorkoutSetCompleted,
 } from "@/features/workouts/dao/mutations/workoutMutations";
 import { RoundAddButton } from "@/components/RoundAddButton";
 import { WorkoutStatusDot } from "@/features/workouts/components/WorkoutStatusDot";
 import { PrepareWorkoutExercisePickerModal } from "@/features/workouts/components/prepare/PrepareWorkoutExercisePickerModal";
+import { PostFinishQuickActionsSheet } from "./components/PostFinishQuickActionsSheet";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-  Alert,
+  Keyboard,
+  Share,
   ScrollView,
   StyleSheet,
   Text,
@@ -52,6 +56,9 @@ export function InProgressWorkoutScreen() {
   const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
   const [deletingExerciseId, setDeletingExerciseId] = useState<string | null>(null);
   const [deletingSetId, setDeletingSetId] = useState<string | null>(null);
+  const [isPostFinishPanelOpen, setIsPostFinishPanelOpen] = useState(false);
+  const [savingAsRoutine, setSavingAsRoutine] = useState(false);
+  const { showAlert, showConfirm, alertElement } = useGlobalAlert();
 
   useFocusEffect(
     useCallback(() => {
@@ -89,6 +96,108 @@ export function InProgressWorkoutScreen() {
     }
 
     return value.toFixed(1);
+  };
+
+  const extractSourceRoutineId = (notes: string | null | undefined): string | null => {
+    if (!notes) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(notes) as { sourceRoutineId?: string | null };
+      return parsed.sourceRoutineId ?? null;
+    } catch {
+      return null;
+    }
+  };
+
+  const buildWorkoutShareText = (activeWorkout: ActiveWorkoutRow) => {
+    const dateText = new Date(activeWorkout.createdAt).toLocaleDateString(locale);
+    const header = [`${t("workouts.inProgressTitle")} - ${dateText}`];
+
+    if (activeWorkout.gym?.name) {
+      header.push(`${t("workouts.gymFieldLabel")}: ${activeWorkout.gym.name}`);
+    }
+
+    const lines = activeWorkout.exercises.flatMap((exercise, exerciseIndex) => {
+      const exerciseTitle = `${exerciseIndex + 1}. ${exercise.exercise.name}`;
+
+      if (exercise.sets.length === 0) {
+        return [exerciseTitle, `  - ${t("workouts.inProgressNoSets")}`];
+      }
+
+      const setLines = exercise.sets.map((set, setIndex) => {
+        const repsText = set.reps > 0 ? String(set.reps) : "-";
+        const weightText = set.weight > 0 ? formatWeight(set.weight) : "-";
+        return `  - ${t("workouts.setLabel")} ${setIndex + 1}: ${repsText} ${t("workouts.repsUnitSuffix")} x ${weightText} ${t("workouts.weightUnit")}`;
+      });
+
+      return [exerciseTitle, ...setLines];
+    });
+
+    return [...header, "", ...lines].join("\n");
+  };
+
+  const handleClosePostFinishPanel = () => {
+    setIsPostFinishPanelOpen(false);
+    handleMinimizeWorkout();
+  };
+
+  const buildDefaultRoutineName = () => {
+    if (!workout) return "";
+    const createdAtLabel = new Date(workout.createdAt).toLocaleDateString(locale);
+    return `${t("workouts.postFinishDefaultRoutineNamePrefix")} ${createdAtLabel}`;
+  };
+
+  const handleSaveAsRoutine = async (routineName: string) => {
+    if (!workout || savingAsRoutine) {
+      return;
+    }
+
+    setSavingAsRoutine(true);
+
+    try {
+      await saveWorkoutAsRoutine({
+        locale,
+        routineName: routineName,
+        exercises: workout.exercises.map((exercise) => ({
+          exerciseId: exercise.exercise.id,
+          exerciseOrder: exercise.exerciseOrder,
+          sets: exercise.sets.map((set) => ({ reps: set.reps })),
+        })),
+      });
+
+      showAlert({
+        title: t("workouts.saveAsRoutineSuccessTitle"),
+        message: t("workouts.saveAsRoutineSuccessBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
+    } catch {
+      showAlert({
+        title: t("workouts.saveAsRoutineErrorTitle"),
+        message: t("workouts.saveAsRoutineErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
+    } finally {
+      setSavingAsRoutine(false);
+    }
+  };
+
+  const handleCopyWorkoutAsText = async () => {
+    if (!workout) {
+      return;
+    }
+
+    try {
+      const message = buildWorkoutShareText(workout);
+      await Share.share({ message });
+    } catch {
+      showAlert({
+        title: t("workouts.copyWorkoutTextErrorTitle"),
+        message: t("workouts.copyWorkoutTextErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
+    }
   };
 
   const handleMinimizeWorkout = () => {
@@ -153,7 +262,11 @@ export function InProgressWorkoutScreen() {
         [args.setId]: sanitizedWeight > 0 ? formatWeight(sanitizedWeight) : "",
       }));
     } catch {
-      Alert.alert(t("workouts.updateSetErrorTitle"), t("workouts.updateSetErrorBody"));
+      showAlert({
+        title: t("workouts.updateSetErrorTitle"),
+        message: t("workouts.updateSetErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
     }
   };
 
@@ -185,7 +298,11 @@ export function InProgressWorkoutScreen() {
         };
       });
     } catch {
-      Alert.alert(t("workouts.updateSetErrorTitle"), t("workouts.updateSetErrorBody"));
+      showAlert({
+        title: t("workouts.updateSetErrorTitle"),
+        message: t("workouts.updateSetErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
     }
   };
 
@@ -224,7 +341,11 @@ export function InProgressWorkoutScreen() {
         [createdSet.id]: "",
       }));
     } catch {
-      Alert.alert(t("workouts.addSetErrorTitle"), t("workouts.addSetErrorBody"));
+      showAlert({
+        title: t("workouts.addSetErrorTitle"),
+        message: t("workouts.addSetErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
     }
   };
 
@@ -271,7 +392,11 @@ export function InProgressWorkoutScreen() {
         [created.initialSet.id]: "",
       }));
     } catch {
-      Alert.alert(t("workouts.addSetErrorTitle"), t("workouts.addSetErrorBody"));
+      showAlert({
+        title: t("workouts.addSetErrorTitle"),
+        message: t("workouts.addSetErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
     }
   };
 
@@ -280,74 +405,68 @@ export function InProgressWorkoutScreen() {
       return;
     }
 
-    Alert.alert(
-      t("workouts.removeExerciseTitle"),
-      t("workouts.removeExerciseBody", { name: exerciseName }),
-      [
-        {
-          text: t("exercises.cancel"),
-          style: "cancel",
-        },
-        {
-          text: t("workouts.removeExerciseConfirmCta"),
-          style: "destructive",
-          onPress: () => {
-            void (async () => {
-              setDeletingExerciseId(exerciseId);
+    showConfirm({
+      title: t("workouts.removeExerciseTitle"),
+      message: t("workouts.removeExerciseBody", { name: exerciseName }),
+      cancelLabel: t("exercises.cancel"),
+      confirmLabel: t("workouts.removeExerciseConfirmCta"),
+      confirmVariant: "destructive",
+      onConfirm: () => {
+        void (async () => {
+          setDeletingExerciseId(exerciseId);
 
-              try {
-                await removeWorkoutExercise({
-                  workoutId: workout.id,
-                  workoutExerciseId: exerciseId,
-                });
+          try {
+            await removeWorkoutExercise({
+              workoutId: workout.id,
+              workoutExerciseId: exerciseId,
+            });
 
-                setWorkout((prev) => {
-                  if (!prev) {
-                    return prev;
-                  }
-
-                  const remainingExercises = prev.exercises
-                    .filter((exercise) => exercise.id !== exerciseId)
-                    .map((exercise, index) => ({ ...exercise, exerciseOrder: index + 1 }));
-
-                  return {
-                    ...prev,
-                    exercises: remainingExercises,
-                  };
-                });
-
-                setRepsDraftBySetId((prev) => {
-                  const next = { ...prev };
-                  const removedSetIds =
-                    workout.exercises.find((exercise) => exercise.id === exerciseId)?.sets ?? [];
-                  removedSetIds.forEach((set) => {
-                    delete next[set.id];
-                  });
-                  return next;
-                });
-
-                setWeightDraftBySetId((prev) => {
-                  const next = { ...prev };
-                  const removedSetIds =
-                    workout.exercises.find((exercise) => exercise.id === exerciseId)?.sets ?? [];
-                  removedSetIds.forEach((set) => {
-                    delete next[set.id];
-                  });
-                  return next;
-                });
-              } catch {
-                Alert.alert(
-                  t("workouts.removeExerciseErrorTitle"),
-                  t("workouts.removeExerciseErrorBody"),
-                );
-              } finally {
-                setDeletingExerciseId(null);
+            setWorkout((prev) => {
+              if (!prev) {
+                return prev;
               }
-            })();
-          },
-        },
-      ],
-    );
+
+              const remainingExercises = prev.exercises
+                .filter((exercise) => exercise.id !== exerciseId)
+                .map((exercise, index) => ({ ...exercise, exerciseOrder: index + 1 }));
+
+              return {
+                ...prev,
+                exercises: remainingExercises,
+              };
+            });
+
+            setRepsDraftBySetId((prev) => {
+              const next = { ...prev };
+              const removedSetIds =
+                workout.exercises.find((exercise) => exercise.id === exerciseId)?.sets ?? [];
+              removedSetIds.forEach((set) => {
+                delete next[set.id];
+              });
+              return next;
+            });
+
+            setWeightDraftBySetId((prev) => {
+              const next = { ...prev };
+              const removedSetIds =
+                workout.exercises.find((exercise) => exercise.id === exerciseId)?.sets ?? [];
+              removedSetIds.forEach((set) => {
+                delete next[set.id];
+              });
+              return next;
+            });
+          } catch {
+            showAlert({
+              title: t("workouts.removeExerciseErrorTitle"),
+              message: t("workouts.removeExerciseErrorBody"),
+              buttonLabel: t("workouts.postFinishCloseCta"),
+            });
+          } finally {
+            setDeletingExerciseId(null);
+          }
+        })();
+      },
+    });
   };
 
   const handleDeleteSetPress = (args: {
@@ -359,61 +478,62 @@ export function InProgressWorkoutScreen() {
       return;
     }
 
-    Alert.alert(t("workouts.removeSetTitle"), t("workouts.removeSetBody"), [
-      {
-        text: t("exercises.cancel"),
-        style: "cancel",
+    showConfirm({
+      title: t("workouts.removeSetTitle"),
+      message: t("workouts.removeSetBody"),
+      cancelLabel: t("exercises.cancel"),
+      confirmLabel: t("workouts.removeSetConfirmCta"),
+      confirmVariant: "destructive",
+      onConfirm: () => {
+        void (async () => {
+          setDeletingSetId(args.setId);
+
+          try {
+            await removeWorkoutSet({
+              setId: args.setId,
+            });
+
+            setWorkout((prev) => {
+              if (!prev) {
+                return prev;
+              }
+
+              return {
+                ...prev,
+                exercises: prev.exercises.map((exercise) =>
+                  exercise.id === args.workoutExerciseId
+                    ? {
+                        ...exercise,
+                        sets: exercise.sets.filter((set) => set.id !== args.setId),
+                      }
+                    : exercise,
+                ),
+              };
+            });
+
+            setRepsDraftBySetId((prev) => {
+              const next = { ...prev };
+              delete next[args.setId];
+              return next;
+            });
+
+            setWeightDraftBySetId((prev) => {
+              const next = { ...prev };
+              delete next[args.setId];
+              return next;
+            });
+          } catch {
+            showAlert({
+              title: t("workouts.removeSetErrorTitle"),
+              message: t("workouts.removeSetErrorBody"),
+              buttonLabel: t("workouts.postFinishCloseCta"),
+            });
+          } finally {
+            setDeletingSetId(null);
+          }
+        })();
       },
-      {
-        text: t("workouts.removeSetConfirmCta"),
-        style: "destructive",
-        onPress: () => {
-          void (async () => {
-            setDeletingSetId(args.setId);
-
-            try {
-              await removeWorkoutSet({
-                setId: args.setId,
-              });
-
-              setWorkout((prev) => {
-                if (!prev) {
-                  return prev;
-                }
-
-                return {
-                  ...prev,
-                  exercises: prev.exercises.map((exercise) =>
-                    exercise.id === args.workoutExerciseId
-                      ? {
-                          ...exercise,
-                          sets: exercise.sets.filter((set) => set.id !== args.setId),
-                        }
-                      : exercise,
-                  ),
-                };
-              });
-
-              setRepsDraftBySetId((prev) => {
-                const next = { ...prev };
-                delete next[args.setId];
-                return next;
-              });
-
-              setWeightDraftBySetId((prev) => {
-                const next = { ...prev };
-                delete next[args.setId];
-                return next;
-              });
-            } catch {
-              Alert.alert(t("workouts.removeSetErrorTitle"), t("workouts.removeSetErrorBody"));
-            } finally {
-              setDeletingSetId(null);
-            }
-          })();
-        },
-      },
-    ]);
+    });
   };
 
   const handleCancelWorkoutPress = () => {
@@ -421,59 +541,61 @@ export function InProgressWorkoutScreen() {
       return;
     }
 
-    Alert.alert(t("workouts.cancelWorkoutTitle"), t("workouts.cancelWorkoutBody"), [
-      {
-        text: t("exercises.cancel"),
-        style: "cancel",
-      },
-      {
-        text: t("workouts.cancelWorkoutConfirmCta"),
-        style: "destructive",
-        onPress: () => {
-          void (async () => {
-            setCanceling(true);
+    showConfirm({
+      title: t("workouts.cancelWorkoutTitle"),
+      message: t("workouts.cancelWorkoutBody"),
+      cancelLabel: t("exercises.cancel"),
+      confirmLabel: t("workouts.cancelWorkoutConfirmCta"),
+      confirmVariant: "destructive",
+      onConfirm: () => {
+        void (async () => {
+          setCanceling(true);
 
-            try {
-              await cancelWorkout(workout.id);
-              handleMinimizeWorkout();
-            } finally {
-              setCanceling(false);
-            }
-          })();
-        },
+          try {
+            await cancelWorkout(workout.id);
+            handleMinimizeWorkout();
+          } finally {
+            setCanceling(false);
+          }
+        })();
       },
-    ]);
+    });
   };
 
   const handleFinishWorkoutPress = () => {
-    if (!workout || finishing) {
+    if (!workout || finishing || workout.exercises.length === 0) {
       return;
     }
 
-    Alert.alert(t("workouts.finishWorkoutTitle"), t("workouts.finishWorkoutBody"), [
-      {
-        text: t("exercises.cancel"),
-        style: "cancel",
-      },
-      {
-        text: t("workouts.finishWorkoutConfirmCta"),
-        onPress: () => {
-          void (async () => {
-            setFinishing(true);
+    showConfirm({
+      title: t("workouts.finishWorkoutTitle"),
+      message: t("workouts.finishWorkoutBody"),
+      cancelLabel: t("exercises.cancel"),
+      confirmLabel: t("workouts.finishWorkoutConfirmCta"),
+      onConfirm: () => {
+        void (async () => {
+          if (workout.exercises.length === 0) {
+            return;
+          }
 
-            try {
-              await finishWorkout(workout.id);
-              handleMinimizeWorkout();
-            } finally {
-              setFinishing(false);
-            }
-          })();
-        },
+          setFinishing(true);
+
+          try {
+            await finishWorkout(workout.id);
+            Keyboard.dismiss();
+            setIsPostFinishPanelOpen(true);
+          } finally {
+            setFinishing(false);
+          }
+        })();
       },
-    ]);
+    });
   };
 
   const completedSetColor = colorScheme === "light" ? "#16A34A" : palette.success;
+  const shouldSuggestSaveAsRoutine =
+    Boolean(workout) && extractSourceRoutineId(workout?.notes) === null;
+  const canFinishWorkout = Boolean(workout) && (workout?.exercises.length ?? 0) > 0;
 
   return (
     <View
@@ -745,11 +867,23 @@ export function InProgressWorkoutScreen() {
           <TouchableOpacity
             style={[
               styles.primaryButton,
-              { backgroundColor: palette.accent, borderColor: palette.accent },
+              canFinishWorkout
+                ? { backgroundColor: palette.accent, borderColor: palette.accent }
+                : {
+                    backgroundColor: palette.page,
+                    borderColor: palette.border,
+                    opacity: 0.5,
+                  },
             ]}
             onPress={handleFinishWorkoutPress}
+            disabled={!canFinishWorkout || finishing}
           >
-            <Text style={[styles.primaryButtonText, { color: palette.onAccent }]}>
+            <Text
+              style={[
+                styles.primaryButtonText,
+                { color: canFinishWorkout ? palette.onAccent : palette.textSecondary },
+              ]}
+            >
               {finishing ? t("routines.loading") : t("workouts.finishWorkoutCta")}
             </Text>
           </TouchableOpacity>
@@ -779,6 +913,22 @@ export function InProgressWorkoutScreen() {
         emptyLabel={t("routines.noExerciseResults")}
         loadingLabel={t("routines.loading")}
       />
+
+      <PostFinishQuickActionsSheet
+        isOpen={isPostFinishPanelOpen}
+        savingAsRoutine={savingAsRoutine}
+        showSaveAsRoutine={shouldSuggestSaveAsRoutine}
+        defaultRoutineName={buildDefaultRoutineName()}
+        onClose={handleClosePostFinishPanel}
+        onSaveAsRoutine={(name) => {
+          void handleSaveAsRoutine(name);
+        }}
+        onCopyWorkoutAsText={() => {
+          void handleCopyWorkoutAsText();
+        }}
+      />
+
+      {alertElement}
     </View>
   );
 }

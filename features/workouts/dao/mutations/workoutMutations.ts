@@ -1,10 +1,12 @@
 import { db } from "@/db/client";
-import { sets, workoutExercises, workouts } from "@/db/schema";
+import { routineExercises, routines, sets, workoutExercises, workouts } from "@/db/schema";
+import type { AppLocale } from "@/constants/translations";
 import { asc, desc, eq, inArray } from "drizzle-orm";
 import { WORKOUT_ACTIVE_STATUSES } from "@/features/workouts/dao/queries/workoutQueries";
 
 type StartWorkoutArgs = {
   gymId: string | null;
+  sourceRoutineId?: string | null;
   exercises: {
     exerciseId: string;
     exerciseOrder: number;
@@ -17,6 +19,14 @@ type StartWorkoutResult = {
   workoutId: string;
   reusedActiveWorkout: boolean;
 };
+
+function normalizeSearchText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
 
 export async function startWorkout(args: StartWorkoutArgs): Promise<StartWorkoutResult> {
   return db.transaction(async (tx) => {
@@ -42,7 +52,9 @@ export async function startWorkout(args: StartWorkoutArgs): Promise<StartWorkout
       date: now,
       status: "in_progress",
       duration: null,
-      notes: null,
+      notes: JSON.stringify({
+        sourceRoutineId: args.sourceRoutineId ?? null,
+      }),
       gymId: args.gymId,
       createdAt: now,
     });
@@ -319,4 +331,63 @@ export async function softDeleteWorkout(workoutId: string): Promise<void> {
     .update(workouts)
     .set({ deletedAt: new Date().toISOString() })
     .where(eq(workouts.id, workoutId));
+}
+
+export async function saveWorkoutAsRoutine(args: {
+  locale: AppLocale;
+  routineName: string;
+  exercises: {
+    exerciseId: string;
+    exerciseOrder: number;
+    sets: {
+      reps: number;
+    }[];
+  }[];
+}): Promise<{ routineId: string }> {
+  const routineId = `routine-${Date.now()}`;
+  const createdAt = new Date().toISOString();
+  const trimmedName = args.routineName.trim();
+
+  await db.transaction(async (tx) => {
+    await tx.insert(routines).values({
+      id: routineId,
+      name: trimmedName,
+      detail: null,
+      description: null,
+      isSystem: false,
+      isFavorite: false,
+      searchPt: args.locale === "pt-BR" ? normalizeSearchText(trimmedName) : null,
+      searchEn: args.locale === "en-US" ? normalizeSearchText(trimmedName) : null,
+      createdAt,
+    });
+
+    const routineExerciseRows = args.exercises
+      .slice()
+      .sort((a, b) => a.exerciseOrder - b.exerciseOrder)
+      .map((exercise, index) => {
+        const setsTarget = exercise.sets.length > 0 ? exercise.sets.length : null;
+        const repsValues = exercise.sets
+          .map((set) => set.reps)
+          .filter((reps) => Number.isFinite(reps) && reps > 0);
+        const avgReps =
+          repsValues.length > 0
+            ? Math.round(repsValues.reduce((sum, reps) => sum + reps, 0) / repsValues.length)
+            : null;
+
+        return {
+          id: `rte-${routineId}-${index + 1}`,
+          routineId,
+          exerciseId: exercise.exerciseId,
+          exerciseOrder: exercise.exerciseOrder,
+          setsTarget,
+          repsTarget: avgReps !== null ? String(avgReps) : null,
+        };
+      });
+
+    if (routineExerciseRows.length > 0) {
+      await tx.insert(routineExercises).values(routineExerciseRows);
+    }
+  });
+
+  return { routineId };
 }

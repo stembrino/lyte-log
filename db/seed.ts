@@ -246,7 +246,6 @@ export async function seedDatabase(options: SeedDatabaseOptions = {}): Promise<v
   const includeRoutineGroups = options.includeRoutineGroups ?? false;
 
   runDevOnlyResetExercisesToBaseline(expoDb, "seed");
-  await runDevOnlyInjectMockRoutines(database);
 
   await database
     .insert(muscleGroups)
@@ -439,4 +438,8 @@ export async function seedDatabase(options: SeedDatabaseOptions = {}): Promise<v
       console.log("[seed] sample indexed row:", sample);
     }
   }
+
+  // Must run after exercises and routineTags are seeded — routineExercises and routineTagLinks
+  // reference those tables via FK and would fail if inserted before parent rows exist.
+  await runDevOnlyInjectMockRoutines(database);
 }

@@ -2,6 +2,7 @@ import { AppCard } from "@/components/AppCard";
 import { ActionMenu } from "@/components/ActionMenu";
 import { ControlledSearchInput } from "@/components/ControlledSearchInput";
 import { ExpandedPanel } from "@/components/ExpandedPanel";
+import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
@@ -14,13 +15,14 @@ import {
 } from "@/features/routines/hooks/useRoutineMutations";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { CreateRoutineModal, type RoutineFormInitialValues } from "./components/CreateRoutineModal";
 
 export function RoutinesTabScreen() {
   const router = useRouter();
   const { t, locale } = useI18n();
   const palette = useRetroPalette();
+  const { showConfirm, alertElement } = useGlobalAlert();
   const showRoutineCollectionsEntry = FEATURE_FLAGS.routineCollectionsEntry;
   const {
     items: routines,
@@ -113,25 +115,18 @@ export function RoutinesTabScreen() {
 
   const handleDeleteRoutine = useCallback(
     (routineId: string, routineName: string) => {
-      Alert.alert(
-        t("routines.deleteRoutineModalTitle"),
-        t("routines.deleteRoutineModalMessage", { name: routineName }),
-        [
-          {
-            text: t("routines.cancelButton"),
-            style: "cancel",
-          },
-          {
-            text: t("routines.confirmDelete"),
-            style: "destructive",
-            onPress: async () => {
-              await deleteRoutine(routineId);
-            },
-          },
-        ],
-      );
+      showConfirm({
+        title: t("routines.deleteRoutineModalTitle"),
+        message: t("routines.deleteRoutineModalMessage", { name: routineName }),
+        cancelLabel: t("routines.cancelButton"),
+        confirmLabel: t("routines.confirmDelete"),
+        confirmVariant: "destructive",
+        onConfirm: () => {
+          void deleteRoutine(routineId);
+        },
+      });
     },
-    [deleteRoutine, t],
+    [deleteRoutine, showConfirm, t],
   );
 
   return (
@@ -272,6 +267,8 @@ export function RoutinesTabScreen() {
         initialValues={routineInitialValues}
         onSubmit={handleRoutineSubmit}
       />
+
+      {alertElement}
     </>
   );
 }

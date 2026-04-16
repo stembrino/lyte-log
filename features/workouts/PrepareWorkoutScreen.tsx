@@ -1,5 +1,6 @@
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Chip } from "@/components/Chip";
+import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
@@ -15,7 +16,7 @@ import { useGymPicker } from "@/features/workouts/hooks/useGymPicker";
 import { useSelectedRoutine } from "@/features/workouts/hooks/useSelectedRoutine";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function PrepareWorkoutScreen() {
@@ -23,6 +24,7 @@ export function PrepareWorkoutScreen() {
   const insets = useSafeAreaInsets();
   const { t, locale } = useI18n();
   const palette = useRetroPalette();
+  const { showAlert, alertElement } = useGlobalAlert();
   const params = useLocalSearchParams<{ routineId?: string | string[] }>();
   const routineIdParam = params.routineId;
   const routineId = Array.isArray(routineIdParam) ? routineIdParam[0] : routineIdParam;
@@ -135,11 +137,16 @@ export function PrepareWorkoutScreen() {
 
       const result = await startWorkout({
         gymId: selectedGymId,
+        sourceRoutineId: routineId ?? null,
         exercises: payloadExercises,
       });
 
       if (result.reusedActiveWorkout) {
-        Alert.alert(t("workouts.activeWorkoutExistsTitle"), t("workouts.activeWorkoutExistsBody"));
+        showAlert({
+          title: t("workouts.activeWorkoutExistsTitle"),
+          message: t("workouts.activeWorkoutExistsBody"),
+          buttonLabel: t("workouts.postFinishCloseCta"),
+        });
       }
 
       router.replace({
@@ -276,6 +283,8 @@ export function PrepareWorkoutScreen() {
         emptyLabel={t("routines.noExerciseResults")}
         loadingLabel={t("routines.loading")}
       />
+
+      {alertElement}
     </View>
   );
 }
