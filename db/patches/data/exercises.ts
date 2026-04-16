@@ -146,6 +146,15 @@ export const DEFAULT_EXERCISES = [
     labelEn: "Lying Leg Curl",
     imageUrl: TEST_AVATAR_IMAGE,
   },
+  {
+    id: "ex-08-legs",
+    name: "Hip Thrust",
+    muscleGroup: "Legs",
+    isCustom: false,
+    labelPt: "Elevação Pélvica",
+    labelEn: "Hip Thrust",
+    imageUrl: TEST_AVATAR_IMAGE,
+  },
 
   // Shoulders
   {

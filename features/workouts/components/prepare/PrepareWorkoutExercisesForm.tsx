@@ -7,7 +7,7 @@ import DraggableFlatList, {
   type RenderItemParams,
 } from "react-native-draggable-flatlist";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export type EditableWorkoutExercise = {
   id: string;
@@ -22,6 +22,8 @@ type PrepareWorkoutExercisesFormProps = {
   items: EditableWorkoutExercise[];
   addButtonAccessibilityLabel: string;
   removeButtonLabel: string;
+  setsPlaceholder: string;
+  repsPlaceholder: string;
   palette: {
     card: string;
     border: string;
@@ -33,6 +35,7 @@ type PrepareWorkoutExercisesFormProps = {
   };
   onReorder: (nextItems: EditableWorkoutExercise[]) => void;
   onRemoveExercise: (exerciseId: string) => void;
+  onUpdateExerciseField: (id: string, field: "setsTarget" | "repsTarget", value: string) => void;
   onPressAddExercise: () => void;
 };
 
@@ -40,9 +43,12 @@ export function PrepareWorkoutExercisesForm({
   items,
   addButtonAccessibilityLabel,
   removeButtonLabel,
+  setsPlaceholder,
+  repsPlaceholder,
   palette,
   onReorder,
   onRemoveExercise,
+  onUpdateExerciseField,
   onPressAddExercise,
 }: PrepareWorkoutExercisesFormProps) {
   const renderItem = ({ item, drag, isActive }: RenderItemParams<EditableWorkoutExercise>) => {
@@ -78,6 +84,43 @@ export function PrepareWorkoutExercisesForm({
 
           <View style={styles.exerciseCopy}>
             <Text style={[styles.exerciseName, { color: palette.textPrimary }]}>{item.name}</Text>
+            <View style={styles.fieldsRow}>
+              <TextInput
+                style={[
+                  styles.smallInput,
+                  {
+                    borderColor: palette.border,
+                    color: palette.textPrimary,
+                    backgroundColor: palette.page,
+                  },
+                ]}
+                value={item.setsTarget}
+                onChangeText={(value) => onUpdateExerciseField(item.id, "setsTarget", value)}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+              <Text style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+                {setsPlaceholder.toLowerCase()}
+              </Text>
+              <Text style={[styles.fieldLabel, { color: palette.textSecondary }]}>de</Text>
+              <TextInput
+                style={[
+                  styles.smallInput,
+                  {
+                    borderColor: palette.border,
+                    color: palette.textPrimary,
+                    backgroundColor: palette.page,
+                  },
+                ]}
+                value={item.repsTarget}
+                onChangeText={(value) => onUpdateExerciseField(item.id, "repsTarget", value)}
+                keyboardType="number-pad"
+                maxLength={3}
+              />
+              <Text style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+                {repsPlaceholder.toLowerCase()}
+              </Text>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -134,7 +177,7 @@ const styles = StyleSheet.create({
   },
   exerciseRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 8,
     borderWidth: 1,
     borderRadius: 4,
@@ -164,7 +207,8 @@ const styles = StyleSheet.create({
   },
   exerciseCopy: {
     flex: 1,
-    gap: 2,
+    gap: 4,
+    minWidth: 0,
   },
   exerciseName: {
     fontFamily: monoFont,
@@ -172,11 +216,38 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.2,
   },
+  fieldsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    columnGap: 6,
+    rowGap: 6,
+    alignItems: "center",
+  },
+  smallInput: {
+    width: 32,
+    height: 36,
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    fontFamily: monoFont,
+    fontSize: 11,
+    fontWeight: "600",
+    flexShrink: 1,
+    textAlign: "center",
+  },
+  fieldLabel: {
+    fontFamily: monoFont,
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+    textTransform: "lowercase",
+  },
   removeButton: {
     width: 28,
     height: 28,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 1,
   },
   addFooter: {
     paddingTop: 2,

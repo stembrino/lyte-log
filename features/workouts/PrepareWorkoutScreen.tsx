@@ -58,8 +58,8 @@ export function PrepareWorkoutScreen() {
         exerciseId: exercise.exerciseId,
         name: exercise.name,
         exerciseOrder: exercise.exerciseOrder ?? index + 1,
-        setsTarget: exercise.setsTarget?.toString() ?? "",
-        repsTarget: exercise.repsTarget ?? "",
+        setsTarget: exercise.setsTarget?.toString() || "3",
+        repsTarget: exercise.repsTarget || "10",
       })),
     );
   }, [routine]);
@@ -78,8 +78,8 @@ export function PrepareWorkoutScreen() {
         exerciseId: exercise.id,
         name: exercise.name,
         exerciseOrder: prev.length + 1,
-        setsTarget: "1",
-        repsTarget: "",
+        setsTarget: "3",
+        repsTarget: "10",
       },
     ]);
   };
@@ -89,6 +89,24 @@ export function PrepareWorkoutScreen() {
       prev
         .filter((exercise) => exercise.id !== exerciseId)
         .map((exercise, index) => ({ ...exercise, exerciseOrder: index + 1 })),
+    );
+  };
+
+  const handleUpdateExerciseField = (
+    exerciseId: string,
+    field: "setsTarget" | "repsTarget",
+    value: string,
+  ) => {
+    const numericValue = value.replace(/\D+/g, "");
+    const normalizedValue =
+      field === "setsTarget" && numericValue.length > 0
+        ? String(Math.min(99, Number.parseInt(numericValue, 10) || 0))
+        : numericValue;
+
+    setEditableExercises((prev) =>
+      prev.map((exercise) =>
+        exercise.id === exerciseId ? { ...exercise, [field]: normalizedValue } : exercise,
+      ),
     );
   };
 
@@ -254,8 +272,11 @@ export function PrepareWorkoutScreen() {
             items={editableExercises}
             addButtonAccessibilityLabel={t("workouts.addExerciseAccessibilityLabel")}
             removeButtonLabel={t("routines.removeExerciseButton")}
+            setsPlaceholder={t("routines.setsPlaceholder")}
+            repsPlaceholder={t("routines.repsPlaceholder")}
             onReorder={handleReorderExercises}
             onRemoveExercise={handleRemoveExercise}
+            onUpdateExerciseField={handleUpdateExerciseField}
             onPressAddExercise={() => setIsExercisePickerOpen(true)}
             palette={palette}
           />
