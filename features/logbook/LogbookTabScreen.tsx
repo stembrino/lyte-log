@@ -7,8 +7,11 @@ import {
   type LogbookGymFilterValue,
   usePaginatedLogbook,
 } from "@/features/logbook/hooks/usePaginatedLogbook";
-import { softDeleteWorkout } from "@/features/workouts/dao/mutations/workoutMutations";
-import { useCallback, useMemo } from "react";
+import {
+  softDeleteWorkout,
+  updateCompletedWorkoutFromLogbook,
+} from "@/features/workouts/dao/mutations/workoutMutations";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -17,6 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { EditLogbookWorkoutModal } from "./components/EditLogbookWorkoutModal";
 import { LogbookWorkoutCard } from "./components/LogbookWorkoutCard";
 
 type GroupedWorkouts = {
@@ -28,7 +32,8 @@ type GroupedWorkouts = {
 export function LogbookTabScreen() {
   const palette = useRetroPalette();
   const { t, locale } = useI18n();
-  const { showConfirm, alertElement } = useGlobalAlert();
+  const { showAlert, showConfirm, alertElement } = useGlobalAlert();
+  const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
   const {
     items,
     gymGroups,
@@ -54,7 +59,7 @@ export function LogbookTabScreen() {
         },
       });
     },
-    [t, reload, showConfirm],
+    [reload, showConfirm, t],
   );
 
   const totalCount = useMemo(() => {
@@ -102,6 +107,37 @@ export function LogbookTabScreen() {
 
     return Array.from(groups.values());
   }, [items, t]);
+
+  const editingWorkout = useMemo(
+    () => items.find((item) => item.id === editingWorkoutId) ?? null,
+    [editingWorkoutId, items],
+  );
+
+  const handleSaveEdit = useCallback(
+    async (payload: {
+      workoutId: string;
+      duration: number | null;
+      sets: {
+        setId: string;
+        reps: number;
+        weight: number;
+        completed: boolean;
+      }[];
+    }) => {
+      try {
+        await updateCompletedWorkoutFromLogbook(payload);
+        setEditingWorkoutId(null);
+        await reload();
+      } catch {
+        showAlert({
+          title: t("performance.logbookEditSaveErrorTitle"),
+          message: t("performance.logbookEditSaveErrorBody"),
+          buttonLabel: t("exercises.ok"),
+        });
+      }
+    },
+    [reload, showAlert, t],
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: palette.page }]}>
@@ -167,6 +203,7 @@ export function LogbookTabScreen() {
                       setLabel={t("workouts.setLabel")}
                       repsUnitSuffix={t("workouts.repsUnitSuffix")}
                       weightUnit={t("workouts.weightUnit")}
+                      onEdit={(selectedItem) => setEditingWorkoutId(selectedItem.id)}
                       onDelete={handleDeletePress}
                     />
                   ))}
@@ -191,6 +228,22 @@ export function LogbookTabScreen() {
           </TouchableOpacity>
         ) : null}
       </ScrollView>
+
+      <EditLogbookWorkoutModal
+        visible={Boolean(editingWorkout)}
+        item={editingWorkout}
+        title={t("performance.logbookEditTitle")}
+        durationLabel={t("performance.logbookEditDurationLabel")}
+        setLabel={t("workouts.setLabel")}
+        repsUnitSuffix={t("workouts.repsUnitSuffix")}
+        weightUnit={t("workouts.weightUnit")}
+        completedLabel={t("performance.logbookCardCompleted")}
+        saveLabel={t("performance.logbookEditSave")}
+        cancelLabel={t("performance.logbookEditCancel")}
+        closeButtonAccessibilityLabel={t("routines.closeActionsButton")}
+        onClose={() => setEditingWorkoutId(null)}
+        onSave={handleSaveEdit}
+      />
 
       {alertElement}
     </View>

@@ -17,6 +17,7 @@ type LogbookWorkoutCardProps = {
   setLabel: string;
   repsUnitSuffix: string;
   weightUnit: string;
+  onEdit: (item: LogbookWorkoutItem) => void;
   onDelete: (id: string) => void;
 };
 
@@ -55,6 +56,7 @@ export function LogbookWorkoutCard({
   setLabel,
   repsUnitSuffix,
   weightUnit,
+  onEdit,
   onDelete,
 }: LogbookWorkoutCardProps) {
   const palette = useRetroPalette();
@@ -76,14 +78,24 @@ export function LogbookWorkoutCard({
         <Text style={[styles.durationText, { color: palette.accent }]}>
           {durationLabel}: {item.duration ?? 0}min
         </Text>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => onDelete(item.id)}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-        >
-          <FontAwesome name="trash-o" size={15} color={palette.textSecondary} />
-        </TouchableOpacity>
+        <View style={styles.headerActionsRow}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => onEdit(item)}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+          >
+            <FontAwesome name="pencil" size={14} color={palette.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => onDelete(item.id)}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+          >
+            <FontAwesome name="trash-o" size={15} color={palette.textSecondary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={[styles.divider, { backgroundColor: palette.border }]} />
@@ -137,7 +149,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     gap: 8,
   },
-  deleteButton: {
+  headerActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  iconButton: {
     minWidth: 28,
     minHeight: 28,
     alignItems: "center",

@@ -345,6 +345,37 @@ export async function softDeleteWorkout(workoutId: string): Promise<void> {
     .where(eq(workouts.id, workoutId));
 }
 
+export async function updateCompletedWorkoutFromLogbook(args: {
+  workoutId: string;
+  duration: number | null;
+  sets: {
+    setId: string;
+    reps: number;
+    weight: number;
+    completed: boolean;
+  }[];
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx
+      .update(workouts)
+      .set({
+        duration: args.duration,
+      })
+      .where(eq(workouts.id, args.workoutId));
+
+    for (const setRow of args.sets) {
+      await tx
+        .update(sets)
+        .set({
+          reps: setRow.reps,
+          weight: setRow.weight,
+          completed: setRow.completed,
+        })
+        .where(eq(sets.id, setRow.setId));
+    }
+  });
+}
+
 export async function saveWorkoutAsRoutine(args: {
   locale: AppLocale;
   routineName: string;
