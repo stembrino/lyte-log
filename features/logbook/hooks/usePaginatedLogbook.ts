@@ -6,6 +6,7 @@ import {
   type LogbookGymGroup,
   type LogbookWorkoutItem,
 } from "@/features/logbook/dao/queries/logbookQueries";
+import type { AppLocale } from "@/components/providers/i18n-provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type LogbookGymFilterValue = "all" | "none" | string;
@@ -34,7 +35,7 @@ function mapFilterToGymId(filter: LogbookGymFilterValue): string | null | undefi
   return filter;
 }
 
-export function usePaginatedLogbook(): UsePaginatedLogbookResult {
+export function usePaginatedLogbook(locale: AppLocale): UsePaginatedLogbookResult {
   const [items, setItems] = useState<LogbookWorkoutItem[]>([]);
   const [gymGroups, setGymGroups] = useState<LogbookGymGroup[]>([]);
   const [selectedGymFilter, setSelectedGymFilter] = useState<LogbookGymFilterValue>("all");
@@ -59,7 +60,7 @@ export function usePaginatedLogbook(): UsePaginatedLogbookResult {
 
       try {
         const [rows, totalCount, groups] = await Promise.all([
-          getLogbookWorkoutsPage({ page: nextPage, gymId: selectedGymId }),
+          getLogbookWorkoutsPage({ page: nextPage, gymId: selectedGymId, locale }),
           reset ? getLogbookWorkoutsCount({ gymId: selectedGymId }) : Promise.resolve(null),
           reset ? getLogbookGymGroups() : Promise.resolve(null),
         ]);
@@ -95,7 +96,7 @@ export function usePaginatedLogbook(): UsePaginatedLogbookResult {
         }
       }
     },
-    [selectedGymId],
+    [locale, selectedGymId],
   );
 
   const reload = useCallback(async () => {

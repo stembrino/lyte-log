@@ -1,5 +1,7 @@
+import type { AppLocale } from "@/components/providers/i18n-provider";
 import { db } from "@/db/client";
 import { gyms, workouts } from "@/db/schema";
+import { getEntityFieldTranslationsMap } from "@/features/translations/dao/queries/translationQueries";
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 
 export const LOGBOOK_PAGE_SIZE = 20;
@@ -59,6 +61,7 @@ export async function getLogbookWorkoutsCount(args?: { gymId?: string | null }):
 export async function getLogbookWorkoutsPage(args: {
   page: number;
   gymId?: string | null;
+  locale: AppLocale;
 }): Promise<LogbookWorkoutItem[]> {
   const rows = await db.query.workouts.findMany({
     where: buildCompletedWorkoutFilter(args.gymId),
@@ -81,6 +84,7 @@ export async function getLogbookWorkoutsPage(args: {
         with: {
           exercise: {
             columns: {
+              id: true,
               name: true,
             },
           },
@@ -98,6 +102,15 @@ export async function getLogbookWorkoutsPage(args: {
     },
   });
 
+  const translationMap = await getEntityFieldTranslationsMap({
+    locale: args.locale,
+    entityType: "exercise",
+    field: "name",
+    entityIds: rows.flatMap((row) =>
+      row.workoutExercises.map((workoutExercise) => workoutExercise.exercise.id),
+    ),
+  });
+
   return rows.map((row) => {
     const totalSets = row.workoutExercises.reduce((sum, workoutExercise) => {
       return sum + workoutExercise.sets.length;
@@ -108,9 +121,12 @@ export async function getLogbookWorkoutsPage(args: {
     }, 0);
 
     const setDetails = row.workoutExercises.flatMap((workoutExercise) => {
+      const exerciseName =
+        translationMap.get(workoutExercise.exercise.id) ?? workoutExercise.exercise.name;
+
       return workoutExercise.sets.map((set, index) => ({
         id: set.id,
-        exerciseName: workoutExercise.exercise.name,
+        exerciseName,
         setOrder: index + 1,
         reps: set.reps,
         weight: set.weight,

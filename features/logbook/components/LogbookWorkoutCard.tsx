@@ -14,6 +14,9 @@ type LogbookWorkoutCardProps = {
   completedLabel: string;
   totalLoadLabel: string;
   noSetDetailsLabel: string;
+  setLabel: string;
+  repsUnitSuffix: string;
+  weightUnit: string;
   onDelete: (id: string) => void;
 };
 
@@ -49,6 +52,9 @@ export function LogbookWorkoutCard({
   completedLabel,
   totalLoadLabel,
   noSetDetailsLabel,
+  setLabel,
+  repsUnitSuffix,
+  weightUnit,
   onDelete,
 }: LogbookWorkoutCardProps) {
   const palette = useRetroPalette();
@@ -112,7 +118,9 @@ export function LogbookWorkoutCard({
         ) : (
           item.setDetails.map((set) => (
             <Text key={set.id} style={[styles.setDetailText, { color: palette.textSecondary }]}>
-              {set.exerciseName} S{set.setOrder}: {set.reps} x {formatNumber(set.weight, locale)}kg
+              {set.exerciseName} {setLabel} {set.setOrder}: {set.reps} {repsUnitSuffix} x{" "}
+              {formatNumber(set.weight, locale)}
+              {weightUnit}
             </Text>
           ))
         )}

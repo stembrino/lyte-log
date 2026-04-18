@@ -101,42 +101,54 @@ export function ExercisePickerScreen({
                   </View>
 
                   <View style={styles.selectedFieldsRow}>
-                    <TextInput
+                    <View
                       style={[
-                        styles.smallInput,
+                        styles.smallInputWrapper,
                         {
                           borderColor: palette.border,
-                          color: palette.textPrimary,
                           backgroundColor: palette.page,
                         },
                       ]}
-                      placeholder={t("routines.setsPlaceholder")}
-                      placeholderTextColor={palette.textSecondary}
-                      value={exercise.setsTarget}
-                      onChangeText={(value) =>
-                        onUpdateExerciseField(exercise.exerciseId, "setsTarget", value)
-                      }
-                      keyboardType="number-pad"
-                      maxLength={2}
-                    />
-                    <TextInput
+                    >
+                      <Text style={[styles.inputPrefix, { color: palette.textSecondary }]}>
+                        {t("routines.setsInputPrefix")}
+                      </Text>
+                      <TextInput
+                        style={[styles.smallInput, { color: palette.textPrimary }]}
+                        placeholder={t("routines.setsPlaceholder")}
+                        placeholderTextColor={palette.textSecondary}
+                        value={exercise.setsTarget}
+                        onChangeText={(value) =>
+                          onUpdateExerciseField(exercise.exerciseId, "setsTarget", value)
+                        }
+                        keyboardType="number-pad"
+                        maxLength={2}
+                      />
+                    </View>
+                    <View
                       style={[
-                        styles.smallInput,
+                        styles.smallInputWrapper,
                         {
                           borderColor: palette.border,
-                          color: palette.textPrimary,
                           backgroundColor: palette.page,
                         },
                       ]}
-                      placeholder={t("routines.repsPlaceholder")}
-                      placeholderTextColor={palette.textSecondary}
-                      value={exercise.repsTarget}
-                      onChangeText={(value) =>
-                        onUpdateExerciseField(exercise.exerciseId, "repsTarget", value)
-                      }
-                      keyboardType="number-pad"
-                      maxLength={3}
-                    />
+                    >
+                      <Text style={[styles.inputPrefix, { color: palette.textSecondary }]}>
+                        {t("routines.repsInputPrefix")}
+                      </Text>
+                      <TextInput
+                        style={[styles.smallInput, { color: palette.textPrimary }]}
+                        placeholder={t("routines.repsPlaceholder")}
+                        placeholderTextColor={palette.textSecondary}
+                        value={exercise.repsTarget}
+                        onChangeText={(value) =>
+                          onUpdateExerciseField(exercise.exerciseId, "repsTarget", value)
+                        }
+                        keyboardType="number-pad"
+                        maxLength={3}
+                      />
+                    </View>
                   </View>
                 </View>
               ))}
@@ -260,11 +272,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  smallInput: {
+  smallInputWrapper: {
     flex: 1,
     borderWidth: 1,
     borderRadius: 4,
-    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 10,
+    paddingRight: 6,
+  },
+  inputPrefix: {
+    fontFamily: monoFont,
+    fontSize: 12,
+    textTransform: "lowercase",
+    marginRight: 6,
+  },
+  smallInput: {
+    flex: 1,
+    paddingHorizontal: 0,
     paddingVertical: 8,
     fontFamily: monoFont,
     fontSize: 13,
