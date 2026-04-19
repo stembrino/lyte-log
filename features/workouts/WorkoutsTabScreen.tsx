@@ -8,7 +8,7 @@ import {
   type ActiveWorkoutRow,
 } from "@/features/workouts/dao/queries/workoutQueries";
 import type { WorkoutRoutinePickerItem } from "@/features/workouts/hooks/useRoutinePicker";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -16,7 +16,6 @@ import { SelectRoutineModal } from "./components/SelectRoutineModal";
 
 export function WorkoutsTabScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ skipActiveRedirect?: string | string[] }>();
   const colorScheme = useColorScheme();
   const { t, locale } = useI18n();
   const palette = getRetroPalette(colorScheme);
@@ -24,18 +23,9 @@ export function WorkoutsTabScreen() {
   const [checkingActiveWorkout, setCheckingActiveWorkout] = useState(true);
   const [activeWorkout, setActiveWorkout] = useState<ActiveWorkoutRow | null>(null);
 
-  const skipActiveRedirectParam = params.skipActiveRedirect;
-  const skipActiveRedirect = Array.isArray(skipActiveRedirectParam)
-    ? skipActiveRedirectParam[0]
-    : skipActiveRedirectParam;
-
   useFocusEffect(
     useCallback(() => {
       let active = true;
-
-      if (skipActiveRedirect === "1") {
-        router.setParams({ skipActiveRedirect: undefined });
-      }
 
       const syncActiveWorkout = async () => {
         setCheckingActiveWorkout(true);
@@ -48,16 +38,6 @@ export function WorkoutsTabScreen() {
           }
 
           setActiveWorkout(current);
-
-          if (current && skipActiveRedirect !== "1") {
-            router.replace({
-              pathname: "/workout-in-progress",
-              params: {
-                workoutId: current.id,
-              },
-            });
-            return;
-          }
         } finally {
           if (active) {
             setCheckingActiveWorkout(false);
@@ -70,7 +50,7 @@ export function WorkoutsTabScreen() {
       return () => {
         active = false;
       };
-    }, [locale, router, skipActiveRedirect]),
+    }, [locale]),
   );
 
   const handleStartWorkoutPress = () => {
