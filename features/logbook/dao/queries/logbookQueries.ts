@@ -1,8 +1,8 @@
 import type { AppLocale } from "@/components/providers/i18n-provider";
 import { db } from "@/db/client";
-import { gyms, workouts } from "@/db/schema";
+import { gyms, routines, workouts } from "@/db/schema";
 import { getEntityFieldTranslationsMap } from "@/features/translations/dao/queries/translationQueries";
-import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 export const LOGBOOK_PAGE_SIZE = 20;
 
@@ -11,6 +11,10 @@ export type LogbookWorkoutItem = {
   date: string;
   createdAt: string;
   duration: number | null;
+  sourceRoutine: {
+    id: string;
+    name: string;
+  } | null;
   gym: {
     id: string;
     name: string;
@@ -35,6 +39,26 @@ export type LogbookGymGroup = {
   workoutsCount: number;
 };
 
+type RoutineRow = {
+  id: string;
+  name: string;
+};
+
+function parseSourceRoutineId(notes: string | null): string | null {
+  if (!notes) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(notes) as { sourceRoutineId?: unknown };
+    return typeof parsed.sourceRoutineId === "string" && parsed.sourceRoutineId.trim().length > 0
+      ? parsed.sourceRoutineId
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function buildCompletedWorkoutFilter(gymId?: string | null) {
   const notDeleted = isNull(workouts.deletedAt);
 
@@ -47,6 +71,20 @@ function buildCompletedWorkoutFilter(gymId?: string | null) {
   }
 
   return and(eq(workouts.status, "completed"), notDeleted, eq(workouts.gymId, gymId));
+}
+
+async function getRoutinesByIds(routineIds: string[]): Promise<RoutineRow[]> {
+  if (routineIds.length === 0) {
+    return [];
+  }
+
+  return db
+    .select({
+      id: routines.id,
+      name: routines.name,
+    })
+    .from(routines)
+    .where(inArray(routines.id, routineIds));
 }
 
 export async function getLogbookWorkoutsCount(args?: { gymId?: string | null }): Promise<number> {
@@ -111,6 +149,34 @@ export async function getLogbookWorkoutsPage(args: {
     ),
   });
 
+  const sourceRoutineIdByWorkoutId = new Map<string, string>();
+  for (const row of rows) {
+    const sourceRoutineId = parseSourceRoutineId(row.notes);
+    if (sourceRoutineId) {
+      sourceRoutineIdByWorkoutId.set(row.id, sourceRoutineId);
+    }
+  }
+
+  const sourceRoutineIds = Array.from(new Set(sourceRoutineIdByWorkoutId.values()));
+  const sourceRoutineRows = await getRoutinesByIds(sourceRoutineIds);
+
+  const routineNameTranslationMap = await getEntityFieldTranslationsMap({
+    locale: args.locale,
+    entityType: "routine",
+    field: "name",
+    entityIds: sourceRoutineRows.map((routine) => routine.id),
+  });
+
+  const sourceRoutineById = new Map(
+    sourceRoutineRows.map((routine) => [
+      routine.id,
+      {
+        id: routine.id,
+        name: routineNameTranslationMap.get(routine.id) ?? routine.name,
+      },
+    ]),
+  );
+
   return rows.map((row) => {
     const totalSets = row.workoutExercises.reduce((sum, workoutExercise) => {
       return sum + workoutExercise.sets.length;
@@ -149,6 +215,7 @@ export async function getLogbookWorkoutsPage(args: {
       date: row.date,
       createdAt: row.createdAt,
       duration: row.duration,
+      sourceRoutine: sourceRoutineById.get(sourceRoutineIdByWorkoutId.get(row.id) ?? "") ?? null,
       gym: row.gym ? { id: row.gym.id, name: row.gym.name } : null,
       exerciseCount: row.workoutExercises.length,
       totalSets,

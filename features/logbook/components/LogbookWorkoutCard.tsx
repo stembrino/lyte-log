@@ -8,6 +8,8 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 type LogbookWorkoutCardProps = {
   item: LogbookWorkoutItem;
   locale: AppLocale;
+  routineLabel: string;
+  noRoutineLabel: string;
   durationLabel: string;
   exercisesLabel: string;
   setsLabel: string;
@@ -47,6 +49,8 @@ function formatWorkoutDate(value: string, locale: AppLocale): string {
 export function LogbookWorkoutCard({
   item,
   locale,
+  routineLabel,
+  noRoutineLabel,
   durationLabel,
   exercisesLabel,
   setsLabel,
@@ -97,6 +101,10 @@ export function LogbookWorkoutCard({
           </TouchableOpacity>
         </View>
       </View>
+
+      <Text style={[styles.routineText, { color: palette.textSecondary }]}>
+        {routineLabel}: {item.sourceRoutine?.name ?? noRoutineLabel}
+      </Text>
 
       <View style={[styles.divider, { backgroundColor: palette.border }]} />
 
@@ -178,6 +186,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.3,
+    textTransform: "uppercase",
+  },
+  routineText: {
+    fontFamily: monoFont,
+    fontSize: 10,
+    letterSpacing: 0.2,
     textTransform: "uppercase",
   },
   divider: {

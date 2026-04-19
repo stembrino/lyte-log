@@ -194,6 +194,8 @@ export function LogbookTabScreen() {
                       key={item.id}
                       item={item}
                       locale={locale}
+                      routineLabel={t("performance.logbookCardRoutine")}
+                      noRoutineLabel={t("performance.logbookCardNoRoutine")}
                       durationLabel={t("performance.logbookCardDuration")}
                       exercisesLabel={t("performance.logbookCardExercises")}
                       setsLabel={t("performance.logbookCardSets")}
