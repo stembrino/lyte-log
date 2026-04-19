@@ -1,4 +1,4 @@
-# Lyte Log
+# Gym Log
 
 ## Docs
 
