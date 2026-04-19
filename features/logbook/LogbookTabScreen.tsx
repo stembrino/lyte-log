@@ -34,6 +34,7 @@ export function LogbookTabScreen() {
   const { t, locale } = useI18n();
   const { showAlert, showConfirm, alertElement } = useGlobalAlert();
   const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
+  const [expandedWorkoutIds, setExpandedWorkoutIds] = useState<Set<string>>(() => new Set());
   const {
     items,
     gymGroups,
@@ -139,6 +140,18 @@ export function LogbookTabScreen() {
     [reload, showAlert, t],
   );
 
+  const toggleWorkoutExpanded = useCallback((workoutId: string) => {
+    setExpandedWorkoutIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(workoutId)) {
+        next.delete(workoutId);
+      } else {
+        next.add(workoutId);
+      }
+      return next;
+    });
+  }, []);
+
   return (
     <View style={[styles.container, { backgroundColor: palette.page }]}>
       <View style={styles.headerWrap}>
@@ -205,6 +218,8 @@ export function LogbookTabScreen() {
                       setLabel={t("workouts.setLabel")}
                       repsUnitSuffix={t("workouts.repsUnitSuffix")}
                       weightUnit={t("workouts.weightUnit")}
+                      expanded={expandedWorkoutIds.has(item.id)}
+                      onToggleExpanded={() => toggleWorkoutExpanded(item.id)}
                       onEdit={(selectedItem) => setEditingWorkoutId(selectedItem.id)}
                       onDelete={handleDeletePress}
                     />

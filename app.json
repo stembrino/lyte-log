@@ -4,13 +4,13 @@
     "slug": "lyte-log",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo-logym.jpeg",
+    "icon": "./assets/images/logo-logym-appicon.png",
     "scheme": "lytelog",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/logo-logym.jpeg",
+      "image": "./assets/images/logo-brand-name.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0e0e0e"
+      "backgroundColor": "#2C353F"
     },
     "ios": {
       "supportsTablet": true,
@@ -19,7 +19,7 @@
     "android": {
       "package": "com.anonymous.lytelog",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo-logym.jpeg",
+        "foregroundImage": "./assets/images/logo-logym-appicon.png",
         "backgroundColor": "#0e0e0e"
       },
       "predictiveBackGestureEnabled": false

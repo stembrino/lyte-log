@@ -1,3 +1,4 @@
+import { ExpandedPanel } from "@/components/ExpandedPanel";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { monoFont } from "@/constants/retroTheme";
 import type { AppLocale } from "@/constants/translations";
@@ -19,6 +20,8 @@ type LogbookWorkoutCardProps = {
   setLabel: string;
   repsUnitSuffix: string;
   weightUnit: string;
+  expanded: boolean;
+  onToggleExpanded: () => void;
   onEdit: (item: LogbookWorkoutItem) => void;
   onDelete: (id: string) => void;
 };
@@ -60,13 +63,22 @@ export function LogbookWorkoutCard({
   setLabel,
   repsUnitSuffix,
   weightUnit,
+  expanded,
+  onToggleExpanded,
   onEdit,
   onDelete,
 }: LogbookWorkoutCardProps) {
   const palette = useRetroPalette();
+  const title = formatWorkoutDate(item.date, locale);
+  const subtitle = `${routineLabel}: ${item.sourceRoutine?.name ?? noRoutineLabel}`;
 
   return (
-    <View
+    <ExpandedPanel
+      title={title}
+      subtitle={subtitle}
+      count={item.exerciseCount}
+      expanded={expanded}
+      onToggle={onToggleExpanded}
       style={[
         styles.container,
         {
@@ -74,15 +86,11 @@ export function LogbookWorkoutCard({
           backgroundColor: palette.card,
         },
       ]}
-    >
-      <View style={styles.headerRow}>
-        <Text style={[styles.dateText, { color: palette.textPrimary }]}>
-          {formatWorkoutDate(item.date, locale)}
-        </Text>
-        <Text style={[styles.durationText, { color: palette.accent }]}>
-          {durationLabel}: {item.duration ?? 0}min
-        </Text>
+      headerAction={
         <View style={styles.headerActionsRow}>
+          <Text style={[styles.durationText, { color: palette.accent }]}>
+            {durationLabel}: {item.duration ?? 0}min
+          </Text>
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => onEdit(item)}
@@ -100,14 +108,8 @@ export function LogbookWorkoutCard({
             <FontAwesome name="trash-o" size={15} color={palette.textSecondary} />
           </TouchableOpacity>
         </View>
-      </View>
-
-      <Text style={[styles.routineText, { color: palette.textSecondary }]}>
-        {routineLabel}: {item.sourceRoutine?.name ?? noRoutineLabel}
-      </Text>
-
-      <View style={[styles.divider, { backgroundColor: palette.border }]} />
-
+      }
+    >
       <View style={styles.statsRow}>
         <Text style={[styles.statText, { color: palette.textSecondary }]}>
           {exercisesLabel}: {item.exerciseCount}
@@ -145,7 +147,7 @@ export function LogbookWorkoutCard({
           ))
         )}
       </View>
-    </View>
+    </ExpandedPanel>
   );
 }
 
@@ -153,9 +155,7 @@ const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
     borderRadius: 2,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    gap: 8,
+    overflow: "hidden",
   },
   headerActionsRow: {
     flexDirection: "row",
@@ -168,30 +168,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  dateText: {
-    fontFamily: monoFont,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-    flex: 1,
-  },
   durationText: {
     fontFamily: monoFont,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.3,
-    textTransform: "uppercase",
-  },
-  routineText: {
-    fontFamily: monoFont,
-    fontSize: 10,
-    letterSpacing: 0.2,
     textTransform: "uppercase",
   },
   divider: {
