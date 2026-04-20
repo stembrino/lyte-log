@@ -15,7 +15,9 @@
     "test:watch": "jest --watch",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "db:studio:local": "drizzle-kit studio --config drizzle.studio.config.ts"
+    "db:studio:local": "drizzle-kit studio --config drizzle.studio.config.ts",
+    "build:android:preview": "npx eas-cli build -p android --profile preview",
+    "build:android:preview:local": "npx eas-cli build -p android --profile preview --local"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
