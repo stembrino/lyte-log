@@ -3,6 +3,7 @@ import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { monoFont } from "@/constants/retroTheme";
 import type { AppLocale } from "@/constants/translations";
 import type { LogbookWorkoutItem } from "@/features/logbook/dao/queries/logbookQueries";
+import { getHighlightedSetIds } from "@/features/logbook/utils/setHighlightUtils";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
@@ -71,6 +72,7 @@ export function LogbookWorkoutCard({
   const palette = useRetroPalette();
   const title = formatWorkoutDate(item.date, locale);
   const subtitle = `${routineLabel}: ${item.sourceRoutine?.name ?? noRoutineLabel}`;
+  const lastMaxSetIds = getHighlightedSetIds(item.setDetails);
 
   return (
     <ExpandedPanel
@@ -138,13 +140,22 @@ export function LogbookWorkoutCard({
             {noSetDetailsLabel}
           </Text>
         ) : (
-          item.setDetails.map((set) => (
-            <Text key={set.id} style={[styles.setDetailText, { color: palette.textSecondary }]}>
-              {set.exerciseName} {setLabel} {set.setOrder}: {set.reps} {repsUnitSuffix} x{" "}
-              {formatNumber(set.weight, locale)}
-              {weightUnit}
-            </Text>
-          ))
+          item.setDetails.map((set) => {
+            const isMaxWeight = lastMaxSetIds.has(set.id);
+            return (
+              <Text
+                key={set.id}
+                style={[
+                  styles.setDetailText,
+                  { color: isMaxWeight ? palette.accent : palette.textSecondary },
+                ]}
+              >
+                {set.exerciseName} {setLabel} {set.setOrder}: {set.reps} {repsUnitSuffix} x{" "}
+                {formatNumber(set.weight, locale)}
+                {weightUnit}
+              </Text>
+            );
+          })
         )}
       </View>
     </ExpandedPanel>
