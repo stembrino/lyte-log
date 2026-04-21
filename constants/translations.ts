@@ -15,6 +15,16 @@ export const translations = {
       language: "Idioma",
       themeToDark: "Mudar para tema escuro",
       themeToLight: "Mudar para tema claro",
+      settings: "Configurações",
+    },
+    settings: {
+      title: "Configurações",
+      appearance: "Aparência",
+      language: "Idioma",
+      currentLanguage: "Idioma",
+      theme: "Tema",
+      dark: "Escuro",
+      light: "Claro",
     },
     exercises: {
       title: "Exercícios",
@@ -304,6 +314,16 @@ export const translations = {
       language: "Language",
       themeToDark: "Switch to dark theme",
       themeToLight: "Switch to light theme",
+      settings: "Settings",
+    },
+    settings: {
+      title: "Settings",
+      appearance: "Appearance",
+      language: "Language",
+      currentLanguage: "Language",
+      theme: "Theme",
+      dark: "Dark",
+      light: "Light",
     },
     exercises: {
       title: "Exercises",

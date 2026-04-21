@@ -1,6 +1,6 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import { Tabs } from "expo-router";
+import { useRouter, Tabs } from "expo-router";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 
@@ -20,10 +20,12 @@ function TabBarIcon(props: {
 }
 
 export default function TabLayout() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const { toggleTheme } = useThemePreference();
   const { locale, toggleLocale, t } = useI18n();
   const isDarkTheme = colorScheme === "dark";
+  const isDev = __DEV__;
 
   return (
     <Tabs
@@ -51,52 +53,73 @@ export default function TabLayout() {
           color: Colors[colorScheme ?? "light"].text,
         },
         headerRight: () => (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginRight: 8 }}>
+            {isDev && (
+              <Pressable
+                onPress={toggleTheme}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isDarkTheme ? t("header.themeToLight") : t("header.themeToDark")
+                }
+              >
+                {({ pressed }) => (
+                  <FontAwesome
+                    name={isDarkTheme ? "sun-o" : "moon-o"}
+                    size={22}
+                    color={Colors[colorScheme ?? "light"].text}
+                    style={{ marginRight: 16, opacity: pressed ? 0.5 : 1 }}
+                  />
+                )}
+              </Pressable>
+            )}
+            {isDev && (
+              <Pressable
+                onPress={toggleLocale}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={t("header.language")}
+              >
+                {({ pressed }) => (
+                  <View
+                    style={{
+                      marginRight: 12,
+                      borderWidth: 1,
+                      borderColor: Colors[colorScheme ?? "light"].text,
+                      borderRadius: 2,
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      opacity: pressed ? 0.5 : 1,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: Colors[colorScheme ?? "light"].text,
+                        fontFamily: monoFont,
+                        fontWeight: "700",
+                        fontSize: 12,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {locale === "pt-BR" ? "PT" : "EN"}
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            )}
             <Pressable
-              onPress={toggleTheme}
+              onPress={() => router.push("/settings")}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel={isDarkTheme ? t("header.themeToLight") : t("header.themeToDark")}
+              accessibilityLabel={t("header.settings") || "Settings"}
             >
               {({ pressed }) => (
                 <FontAwesome
-                  name={isDarkTheme ? "sun-o" : "moon-o"}
+                  name="cog"
                   size={22}
                   color={Colors[colorScheme ?? "light"].text}
-                  style={{ marginRight: 16, opacity: pressed ? 0.5 : 1 }}
+                  style={{ marginRight: 12, opacity: pressed ? 0.5 : 1 }}
                 />
-              )}
-            </Pressable>
-            <Pressable
-              onPress={toggleLocale}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel={t("header.language")}
-            >
-              {({ pressed }) => (
-                <View
-                  style={{
-                    marginRight: 15,
-                    borderWidth: 1,
-                    borderColor: Colors[colorScheme ?? "light"].text,
-                    borderRadius: 2,
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    opacity: pressed ? 0.5 : 1,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: Colors[colorScheme ?? "light"].text,
-                      fontFamily: monoFont,
-                      fontWeight: "700",
-                      fontSize: 12,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {locale === "pt-BR" ? "PT" : "EN"}
-                  </Text>
-                </View>
               )}
             </Pressable>
           </View>
