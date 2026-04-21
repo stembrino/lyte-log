@@ -16,6 +16,7 @@ import {
   removeWorkoutSet,
   saveWorkoutAsRoutine,
   updateWorkoutGym,
+  updateWorkoutSourceRoutine,
   updateWorkoutSet,
   updateWorkoutSetCompleted,
 } from "@/features/workouts/dao/mutations/workoutMutations";
@@ -178,7 +179,7 @@ export function InProgressWorkoutScreen() {
     setSavingAsRoutine(true);
 
     try {
-      await saveWorkoutAsRoutine({
+      const { routineId } = await saveWorkoutAsRoutine({
         locale,
         routineName: routineName,
         exercises: workout.exercises.map((exercise) => ({
@@ -187,6 +188,20 @@ export function InProgressWorkoutScreen() {
           sets: exercise.sets.map((set) => ({ reps: set.reps })),
         })),
       });
+
+      await updateWorkoutSourceRoutine({
+        workoutId: workout.id,
+        routineId,
+      });
+
+      setWorkout((prev) =>
+        prev
+          ? {
+              ...prev,
+              notes: JSON.stringify({ sourceRoutineId: routineId }),
+            }
+          : prev,
+      );
 
       showAlert({
         title: t("workouts.saveAsRoutineSuccessTitle"),

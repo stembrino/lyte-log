@@ -434,3 +434,17 @@ export async function saveWorkoutAsRoutine(args: {
 
   return { routineId };
 }
+
+export async function updateWorkoutSourceRoutine(args: {
+  workoutId: string;
+  routineId: string;
+}): Promise<void> {
+  await db
+    .update(workouts)
+    .set({
+      notes: JSON.stringify({
+        sourceRoutineId: args.routineId,
+      }),
+    })
+    .where(eq(workouts.id, args.workoutId));
+}
