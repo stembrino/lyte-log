@@ -1,4 +1,5 @@
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
+import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { WindowControlButton } from "@/components/WindowControlButton";
 import { monoFont } from "@/constants/retroTheme";
@@ -62,6 +63,7 @@ export function CreateRoutineModal({
 }: CreateRoutineModalProps) {
   const { t, locale } = useI18n();
   const palette = useRetroPalette();
+  const { showConfirm, alertElement } = useGlobalAlert();
   const insets = useSafeAreaInsets();
 
   const [screen, setScreen] = useState<Screen>("basic");
@@ -112,6 +114,54 @@ export function CreateRoutineModal({
   });
   const { items: muscleGroups } = useMuscleGroups();
   const { createExercise } = useExerciseMutations(reload);
+
+  const hasUnsavedChanges = useMemo(() => {
+    const initialName = initialValues?.name ?? "";
+    const initialGroupId = enableRoutineGroups ? (initialValues?.selectedGroupId ?? null) : null;
+    const initialDetail = initialValues?.detail ?? "";
+    const initialDescription = initialValues?.description ?? "";
+    const initialTagIds = initialValues?.tagIds ?? [];
+    const initialExercises = initialValues?.exercises ?? [];
+
+    if (name !== initialName) return true;
+    if ((enableRoutineGroups ? selectedGroupId : null) !== initialGroupId) return true;
+    if (detail !== initialDetail) return true;
+    if (description !== initialDescription) return true;
+
+    if (selectedTags.size !== initialTagIds.length) return true;
+    for (const tagId of initialTagIds) {
+      if (!selectedTags.has(tagId)) {
+        return true;
+      }
+    }
+
+    if (selectedExercises.length !== initialExercises.length) return true;
+    for (let index = 0; index < selectedExercises.length; index += 1) {
+      const currentExercise = selectedExercises[index];
+      const initialExercise = initialExercises[index];
+
+      if (
+        !initialExercise ||
+        currentExercise.exerciseId !== initialExercise.exerciseId ||
+        currentExercise.exerciseOrder !== initialExercise.exerciseOrder ||
+        currentExercise.setsTarget !== initialExercise.setsTarget ||
+        currentExercise.repsTarget !== initialExercise.repsTarget
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [
+    description,
+    detail,
+    enableRoutineGroups,
+    initialValues,
+    name,
+    selectedExercises,
+    selectedGroupId,
+    selectedTags,
+  ]);
 
   const handleToggleTag = (tagId: string) => {
     setSelectedTags((prev) => {
@@ -203,8 +253,8 @@ export function CreateRoutineModal({
   };
 
   const handleCreateExercise = async (payload: { name: string; muscleGroup: string }) => {
-    await createExercise(payload);
-    setCreateExerciseModalVisible(false);
+    const createdExercise = await createExercise(payload);
+    handleAddExercise(createdExercise);
   };
 
   const handleModalClose = () => {
@@ -221,12 +271,28 @@ export function CreateRoutineModal({
     onClose();
   };
 
+  const handleRequestClose = () => {
+    if (!hasUnsavedChanges) {
+      handleModalClose();
+      return;
+    }
+
+    showConfirm({
+      title: t("routines.discardChangesTitle"),
+      message: t("routines.discardChangesMessage"),
+      cancelLabel: t("routines.keepEditingButton"),
+      confirmLabel: t("routines.discardChangesButton"),
+      confirmVariant: "destructive",
+      onConfirm: handleModalClose,
+    });
+  };
+
   return (
     <Modal
       visible={visible}
       animationType="slide"
       presentationStyle="formSheet"
-      onRequestClose={handleModalClose}
+      onRequestClose={handleRequestClose}
     >
       <View style={[styles.container, { backgroundColor: palette.page }]}>
         <View
@@ -250,7 +316,7 @@ export function CreateRoutineModal({
             <WindowControlButton
               variant="close"
               size="md"
-              onPress={handleModalClose}
+              onPress={handleRequestClose}
               accessibilityLabel={t("routines.closeActionsButton")}
               borderColor={palette.border}
               backgroundColor={palette.card}
@@ -312,7 +378,7 @@ export function CreateRoutineModal({
             <>
               <TouchableOpacity
                 style={[styles.button, styles.cancelButton, { borderColor: palette.border }]}
-                onPress={handleModalClose}
+                onPress={handleRequestClose}
               >
                 <Text style={[styles.buttonText, { color: palette.textPrimary }]}>
                   {t("routines.cancelButton")}
@@ -359,6 +425,8 @@ export function CreateRoutineModal({
           muscleGroups={muscleGroups}
           onSubmit={handleCreateExercise}
         />
+
+        {alertElement}
       </View>
     </Modal>
   );

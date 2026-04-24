@@ -64,7 +64,7 @@ export const translations = {
       },
     },
     workouts: {
-      startWorkoutCta: "INICIAR",
+      startWorkoutCta: "TREINAR",
       startWorkoutShortCta: "SELECIONAR",
       startWithoutRoutineCta: "INICIAR SEM ROTINA",
       startRoutineGroupCta: "INICIAR ROTINA DE TREINOS",
@@ -211,6 +211,11 @@ export const translations = {
       repsPlaceholder: "Repetições",
       noExerciseResults: "Nenhum exercício encontrado.",
       cancelButton: "Cancelar",
+      discardChangesTitle: "Descartar criação da rotina?",
+      discardChangesMessage:
+        "Você tem alterações não salvas. Se sair agora, perderá os dados preenchidos.",
+      keepEditingButton: "Continuar editando",
+      discardChangesButton: "Descartar",
       nextButton: "Próximo",
       backButton: "Voltar",
       createButton: "Criar",
@@ -509,6 +514,11 @@ export const translations = {
       repsPlaceholder: "Reps",
       noExerciseResults: "No exercises found.",
       cancelButton: "Cancel",
+      discardChangesTitle: "Discard routine creation?",
+      discardChangesMessage:
+        "You have unsaved changes. If you leave now, your entered data will be lost.",
+      keepEditingButton: "Keep editing",
+      discardChangesButton: "Discard",
       nextButton: "Next",
       backButton: "Back",
       createButton: "Create",
