@@ -27,6 +27,8 @@ import { PrepareWorkoutExercisePickerModal } from "@/features/workouts/component
 import { InProgressExerciseCard } from "@/features/workouts/components/in-progress/InProgressExerciseCard";
 import { createGym } from "@/features/workouts/dao/queries/gymQueries";
 import { useGymPicker } from "@/features/workouts/hooks/useGymPicker";
+import { useExerciseLastSession } from "@/features/workouts/hooks/useExerciseLastSession";
+import { useCopySetsFromLastSession } from "@/features/workouts/hooks/useCopySetsFromLastSession";
 import { useKeyboardInputAutoScroll } from "@/features/workouts/hooks/useKeyboardInputAutoScroll";
 import { PostFinishQuickActionsSheet } from "./components/PostFinishQuickActionsSheet";
 import { useRouter } from "expo-router";
@@ -62,10 +64,19 @@ export function InProgressWorkoutScreen() {
   const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
   const [deletingExerciseId, setDeletingExerciseId] = useState<string | null>(null);
   const [deletingSetId, setDeletingSetId] = useState<string | null>(null);
+  const [openHistoryByExerciseId, setOpenHistoryByExerciseId] = useState<Record<string, boolean>>(
+    {},
+  );
   const [isPostFinishPanelOpen, setIsPostFinishPanelOpen] = useState(false);
   const [isPostFinishGymModalOpen, setIsPostFinishGymModalOpen] = useState(false);
   const [savingAsRoutine, setSavingAsRoutine] = useState(false);
   const [updatingGym, setUpdatingGym] = useState(false);
+  const {
+    getState: getHistoryState,
+    ensureLoaded,
+    retry: retryHistory,
+    resetAll: resetHistory,
+  } = useExerciseLastSession(workout?.id ?? null, workout?.gymId ?? null);
   const { scrollRef, setInputRef, handleInputFocus, handleScroll } = useKeyboardInputAutoScroll();
   const { showAlert, showConfirm, alertElement } = useGlobalAlert();
   const {
@@ -76,10 +87,37 @@ export function InProgressWorkoutScreen() {
     loading: loadingGyms,
     reload: reloadGyms,
   } = useGymPicker({ autoSelectDefault: false });
+  const { handleCopySetsFromLastSession, copyingSetsForExerciseId } = useCopySetsFromLastSession({
+    workout,
+    getHistoryState,
+    onWorkoutUpdated: setWorkout,
+  });
 
   useEffect(() => {
     setSelectedGymId(workout?.gymId ?? null);
   }, [setSelectedGymId, workout?.gymId]);
+
+  useEffect(() => {
+    if (!workout) {
+      setOpenHistoryByExerciseId({});
+      resetHistory();
+      return;
+    }
+
+    const activeExerciseIds = new Set(workout.exercises.map((exercise) => exercise.id));
+
+    setOpenHistoryByExerciseId((prev) => {
+      const next: Record<string, boolean> = {};
+
+      Object.entries(prev).forEach(([exerciseId, isOpen]) => {
+        if (activeExerciseIds.has(exerciseId)) {
+          next[exerciseId] = isOpen;
+        }
+      });
+
+      return next;
+    });
+  }, [workout, resetHistory]);
 
   useFocusEffect(
     useCallback(() => {
@@ -566,6 +604,12 @@ export function InProgressWorkoutScreen() {
               });
               return next;
             });
+
+            setOpenHistoryByExerciseId((prev) => {
+              const next = { ...prev };
+              delete next[exerciseId];
+              return next;
+            });
           } catch {
             showAlert({
               title: t("workouts.removeExerciseErrorTitle"),
@@ -578,6 +622,22 @@ export function InProgressWorkoutScreen() {
         })();
       },
     });
+  };
+
+  const handleToggleExerciseHistoryPanel = async (
+    workoutExerciseId: string,
+    exerciseId: string,
+  ) => {
+    const shouldOpen = !openHistoryByExerciseId[workoutExerciseId];
+
+    setOpenHistoryByExerciseId((prev) => ({
+      ...prev,
+      [workoutExerciseId]: shouldOpen,
+    }));
+
+    if (shouldOpen) {
+      await ensureLoaded(exerciseId);
+    }
   };
 
   const handleDeleteSetPress = (args: {
@@ -786,6 +846,20 @@ export function InProgressWorkoutScreen() {
                   setInputRef={setInputRef}
                   handleInputFocus={handleInputFocus}
                   onDeleteExercisePress={handleDeleteExercisePress}
+                  isHistoryPanelOpen={Boolean(openHistoryByExerciseId[exercise.id])}
+                  onToggleHistoryPanel={() => {
+                    void handleToggleExerciseHistoryPanel(exercise.id, exercise.exercise.id);
+                  }}
+                  historyState={getHistoryState(exercise.exercise.id)}
+                  onRetryHistory={() => {
+                    void retryHistory(exercise.exercise.id);
+                  }}
+                  onCopySets={
+                    getHistoryState(exercise.exercise.id).status === "loaded"
+                      ? () => handleCopySetsFromLastSession(exercise.id, exercise.exercise.id)
+                      : undefined
+                  }
+                  copyingSetS={copyingSetsForExerciseId === exercise.id}
                   onPersistSet={handlePersistSet}
                   onDeleteSetPress={handleDeleteSetPress}
                   onToggleSetCompleted={handleToggleSetCompleted}

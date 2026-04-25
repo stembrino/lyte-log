@@ -3,6 +3,8 @@ import { AvatarWithPreview } from "@/components/AvatarWithPreview";
 import { RoundAddButton } from "@/components/RoundAddButton";
 import { monoFont } from "@/constants/retroTheme";
 import { resolveExerciseImageSource } from "@/features/exercises/utils/exerciseImageSource";
+import { InProgressExerciseHistoryPanel } from "@/features/workouts/components/in-progress/InProgressExerciseHistoryPanel";
+import type { ExerciseLastSessionState } from "@/features/workouts/hooks/useExerciseLastSession";
 import type { ActiveWorkoutRow } from "@/features/workouts/dao/queries/workoutQueries";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
@@ -30,6 +32,12 @@ type InProgressExerciseCardProps = {
   setInputRef: (key: string, ref: TextInput | null) => void;
   handleInputFocus: (key: string) => void;
   onDeleteExercisePress: (exerciseId: string, exerciseName: string) => void;
+  isHistoryPanelOpen: boolean;
+  onToggleHistoryPanel: () => void;
+  historyState: ExerciseLastSessionState;
+  onRetryHistory: () => void;
+  onCopySets?: () => Promise<void>;
+  copyingSetS?: boolean;
   onPersistSet: (args: {
     setId: string;
     currentReps: number;
@@ -55,6 +63,12 @@ export function InProgressExerciseCard({
   setInputRef,
   handleInputFocus,
   onDeleteExercisePress,
+  isHistoryPanelOpen,
+  onToggleHistoryPanel,
+  historyState,
+  onRetryHistory,
+  onCopySets,
+  copyingSetS,
   onPersistSet,
   onDeleteSetPress,
   onToggleSetCompleted,
@@ -80,6 +94,18 @@ export function InProgressExerciseCard({
           {exercise.exercise.name}
         </Text>
         <TouchableOpacity
+          style={[styles.historyToggleButton, { borderColor: palette.border }]}
+          onPress={onToggleHistoryPanel}
+          accessibilityRole="button"
+          accessibilityLabel={t("workouts.historyToggleAccessibilityLabel")}
+        >
+          <Text style={[styles.historyToggleButtonText, { color: palette.textPrimary }]}>
+            {isHistoryPanelOpen
+              ? t("workouts.historyToggleHideCta")
+              : t("workouts.historyToggleShowCta")}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={styles.removeExerciseButton}
           onPress={() => onDeleteExercisePress(exercise.id, exercise.exercise.name)}
           disabled={deletingExerciseId === exercise.id}
@@ -89,6 +115,17 @@ export function InProgressExerciseCard({
           <FontAwesome name="trash-o" size={18} color={palette.textSecondary} />
         </TouchableOpacity>
       </View>
+
+      {isHistoryPanelOpen ? (
+        <InProgressExerciseHistoryPanel
+          palette={palette}
+          t={t}
+          state={historyState}
+          onRetry={onRetryHistory}
+          onCopySets={onCopySets}
+          copyingSetS={copyingSetS}
+        />
+      ) : null}
 
       {exercise.sets.length === 0 ? (
         <Text style={[styles.noSetsText, { color: palette.textSecondary }]}>
@@ -289,6 +326,22 @@ const styles = StyleSheet.create({
     minHeight: 32,
     alignItems: "center",
     justifyContent: "center",
+  },
+  historyToggleButton: {
+    minHeight: 28,
+    minWidth: 56,
+    borderWidth: 1,
+    borderRadius: 2,
+    paddingHorizontal: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyToggleButtonText: {
+    fontFamily: monoFont,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
   },
   noSetsText: {
     fontFamily: monoFont,
