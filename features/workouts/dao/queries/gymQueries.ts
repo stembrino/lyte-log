@@ -76,3 +76,24 @@ export async function createGym(name: string): Promise<GymItem> {
     createdAt: created.createdAt,
   };
 }
+
+export async function getDefaultGymId(): Promise<string | null> {
+  const row = await db.query.gyms.findFirst({
+    where: eq(gyms.isDefault, true),
+    columns: {
+      id: true,
+    },
+  });
+
+  return row?.id ?? null;
+}
+
+export async function setDefaultGym(gymId: string | null): Promise<void> {
+  await db.update(gyms).set({ isDefault: false });
+
+  if (!gymId) {
+    return;
+  }
+
+  await db.update(gyms).set({ isDefault: true }).where(eq(gyms.id, gymId));
+}

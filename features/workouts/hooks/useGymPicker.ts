@@ -16,12 +16,8 @@ type UseGymPickerResult = {
 };
 
 function pickDefaultGymId(items: GymItem[]): string | null {
-  if (items.length === 0) {
-    return null;
-  }
-
   const defaultGym = items.find((gym) => gym.isDefault);
-  return defaultGym?.id ?? items[0]?.id ?? null;
+  return defaultGym?.id ?? null;
 }
 
 export function useGymPicker(options?: UseGymPickerOptions): UseGymPickerResult {

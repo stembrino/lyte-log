@@ -133,6 +133,7 @@ export function runMigrations(database: SQLiteDatabase): void {
   ensureRoutinesFavoriteColumn(database);
   ensureRoutinesDetailDescriptionColumns(database);
   ensureWorkoutsGymIdColumn(database);
+  ensureGymsDefaultColumn(database);
   ensureWorkoutsStatusColumn(database);
   removeLegacyI18nColumns(database);
   ensureExercisesImageUrlColumn(database);
@@ -422,6 +423,21 @@ function ensureWorkoutsGymIdColumn(database: SQLiteDatabase): void {
     }
   } catch {
     // Ignore backfill failures; app can still run without gym support.
+  }
+}
+
+function ensureGymsDefaultColumn(database: SQLiteDatabase): void {
+  try {
+    const rows = (database as any).getAllSync("PRAGMA table_info(gyms);") as {
+      name: string;
+    }[];
+    const columnNames = new Set(rows.map((row) => row.name));
+
+    if (!columnNames.has("is_default")) {
+      database.execSync("ALTER TABLE gyms ADD COLUMN is_default INTEGER NOT NULL DEFAULT 0;");
+    }
+  } catch {
+    // Ignore backfill failures; app can still run without default gym support.
   }
 }
 

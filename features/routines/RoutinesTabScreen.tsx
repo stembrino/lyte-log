@@ -96,7 +96,7 @@ export function RoutinesTabScreen() {
         exerciseId: entry.exerciseId,
         name: entry.exercise?.name ?? entry.exerciseId,
         exerciseOrder: entry.exerciseOrder ?? index + 1,
-        setsTarget: entry.setsTarget?.toString() ?? "",
+        setsTarget: entry.setsTarget?.toString() ?? "1",
         repsTarget: entry.repsTarget ?? "",
       })),
     });

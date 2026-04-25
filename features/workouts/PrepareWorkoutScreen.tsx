@@ -58,8 +58,8 @@ export function PrepareWorkoutScreen() {
         exerciseId: exercise.exerciseId,
         name: exercise.name,
         exerciseOrder: exercise.exerciseOrder ?? index + 1,
-        setsTarget: exercise.setsTarget?.toString() || "3",
-        repsTarget: exercise.repsTarget || "10",
+        setsTarget: exercise.setsTarget?.toString() || "1",
+        repsTarget: exercise.repsTarget || "",
       })),
     );
   }, [routine]);
@@ -78,8 +78,8 @@ export function PrepareWorkoutScreen() {
         exerciseId: exercise.id,
         name: exercise.name,
         exerciseOrder: prev.length + 1,
-        setsTarget: "3",
-        repsTarget: "10",
+        setsTarget: "1",
+        repsTarget: "",
       },
     ]);
   };

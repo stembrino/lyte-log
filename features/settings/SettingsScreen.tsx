@@ -4,6 +4,7 @@ import { useColorScheme } from "@/components/hooks/useColorScheme";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { LanguageSettingRow } from "@/features/settings/components/LanguageSettingRow";
+import { DefaultGymSettingRow } from "@/features/settings/components/DefaultGymSettingRow";
 import { SettingsSection } from "@/features/settings/components/SettingsSection";
 import { ThemeSettingRow } from "@/features/settings/components/ThemeSettingRow";
 import Colors from "@/constants/Colors";
@@ -33,6 +34,14 @@ export function SettingsScreen() {
           borderColor={palette.border}
         >
           <LanguageSettingRow />
+        </SettingsSection>
+
+        <SettingsSection
+          title={t("settings.workout") || "Workout"}
+          textColor={textColor}
+          borderColor={palette.border}
+        >
+          <DefaultGymSettingRow />
         </SettingsSection>
       </ScrollView>
     </View>

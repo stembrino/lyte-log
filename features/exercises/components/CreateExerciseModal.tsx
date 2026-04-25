@@ -57,7 +57,7 @@ export function CreateExerciseModal({ visible, onClose, muscleGroups, onSubmit }
   };
 
   const handleSubmit = async () => {
-    const trimmedName = name.trim();
+    const trimmedName = name.trim().toUpperCase();
     const selectedMuscleGroup = muscleGroup;
     const hasNameError = trimmedName.length === 0;
     const hasMuscleGroupError = !selectedMuscleGroup;
@@ -140,14 +140,16 @@ export function CreateExerciseModal({ visible, onClose, muscleGroups, onSubmit }
               placeholderTextColor={palette.textSecondary}
               value={name}
               onChangeText={(value) => {
-                setName(value);
-                if (value.trim()) {
+                const uppercasedValue = value.toUpperCase();
+                setName(uppercasedValue);
+                if (uppercasedValue.trim()) {
                   setNameError(false);
                 }
                 setSubmitError(null);
               }}
               onFocus={() => setFocusedField("name")}
               onBlur={() => setFocusedField(null)}
+              autoCapitalize="characters"
               maxLength={60}
             />
             {nameError ? (

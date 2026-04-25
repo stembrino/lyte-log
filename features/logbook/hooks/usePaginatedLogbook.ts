@@ -6,6 +6,7 @@ import {
   type LogbookGymGroup,
   type LogbookWorkoutItem,
 } from "@/features/logbook/dao/queries/logbookQueries";
+import { useApplyDefaultGymFilter } from "@/features/logbook/hooks/useApplyDefaultGymFilter";
 import type { AppLocale } from "@/components/providers/i18n-provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -109,6 +110,8 @@ export function usePaginatedLogbook(locale: AppLocale): UsePaginatedLogbookResul
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  useApplyDefaultGymFilter({ setSelectedGymFilter });
 
   const loadMore = useCallback(() => {
     if (loadingInitial || loadingMore || !hasMore) {

@@ -1,6 +1,6 @@
 import { db } from "@/db/client";
 import { exercises } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { ExerciseLibraryItem } from "../queries/exerciseQueries";
 
 export type CreateExerciseInput = {
@@ -19,14 +19,15 @@ function normalizeSearchText(value: string): string {
 export async function createCustomExercise(
   input: CreateExerciseInput,
 ): Promise<ExerciseLibraryItem> {
-  const trimmedName = input.name.trim();
+  const trimmedName = input.name.trim().toUpperCase();
   const trimmedMuscleGroup = input.muscleGroup.trim();
   const id = `ex-custom-${Date.now()}`;
+  const normalizedName = trimmedName.toLowerCase();
 
   const existingExercise = await db
     .select({ id: exercises.id })
     .from(exercises)
-    .where(eq(exercises.name, trimmedName))
+    .where(sql`trim(lower(${exercises.name})) = ${normalizedName}`)
     .limit(1);
 
   if (existingExercise.length > 0) {

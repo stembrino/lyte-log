@@ -226,8 +226,8 @@ export function CreateRoutineModal({
         exerciseId: exercise.id,
         name: exercise.name,
         exerciseOrder: prev.length + 1,
-        setsTarget: "3",
-        repsTarget: "10",
+        setsTarget: "1",
+        repsTarget: "",
       },
     ]);
   };
