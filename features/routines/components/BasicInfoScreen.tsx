@@ -1,12 +1,10 @@
 import { CharacterCounter } from "@/components/CharacterCounter";
-import { Chip } from "@/components/Chip";
 import { MultiSelectChipGroup } from "@/components/MultiSelectChipGroup";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { FALLBACK_ROUTINE_TAGS } from "@/constants/fallback/routineTags";
 import { monoFont } from "@/constants/retroTheme";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import type { RoutineGroupOption } from "./types";
 
 type Palette = ReturnType<typeof useRetroPalette>;
 type TFn = ReturnType<typeof useI18n>["t"];
@@ -15,10 +13,6 @@ type Locale = ReturnType<typeof useI18n>["locale"];
 export type BasicInfoScreenProps = {
   name: string;
   onChangeName: (v: string) => void;
-  showRoutineGroups?: boolean;
-  routineGroups: RoutineGroupOption[];
-  selectedGroupId: string | null;
-  onSelectGroup: (groupId: string | null) => void;
   detail: string;
   onChangeDetail: (v: string) => void;
   description: string;
@@ -34,10 +28,6 @@ export type BasicInfoScreenProps = {
 export function BasicInfoScreen({
   name,
   onChangeName,
-  showRoutineGroups = true,
-  routineGroups,
-  selectedGroupId,
-  onSelectGroup,
   detail,
   onChangeDetail,
   description,
@@ -84,33 +74,6 @@ export function BasicInfoScreen({
             accentColor={palette.accent}
           />
         </View>
-
-        {showRoutineGroups ? (
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: palette.textPrimary }]}>
-              {t("routines.formGroupLabel")}
-            </Text>
-            <Text style={[styles.helperText, { color: palette.textSecondary }]}>
-              {t("routines.formGroupHint")}
-            </Text>
-            <View style={styles.tagList}>
-              <Chip
-                key="no-group"
-                label={t("routines.formNoGroupOption")}
-                selected={selectedGroupId === null}
-                onPress={() => onSelectGroup(null)}
-              />
-              {routineGroups.map((group) => (
-                <Chip
-                  key={group.id}
-                  label={group.name}
-                  selected={selectedGroupId === group.id}
-                  onPress={() => onSelectGroup(selectedGroupId === group.id ? null : group.id)}
-                />
-              ))}
-            </View>
-          </View>
-        ) : null}
 
         <View style={styles.field}>
           <Text style={[styles.label, { color: palette.textPrimary }]}>

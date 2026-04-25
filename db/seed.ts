@@ -3,29 +3,10 @@ import { runDevOnlyResetExercisesToBaseline } from "@/db/devOnly/resetExercisesT
 import { runDevOnlyInjectMockRoutines } from "@/db/devOnly/injectMockRoutines.devOnly";
 import { DEFAULT_EXERCISES } from "@/db/patches/data/exercises";
 import { DEFAULT_MUSCLE_GROUPS } from "@/db/patches/data/muscleGroups";
-// import {
-//   DEFAULT_ROUTINE_GROUP_ROUTINES,
-//   DEFAULT_ROUTINE_GROUPS,
-// } from "@/db/patches/data/routineGroups";
-// import {
-//   DEFAULT_ROUTINE_EXERCISES,
-//   DEFAULT_ROUTINE_TAG_LINKS,
-//   DEFAULT_ROUTINES,
-// } from "@/db/patches/data/routines";
 import { DEFAULT_ROUTINE_TAGS } from "@/db/patches/data/routineTags";
 import { count, eq, isNull, or } from "drizzle-orm";
 import { db, expoDb } from "./client";
-import {
-  entityTranslations,
-  exercises,
-  muscleGroups,
-  // routineGroupRoutines,
-  routineGroups,
-  // routineExercises,
-  routines,
-  // routineTagLinks,
-  routineTags,
-} from "./schema";
+import { entityTranslations, exercises, muscleGroups, routines, routineTags } from "./schema";
 import { DEFAULT_ENTITY_TRANSLATIONS } from "./seed-data/entityTranslations";
 
 // Bump this version whenever search index logic or labelPt/labelEn data changes.
@@ -34,7 +15,6 @@ const EXERCISE_SEARCH_INDEX_KEY = "exercise_search_index_version";
 
 type SeedDatabaseOptions = {
   database?: typeof db;
-  includeRoutineGroups?: boolean;
 };
 
 // NOTE: entity_translations seed rows must come from db/seed-data/entityTranslations.ts,
@@ -72,13 +52,6 @@ function buildRoutineTagSearchIndex(tag: { slug: string; labelPt: string; labelE
 //   };
 // }
 //
-// function buildRoutineGroupSearchIndex(group: { name: string; labelPt: string; labelEn: string }) {
-//   return {
-//     searchPt: normalizeSearchText(`${group.labelPt} ${group.name}`),
-//     searchEn: normalizeSearchText(`${group.labelEn} ${group.name}`),
-//   };
-// }
-
 function buildBackfillTranslationRows(args: {
   routinesRows: {
     id: string;
@@ -99,16 +72,9 @@ function buildBackfillTranslationRows(args: {
     id: string;
     slug: string;
   }[];
-  routineGroupRows: {
-    id: string;
-    name: string;
-    detail: string | null;
-    description: string | null;
-    createdAt: string;
-  }[];
 }) {
   const rows: {
-    entityType: "exercise" | "muscle_group" | "routine" | "routine_group" | "routine_tag";
+    entityType: "exercise" | "muscle_group" | "routine" | "routine_tag";
     entityId: string;
     field: "name" | "detail" | "description";
     locale: "pt-BR" | "en-US";
@@ -197,44 +163,6 @@ function buildBackfillTranslationRows(args: {
     }
   }
 
-  for (const group of args.routineGroupRows) {
-    for (const locale of ["pt-BR", "en-US"] as const) {
-      rows.push({
-        entityType: "routine_group",
-        entityId: group.id,
-        field: "name",
-        locale,
-        value: group.name,
-        createdAt: group.createdAt,
-        updatedAt: group.createdAt,
-      });
-
-      if (group.detail) {
-        rows.push({
-          entityType: "routine_group",
-          entityId: group.id,
-          field: "detail",
-          locale,
-          value: group.detail,
-          createdAt: group.createdAt,
-          updatedAt: group.createdAt,
-        });
-      }
-
-      if (group.description) {
-        rows.push({
-          entityType: "routine_group",
-          entityId: group.id,
-          field: "description",
-          locale,
-          value: group.description,
-          createdAt: group.createdAt,
-          updatedAt: group.createdAt,
-        });
-      }
-    }
-  }
-
   return rows;
 }
 
@@ -243,7 +171,6 @@ function buildBackfillTranslationRows(args: {
  */
 export async function seedDatabase(options: SeedDatabaseOptions = {}): Promise<void> {
   const database = options.database ?? db;
-  const includeRoutineGroups = options.includeRoutineGroups ?? false;
 
   runDevOnlyResetExercisesToBaseline(expoDb, "seed");
 
@@ -328,13 +255,9 @@ export async function seedDatabase(options: SeedDatabaseOptions = {}): Promise<v
     }
   }
 
-  const translationSeedRows = includeRoutineGroups
-    ? Array.from(DEFAULT_ENTITY_TRANSLATIONS)
-    : Array.from(DEFAULT_ENTITY_TRANSLATIONS).filter((row) => row.entityType !== "routine_group");
-
   await database
     .insert(entityTranslations)
-    .values(translationSeedRows)
+    .values(Array.from(DEFAULT_ENTITY_TRANSLATIONS))
     .onConflictDoNothing({
       target: [
         entityTranslations.entityType,
@@ -375,24 +298,11 @@ export async function seedDatabase(options: SeedDatabaseOptions = {}): Promise<v
     })
     .from(routineTags);
 
-  const existingRoutineGroups = includeRoutineGroups
-    ? await database
-        .select({
-          id: routineGroups.id,
-          name: routineGroups.name,
-          detail: routineGroups.detail,
-          description: routineGroups.description,
-          createdAt: routineGroups.createdAt,
-        })
-        .from(routineGroups)
-    : [];
-
   const backfillRows = buildBackfillTranslationRows({
     routinesRows: existingRoutines,
     exerciseRows: existingExercises,
     muscleGroupRows: existingMuscleGroups,
     routineTagRows: existingRoutineTags,
-    routineGroupRows: existingRoutineGroups,
   });
 
   if (backfillRows.length > 0) {

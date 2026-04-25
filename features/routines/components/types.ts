@@ -5,9 +5,3 @@ export type SelectedRoutineExercise = {
   setsTarget: string;
   repsTarget: string;
 };
-
-export type RoutineGroupOption = {
-  id: string;
-  name: string;
-  detail: string | null;
-};

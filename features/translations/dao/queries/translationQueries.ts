@@ -3,7 +3,7 @@ import { db } from "@/db/client";
 import { entityTranslations } from "@/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
 
-export type TranslationEntityType = "routine" | "routine_group" | "exercise";
+export type TranslationEntityType = "routine" | "exercise" | "muscle_group" | "routine_tag";
 export type TranslationField = "name" | "detail" | "description";
 
 export function buildTranslationKey(

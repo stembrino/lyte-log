@@ -15,13 +15,11 @@ import { useExerciseMutations } from "@/features/exercises/hooks/useExerciseMuta
 import { useMuscleGroups } from "@/features/exercises/hooks/useMuscleGroups";
 import { BasicInfoScreen } from "./BasicInfoScreen";
 import { ExercisePickerScreen } from "./ExercisePickerScreen";
-import type { RoutineGroupOption, SelectedRoutineExercise } from "./types";
+import type { SelectedRoutineExercise } from "./types";
 
 interface CreateRoutineModalProps {
   visible: boolean;
   onClose: () => void;
-  routineGroups: RoutineGroupOption[];
-  enableRoutineGroups?: boolean;
   mode?: "create" | "edit";
   initialValues?: RoutineFormInitialValues | null;
   onSubmit: (routineData: RoutineSubmitPayload) => Promise<void>;
@@ -30,7 +28,6 @@ interface CreateRoutineModalProps {
 type Screen = "basic" | "exercises";
 
 export type RoutineSubmitPayload = {
-  groupId: string | null;
   name: string;
   detail?: string;
   description?: string;
@@ -45,7 +42,6 @@ export type RoutineSubmitPayload = {
 
 export type RoutineFormInitialValues = {
   name: string;
-  selectedGroupId: string | null;
   detail: string;
   description: string;
   tagIds: string[];
@@ -55,8 +51,6 @@ export type RoutineFormInitialValues = {
 export function CreateRoutineModal({
   visible,
   onClose,
-  routineGroups,
-  enableRoutineGroups = true,
   mode = "create",
   initialValues,
   onSubmit,
@@ -69,7 +63,6 @@ export function CreateRoutineModal({
   const [screen, setScreen] = useState<Screen>("basic");
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [detail, setDetail] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
@@ -83,14 +76,13 @@ export function CreateRoutineModal({
     }
 
     setName(initialValues?.name ?? "");
-    setSelectedGroupId(enableRoutineGroups ? (initialValues?.selectedGroupId ?? null) : null);
     setDetail(initialValues?.detail ?? "");
     setDescription(initialValues?.description ?? "");
     setSelectedTags(new Set(initialValues?.tagIds ?? []));
     setSelectedExercises(initialValues?.exercises ?? []);
     setSearchQuery("");
     setScreen("basic");
-  }, [enableRoutineGroups, visible, initialValues]);
+  }, [visible, initialValues]);
 
   const excludedExerciseIds = useMemo(
     () => selectedExercises.map((exercise) => exercise.exerciseId),
@@ -117,14 +109,12 @@ export function CreateRoutineModal({
 
   const hasUnsavedChanges = useMemo(() => {
     const initialName = initialValues?.name ?? "";
-    const initialGroupId = enableRoutineGroups ? (initialValues?.selectedGroupId ?? null) : null;
     const initialDetail = initialValues?.detail ?? "";
     const initialDescription = initialValues?.description ?? "";
     const initialTagIds = initialValues?.tagIds ?? [];
     const initialExercises = initialValues?.exercises ?? [];
 
     if (name !== initialName) return true;
-    if ((enableRoutineGroups ? selectedGroupId : null) !== initialGroupId) return true;
     if (detail !== initialDetail) return true;
     if (description !== initialDescription) return true;
 
@@ -152,16 +142,7 @@ export function CreateRoutineModal({
     }
 
     return false;
-  }, [
-    description,
-    detail,
-    enableRoutineGroups,
-    initialValues,
-    name,
-    selectedExercises,
-    selectedGroupId,
-    selectedTags,
-  ]);
+  }, [description, detail, initialValues, name, selectedExercises, selectedTags]);
 
   const handleToggleTag = (tagId: string) => {
     setSelectedTags((prev) => {
@@ -192,7 +173,6 @@ export function CreateRoutineModal({
     if (!name.trim()) return;
 
     await onSubmit({
-      groupId: enableRoutineGroups ? selectedGroupId : null,
       name: name.trim(),
       detail: detail.trim() || undefined,
       description: description.trim() || undefined,
@@ -210,7 +190,6 @@ export function CreateRoutineModal({
     });
 
     setName("");
-    setSelectedGroupId(null);
     setDetail("");
     setDescription("");
     setSelectedTags(new Set());
@@ -260,7 +239,6 @@ export function CreateRoutineModal({
   const handleModalClose = () => {
     setName("");
     setNameError(false);
-    setSelectedGroupId(null);
     setDetail("");
     setDescription("");
     setSelectedTags(new Set());
@@ -332,10 +310,6 @@ export function CreateRoutineModal({
               setName(newName);
               if (newName.trim()) setNameError(false);
             }}
-            routineGroups={routineGroups}
-            showRoutineGroups={enableRoutineGroups}
-            selectedGroupId={selectedGroupId}
-            onSelectGroup={setSelectedGroupId}
             detail={detail}
             onChangeDetail={setDetail}
             description={description}

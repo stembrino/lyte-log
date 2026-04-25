@@ -54,18 +54,6 @@ export function runMigrations(database: SQLiteDatabase): void {
       created_at              TEXT NOT NULL
     );
 
-    CREATE TABLE IF NOT EXISTS routine_groups (
-      id                      TEXT PRIMARY KEY NOT NULL,
-      name                    TEXT NOT NULL,
-      detail                  TEXT,
-      description             TEXT,
-      is_system               INTEGER NOT NULL DEFAULT 0,
-      is_favorite             INTEGER NOT NULL DEFAULT 0,
-      search_pt               TEXT,
-      search_en               TEXT,
-      created_at              TEXT NOT NULL
-    );
-
     CREATE TABLE IF NOT EXISTS routine_tags (
       id          TEXT PRIMARY KEY NOT NULL,
       slug        TEXT NOT NULL UNIQUE,
@@ -86,14 +74,6 @@ export function runMigrations(database: SQLiteDatabase): void {
       exercise_order   INTEGER NOT NULL,
       sets_target      INTEGER,
       reps_target      TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS routine_group_routines (
-      routine_group_id TEXT NOT NULL REFERENCES routine_groups(id) ON DELETE CASCADE,
-      routine_id       TEXT NOT NULL REFERENCES routines(id) ON DELETE CASCADE,
-      position         INTEGER NOT NULL,
-      label            TEXT,
-      PRIMARY KEY (routine_group_id, routine_id)
     );
 
     CREATE TABLE IF NOT EXISTS entity_translations (
@@ -136,6 +116,7 @@ export function runMigrations(database: SQLiteDatabase): void {
   ensureGymsDefaultColumn(database);
   ensureWorkoutsStatusColumn(database);
   removeLegacyI18nColumns(database);
+  dropLegacyRoutineGroupTables(database);
   ensureExercisesImageUrlColumn(database);
   ensureWorkoutsDeletedAtColumn(database);
 
@@ -249,43 +230,6 @@ function removeLegacyI18nColumns(database: SQLiteDatabase): void {
     rebuildTableWithoutI18nColumn(database, {
       tableName: "routines",
       createSql: `CREATE TABLE routines__new (
-        id TEXT PRIMARY KEY NOT NULL,
-        name TEXT NOT NULL,
-        detail TEXT,
-        description TEXT,
-        is_system INTEGER NOT NULL DEFAULT 0,
-        is_favorite INTEGER NOT NULL DEFAULT 0,
-        search_pt TEXT,
-        search_en TEXT,
-        created_at TEXT NOT NULL
-      );`,
-      targetColumns: [
-        "id",
-        "name",
-        "detail",
-        "description",
-        "is_system",
-        "is_favorite",
-        "search_pt",
-        "search_en",
-        "created_at",
-      ],
-      sourceByColumn: {
-        id: "id",
-        name: "name",
-        detail: "detail",
-        description: "description",
-        is_system: "is_system",
-        is_favorite: "is_favorite",
-        search_pt: "search_pt",
-        search_en: "search_en",
-        created_at: "created_at",
-      },
-    });
-
-    rebuildTableWithoutI18nColumn(database, {
-      tableName: "routine_groups",
-      createSql: `CREATE TABLE routine_groups__new (
         id TEXT PRIMARY KEY NOT NULL,
         name TEXT NOT NULL,
         detail TEXT,
@@ -474,5 +418,16 @@ function ensureWorkoutsDeletedAtColumn(database: SQLiteDatabase): void {
     }
   } catch {
     // Ignore backfill failures; app can still run without soft-delete support.
+  }
+}
+
+function dropLegacyRoutineGroupTables(database: SQLiteDatabase): void {
+  try {
+    database.execSync(`
+      DROP TABLE IF EXISTS routine_group_routines;
+      DROP TABLE IF EXISTS routine_groups;
+    `);
+  } catch {
+    // Ignore cleanup failures; app can still run without removing old routine group tables.
   }
 }

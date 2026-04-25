@@ -43,21 +43,11 @@ export type RoutineItem = {
   exercises: RoutineExercise[];
 };
 
-export type RoutineGroupItem = {
-  id: string;
-  name: string;
-  detail: string | null;
-  description: string | null;
-  isFavorite: boolean;
-  createdAt: string;
-  routines: RoutineItem[];
-};
-
 type TranslationMap = Map<string, string>;
 
 function pickTranslated(
   map: TranslationMap,
-  entityType: "routine" | "routine_group" | "exercise",
+  entityType: "routine" | "exercise",
   entityId: string,
   field: "name" | "detail" | "description",
   fallback: string | null,
@@ -71,27 +61,21 @@ function pickTranslated(
 
 async function loadTranslations(
   locale: AppLocale,
-  groupIds: string[],
   routineIds: string[],
   exerciseIds: string[],
 ): Promise<TranslationMap> {
-  const uniqueGroupIds = Array.from(new Set(groupIds));
   const uniqueRoutineIds = Array.from(new Set(routineIds));
   const uniqueExerciseIds = Array.from(new Set(exerciseIds));
 
-  if (
-    uniqueGroupIds.length === 0 &&
-    uniqueRoutineIds.length === 0 &&
-    uniqueExerciseIds.length === 0
-  ) {
+  if (uniqueRoutineIds.length === 0 && uniqueExerciseIds.length === 0) {
     return new Map();
   }
 
   return getTranslationsMap({
     locale,
-    entityTypes: ["routine", "routine_group", "exercise"],
+    entityTypes: ["routine", "exercise"],
     fields: ["name", "detail", "description"],
-    entityIds: [...uniqueGroupIds, ...uniqueRoutineIds, ...uniqueExerciseIds],
+    entityIds: [...uniqueRoutineIds, ...uniqueExerciseIds],
   });
 }
 
@@ -159,96 +143,14 @@ function mapRoutine(
 }
 
 /**
- * Load all routine groups with their linked routines and exercises.
+ * Load a single routine by ID, with exercises.
  */
-export async function getRoutineGroups(locale: AppLocale): Promise<RoutineGroupItem[]> {
-  const groupRows = await db.query.routineGroups.findMany({
-    orderBy: (group, { asc }) => [asc(group.createdAt)],
-    with: {
-      routineGroupRoutines: {
-        orderBy: (entry, { asc }) => [asc(entry.position)],
-        with: {
-          routine: {
-            with: {
-              routineExercises: {
-                orderBy: (routineExercise, { asc }) => [asc(routineExercise.exerciseOrder)],
-                with: {
-                  exercise: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const groupIds = groupRows.map((group) => group.id);
-  const routineIds = groupRows.flatMap((group) =>
-    group.routineGroupRoutines
-      .map((entry) => entry.routine?.id)
-      .filter((id): id is string => Boolean(id)),
-  );
-  const exerciseIds = groupRows.flatMap((group) =>
-    group.routineGroupRoutines.flatMap(
-      (entry) =>
-        entry.routine?.routineExercises
-          .map((routineExercise) => routineExercise.exerciseId)
-          .filter((id): id is string => Boolean(id)) ?? [],
-    ),
-  );
-
-  const translationMap = await loadTranslations(locale, groupIds, routineIds, exerciseIds);
-
-  return groupRows.map<RoutineGroupItem>((group) => ({
-    id: group.id,
-    name: pickTranslated(translationMap, "routine_group", group.id, "name", group.name) ?? "",
-    detail: pickTranslated(
-      translationMap,
-      "routine_group",
-      group.id,
-      "detail",
-      group.detail ?? null,
-    ),
-    description: pickTranslated(
-      translationMap,
-      "routine_group",
-      group.id,
-      "description",
-      group.description ?? null,
-    ),
-    isFavorite: group.isFavorite,
-    createdAt: group.createdAt,
-    routines: group.routineGroupRoutines
-      .map((entry) => (entry.routine ? mapRoutine(entry.routine, translationMap) : null))
-      .filter((routine): routine is RoutineItem => routine !== null),
-  }));
-}
-
-/**
- * Load all ungrouped routines (not in any group).
- */
-export async function getUngroupedRoutines(locale: AppLocale): Promise<RoutineItem[]> {
-  const groupRows = await db.query.routineGroups.findMany({
-    with: {
-      routineGroupRoutines: {
-        with: {
-          routine: true,
-        },
-      },
-    },
-  });
-
-  const linkedRoutineIdsSet = new Set(
-    groupRows.flatMap((group) =>
-      group.routineGroupRoutines
-        .map((entry) => entry.routine?.id)
-        .filter((id): id is string => Boolean(id)),
-    ),
-  );
-
-  const allRoutineRows = await db.query.routines.findMany({
-    orderBy: (routine, { asc }) => [asc(routine.createdAt)],
+export async function getRoutineById(
+  routineId: string,
+  locale: AppLocale,
+): Promise<RoutineItem | null> {
+  const routineRow = await db.query.routines.findFirst({
+    where: (routine, { eq }) => eq(routine.id, routineId),
     with: {
       routineExercises: {
         orderBy: (routineExercise, { asc }) => [asc(routineExercise.exerciseOrder)],
@@ -259,24 +161,21 @@ export async function getUngroupedRoutines(locale: AppLocale): Promise<RoutineIt
     },
   });
 
-  const ungroupedRoutineRows = allRoutineRows.filter(
-    (routine) => !linkedRoutineIdsSet.has(routine.id),
-  );
+  if (!routineRow) {
+    return null;
+  }
 
-  const routineIds = ungroupedRoutineRows.map((routine) => routine.id);
-  const exerciseIds = ungroupedRoutineRows.flatMap((routine) =>
-    routine.routineExercises
-      .map((routineExercise) => routineExercise.exerciseId)
-      .filter((id): id is string => Boolean(id)),
-  );
+  const exerciseIds = routineRow.routineExercises
+    .map((routineExercise) => routineExercise.exerciseId)
+    .filter((id): id is string => Boolean(id));
 
-  const translationMap = await loadTranslations(locale, [], routineIds, exerciseIds);
+  const translationMap = await loadTranslations(locale, [routineRow.id], exerciseIds);
 
-  return ungroupedRoutineRows.map((routine) => mapRoutine(routine, translationMap));
+  return mapRoutine(routineRow, translationMap);
 }
 
 /**
- * Load all routines as a flat list (grouped + ungrouped together).
+ * Load all routines as a flat list.
  */
 export async function getRoutinesFlat(locale: AppLocale): Promise<RoutineItem[]> {
   const allRoutineRows = await db.query.routines.findMany({
@@ -298,7 +197,7 @@ export async function getRoutinesFlat(locale: AppLocale): Promise<RoutineItem[]>
       .filter((id): id is string => Boolean(id)),
   );
 
-  const translationMap = await loadTranslations(locale, [], routineIds, exerciseIds);
+  const translationMap = await loadTranslations(locale, routineIds, exerciseIds);
 
   return allRoutineRows.map((routine) => mapRoutine(routine, translationMap));
 }
@@ -339,7 +238,7 @@ export async function getRoutinesPage({
       .filter((id): id is string => Boolean(id)),
   );
 
-  const translationMap = await loadTranslations(locale, [], routineIds, exerciseIds);
+  const translationMap = await loadTranslations(locale, routineIds, exerciseIds);
 
   return routineRows.map((routine) => mapRoutine(routine, translationMap));
 }
@@ -359,85 +258,4 @@ export async function getRoutinesCount({
   const [row] = await db.select({ total: count() }).from(routinesTable).where(whereClause);
 
   return row?.total ?? 0;
-}
-
-/**
- * Load a single routine by id for workout preparation.
- */
-export async function getRoutineById(
-  routineId: string,
-  locale: AppLocale,
-): Promise<RoutineItem | null> {
-  const routineRow = await db.query.routines.findFirst({
-    where: (routine, { eq: eqQuery }) => eqQuery(routine.id, routineId),
-    with: {
-      routineExercises: {
-        orderBy: (routineExercise, { asc: ascOrder }) => [ascOrder(routineExercise.exerciseOrder)],
-        with: {
-          exercise: true,
-        },
-      },
-    },
-  });
-
-  if (!routineRow) {
-    return null;
-  }
-
-  const exerciseIds = routineRow.routineExercises
-    .map((routineExercise) => routineExercise.exerciseId)
-    .filter((id): id is string => Boolean(id));
-
-  const translationMap = await loadTranslations(locale, [], [routineRow.id], exerciseIds);
-
-  return mapRoutine(routineRow, translationMap);
-}
-
-/**
- * Load routines for a specific group.
- */
-export async function getRoutinesByGroup(
-  groupId: string,
-  locale: AppLocale,
-): Promise<RoutineItem[]> {
-  const groupRow = await db.query.routineGroups.findFirst({
-    where: (group, { eq }) => eq(group.id, groupId),
-    with: {
-      routineGroupRoutines: {
-        orderBy: (entry, { asc }) => [asc(entry.position)],
-        with: {
-          routine: {
-            with: {
-              routineExercises: {
-                orderBy: (routineExercise, { asc }) => [asc(routineExercise.exerciseOrder)],
-                with: {
-                  exercise: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!groupRow) {
-    return [];
-  }
-
-  const routineIds = groupRow.routineGroupRoutines
-    .map((entry) => entry.routine?.id)
-    .filter((id): id is string => Boolean(id));
-  const exerciseIds = groupRow.routineGroupRoutines.flatMap(
-    (entry) =>
-      entry.routine?.routineExercises
-        .map((routineExercise) => routineExercise.exerciseId)
-        .filter((id): id is string => Boolean(id)) ?? [],
-  );
-
-  const translationMap = await loadTranslations(locale, [], routineIds, exerciseIds);
-
-  return groupRow.routineGroupRoutines
-    .map((entry) => (entry.routine ? mapRoutine(entry.routine, translationMap) : null))
-    .filter((routine): routine is RoutineItem => routine !== null);
 }

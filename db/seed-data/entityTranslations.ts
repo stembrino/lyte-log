@@ -1,6 +1,5 @@
 import { DEFAULT_EXERCISES } from "@/db/patches/data/exercises";
 import { DEFAULT_MUSCLE_GROUPS } from "@/db/patches/data/muscleGroups";
-import { DEFAULT_ROUTINE_GROUPS } from "@/db/patches/data/routineGroups";
 import { DEFAULT_ROUTINES } from "@/db/patches/data/routines";
 import { DEFAULT_ROUTINE_TAGS } from "@/db/patches/data/routineTags";
 
@@ -9,7 +8,7 @@ import { DEFAULT_ROUTINE_TAGS } from "@/db/patches/data/routineTags";
  * Keep this independent from constants/translations.ts.
  */
 
-type SeedEntityType = "exercise" | "muscle_group" | "routine" | "routine_group" | "routine_tag";
+type SeedEntityType = "exercise" | "muscle_group" | "routine" | "routine_tag";
 type SeedField = "name" | "detail" | "description";
 type SeedLocale = "pt-BR" | "en-US";
 
@@ -126,7 +125,16 @@ const muscleGroupRows = DEFAULT_MUSCLE_GROUPS.flatMap((group) =>
   }),
 );
 
-const routineRows = DEFAULT_ROUTINES.flatMap((routine) =>
+const routineRows = (
+  DEFAULT_ROUTINES as readonly {
+    id: string;
+    labelPt: string;
+    labelEn: string;
+    detail?: string | null;
+    description?: string | null;
+    createdAt: string;
+  }[]
+).flatMap((routine) =>
   makeRows({
     entityType: "routine",
     entityId: routine.id,
@@ -137,20 +145,6 @@ const routineRows = DEFAULT_ROUTINES.flatMap((routine) =>
     descriptionPt: routine.description,
     descriptionEn: routine.description,
     createdAt: routine.createdAt,
-  }),
-);
-
-const routineGroupRows = DEFAULT_ROUTINE_GROUPS.flatMap((group) =>
-  makeRows({
-    entityType: "routine_group",
-    entityId: group.id,
-    namePt: group.labelPt,
-    nameEn: group.labelEn,
-    detailPt: group.detail,
-    detailEn: group.detail,
-    descriptionPt: group.description,
-    descriptionEn: group.description,
-    createdAt: group.createdAt,
   }),
 );
 
@@ -168,6 +162,5 @@ export const DEFAULT_ENTITY_TRANSLATIONS = [
   ...exerciseRows,
   ...muscleGroupRows,
   ...routineRows,
-  ...routineGroupRows,
   ...routineTagRows,
 ] as const;

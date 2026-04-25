@@ -5,7 +5,6 @@ import { ExpandedPanel } from "@/components/ExpandedPanel";
 import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { FEATURE_FLAGS } from "@/constants/featureFlags";
 import { monoFont } from "@/constants/retroTheme";
 import { db } from "@/db/client";
 import { usePaginatedRoutines } from "@/features/routines/hooks/usePaginatedRoutines";
@@ -13,17 +12,14 @@ import {
   useRoutineMutations,
   type RoutineSubmitPayload,
 } from "@/features/routines/hooks/useRoutineMutations";
-import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { CreateRoutineModal, type RoutineFormInitialValues } from "./components/CreateRoutineModal";
 
 export function RoutinesTabScreen() {
-  const router = useRouter();
   const { t, locale } = useI18n();
   const palette = useRetroPalette();
   const { showConfirm, alertElement } = useGlobalAlert();
-  const showRoutineCollectionsEntry = FEATURE_FLAGS.routineCollectionsEntry;
   const {
     items: routines,
     loadingInitial,
@@ -63,10 +59,6 @@ export function RoutinesTabScreen() {
     setShowRoutineModal(true);
   };
 
-  const openRoutineCollections = () => {
-    router.push("/routine-collections");
-  };
-
   const openEditRoutine = useCallback(async (routineId: string) => {
     const routine = await db.query.routines.findFirst({
       where: (routineTable, { eq }) => eq(routineTable.id, routineId),
@@ -88,7 +80,6 @@ export function RoutinesTabScreen() {
     setEditingRoutineId(routine.id);
     setRoutineInitialValues({
       name: routine.name,
-      selectedGroupId: null,
       detail: routine.detail ?? "",
       description: routine.description ?? "",
       tagIds: routine.routineTagLinks.map((tagLink) => tagLink.tagId),
@@ -146,22 +137,6 @@ export function RoutinesTabScreen() {
                 {t("routines.subtitle")}
               </Text>
               <View style={styles.headerActions}>
-                {showRoutineCollectionsEntry ? (
-                  <TouchableOpacity
-                    style={[
-                      styles.secondaryHeaderButton,
-                      { borderColor: palette.border, backgroundColor: palette.card },
-                    ]}
-                    onPress={openRoutineCollections}
-                  >
-                    <Text
-                      style={[styles.secondaryHeaderButtonText, { color: palette.textPrimary }]}
-                    >
-                      {t("routines.openCollectionsButton")}
-                    </Text>
-                  </TouchableOpacity>
-                ) : null}
-
                 <TouchableOpacity
                   style={[
                     styles.addButton,
@@ -261,8 +236,6 @@ export function RoutinesTabScreen() {
       <CreateRoutineModal
         visible={showRoutineModal}
         onClose={closeRoutineModal}
-        routineGroups={[]}
-        enableRoutineGroups={false}
         mode={editingRoutineId ? "edit" : "create"}
         initialValues={routineInitialValues}
         onSubmit={handleRoutineSubmit}
@@ -310,21 +283,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.5,
-  },
-  secondaryHeaderButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 4,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  secondaryHeaderButtonText: {
-    fontFamily: monoFont,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
   },
   emptyState: {
     marginTop: 16,
