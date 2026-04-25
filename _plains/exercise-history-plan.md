@@ -1,133 +1,189 @@
-# Exercise History — Where, When & How To Show
+# Exercise History - Where, When & How To Show
 
-## Objetivo
+## Goal
 
-Mostrar ao usuário o histórico de performance por exercício — sem gráficos — de forma que os números exatos sejam sempre visíveis e comparáveis.
+Show exercise performance history without charts, keeping exact numbers visible and easy to compare.
 
 ---
 
-## As três superfícies possíveis
+## Three Possible Surfaces
 
-### Superfície A — Preparar Treino ("última vez")
+### Surface A - Prepare Workout ("last time")
 
-**Onde:** `PrepareWorkoutScreen` → `PrepareWorkoutExercisesForm`  
-**Quando:** Ao preparar um treino com uma rotina selecionada  
-**O que mostrar:** Para cada exercício da lista, uma linha discreta abaixo do nome:
+**Where:** `PrepareWorkoutScreen` -> `PrepareWorkoutExercisesForm`  
+**When:** While preparing a workout from a selected routine  
+**What to show:** A subtle line under each exercise name:
 
 ```
-SUPINO RETO
+BENCH PRESS
 sets: [3]   reps: [8]
-última vez: 60kg × 8 × 3 sets  —  há 6 dias
+last time: 60kg x 8 x 3 sets - 6 days ago
 ```
 
-**Prós:**
+**Pros:**
 
-- Contexto máximo — o usuário está prestes a treinar e pode ajustar a meta
-- Não precisa de navegação extra
-- Natural: "o que fiz da última vez?"
+- Maximum context right before training starts
+- No extra navigation
+- Natural question answered: "what did I do last time?"
 
-**Contras:**
+**Cons:**
 
-- Requer uma query extra por exercício ao carregar a tela (ou uma query única com todos os exerciseIds da rotina)
-- Só aparece quando se usa uma rotina; se o treino for livre sem rotina, não ajuda
+- Requires extra data loading per exercise, or one batched query for all routine exercise IDs
+- Only helps when the workout has routine exercises loaded
 
-**Complexidade:** Baixa — uma query nova `getLastWorkoutSetsByExercises(exerciseIds[])` que retorna o último workout_set por exercício. Sem mudança de schema.
+**Complexity:** Low - one new query `getLastWorkoutSetsByExercises(exerciseIds[])` returning the last completed set summary per exercise. No schema change.
 
 ---
 
-### Superfície B — Aba Performance (histórico como lista)
+### Surface B - Performance Tab (history as a list)
 
-**Onde:** `app/(tabs)/performance.tsx` — tela dedicada  
-**Quando:** Usuário navega para a aba Performance, seleciona um exercício  
-**O que mostrar:** Lista cronológica reversa dos treinos onde aquele exercício apareceu:
+**Where:** `app/(tabs)/performance.tsx` - dedicated screen  
+**When:** User opens the Performance tab and selects an exercise  
+**What to show:** Reverse chronological list of sessions where the exercise appears:
 
 ```
-24 abr 2026
-  Set 1  60kg × 8   ✓
-  Set 2  60kg × 8   ✓
-  Set 3  57.5kg × 6  ✓
+Apr 24, 2026
+  Set 1  60kg x 8   done
+  Set 2  60kg x 8   done
+  Set 3  57.5kg x 6 done
 
-18 abr 2026
-  Set 1  57.5kg × 8  ✓
-  Set 2  57.5kg × 8  ✓
-  Set 3  57.5kg × 8  ✓
+Apr 18, 2026
+  Set 1  57.5kg x 8  done
+  Set 2  57.5kg x 8  done
+  Set 3  57.5kg x 8  done
 ```
 
-Opcionalmente: totais por sessão (volume = soma de carga × reps).
+Optional: session totals (volume = sum of weight x reps).
 
-**Prós:**
+**Pros:**
 
-- Histórico completo e legível
-- Números exatos visíveis, diferenças de 1.5kg são evidentes
-- Naturalmente paginável
+- Full, readable history
+- Exact numbers stay visible, so 1.5kg differences are obvious
+- Naturally pageable
 
-**Contras:**
+**Cons:**
 
-- Requer seletor de exercício antes de mostrar dados
-- Mais uma tela para o usuário descobrir
+- Requires exercise selection before showing data
+- Adds one extra screen to discover
 
-**Complexidade:** Média — query nova `getExerciseHistory(exerciseId, filters)`, componente de seletor de exercício (pode reusar o picker existente), componente de lista de sessões.
+**Complexity:** Medium - new query `getExerciseHistory(exerciseId, filters)`, exercise picker (can reuse current picker), and session list components.
 
 ---
 
-### Superfície C — Delta no Logbook card
+### Surface C - Delta in Logbook card
 
-**Onde:** `LogbookWorkoutCard` — linha de cada exercício  
-**Quando:** Ao ver o histórico de treinos no Logbook  
-**O que mostrar:** Ao lado do exercício, comparar com o workout anterior:
+**Where:** `LogbookWorkoutCard` - each exercise row  
+**When:** While reviewing past sessions in Logbook  
+**What to show:** Compare with the previous session for that exercise:
 
 ```
-SUPINO RETO    60kg × 8 × 3   ▲ +2.5kg vs anterior
-AGACHAMENTO    80kg × 5 × 4   = igual
+BENCH PRESS    60kg x 8 x 3   +2.5kg vs previous
+SQUAT          80kg x 5 x 4   same
 ```
 
-**Prós:**
+**Pros:**
 
-- Zero navegação extra — está no fluxo de revisão que o usuário já usa
-- Feedback imediato no contexto certo (revisar o que fez)
+- Zero extra navigation in an existing review flow
+- Immediate feedback in the right context
 
-**Contras:**
+**Cons:**
 
-- Mais pesado para o logbook — requer join ou lookup com workout anterior por exercício
-- Adiciona ruído ao card se o usuário não quiser comparar agora
-- Lógica de diff mais complexa (e se trocou de peso? E se fez sets diferentes?)
+- Heavier for Logbook queries (needs previous-session lookup per exercise)
+- Can add visual noise for users who do not want comparison there
+- Comparison logic gets complex when set structures differ
 
-**Complexidade:** Alta relativa — exige query de "workout anterior com aquele exercício" para cada card visível, com lógica de comparação de sets.
+**Complexity:** Relatively high - requires previous-session lookup and robust set-diff logic.
 
 ---
 
-## Ordem de prioridade sugerida
+## Recommended Priority
 
-| Fase | Superfície                            | Motivo                                                    |
-| ---- | ------------------------------------- | --------------------------------------------------------- |
-| 1    | **A — Última vez no Preparar Treino** | Máxima utilidade, mínima complexidade, contexto ideal     |
-| 2    | **B — Aba Performance (lista)**       | Histórico completo para quem quer analisar mais           |
-| 3    | **C — Delta no Logbook**              | Complemento visual, mas mais custoso e pode poluir o card |
+| Phase | Surface | Reason |
+| ---- | ---- | ---- |
+| 1 | **Workout In Progress (lazy, on-demand)** | Highest daily value with optional UX and low visual noise |
+| 2 | **A - Last time in Prepare Workout** | Great pre-workout context with moderate implementation effort |
+| 3 | **B - Performance tab list** | Full history for deep review |
+| 4 | **C - Logbook delta** | Useful but heavier and easier to clutter |
 
 ---
 
-## Dados necessários por superfície
+## Data Requirements By Surface
 
-### Superfície A
+### Workout In Progress first (lazy, on-demand)
 
-Nova query: `getLastSetsByExercises(exerciseIds: string[]): Map<exerciseId, SetSummary>`
+New query: `getLastCompletedExerciseSnapshot(exerciseId: string, beforeWorkoutDate?: string)`
 
 ```ts
-type SetSummary = {
-  workoutDate: string; // para "há N dias"
-  totalSets: number;
-  maxWeight: number; // carga máxima usada
-  representativeReps: number; // reps do set com maior carga
+type LastCompletedExerciseSnapshot = {
+  exerciseId: string;
+  workoutId: string;
+  workoutDate: string;
+  gymName: string | null;
+  sets: {
+    setOrder: number;
+    reps: number;
+    weight: number;
+    completed: boolean;
+  }[];
+  bestSet: {
+    weight: number;
+    reps: number;
+  } | null;
+  totalVolume: number;
 };
 ```
 
-- Busca via JOIN: `workout_sets` → `workouts` onde `workouts.status = 'completed'`
-- Ordenado por `workouts.date DESC`, pega o mais recente por exercício
-- Agrupado por `exerciseId`
+Implementation details:
+- Trigger query only when user taps the `Last` action on an exercise row.
+- Cache results in memory by `exerciseId` during the active session.
+- If no prior data exists, cache an explicit empty result to avoid repeated fetches.
+- Optionally preload next 1-2 nearby exercise IDs after first successful fetch.
 
-### Superfície B
+UX interaction flow (Workout In Progress):
+1. User sees each exercise row with a tiny optional action (`Last`) near row actions.
+2. User taps `Last`.
+3. Row expands inline (or opens a small bottom sheet) with exact previous-session data.
+4. User can close the panel and continue logging without leaving the screen.
 
-Nova query: `getExerciseHistory(exerciseId: string, page: number): ExerciseHistorySession[]`
+Where to place the action:
+- Best default: right side of each exercise row header, next to existing small controls.
+- Avoid placing it inside each set row (too noisy and repetitive).
+- Keep tap target at least 36x36 for accessibility.
+
+What to show inside the lazy panel:
+- Relative date: `Last session: 6 days ago`
+- Best set: `Best: 60kg x 8`
+- Compact set list from that session
+- Optional small note: `Volume: 1,440 kg`
+
+Best practices:
+- Keep this fully optional and collapsed by default.
+- Never block set logging while this data is loading.
+- Show row-level loading state only (`Loading last session...`).
+- If query fails, show a small inline retry action (`Try again`).
+- Do not auto-open on screen load to avoid UI disruption.
+- Keep terminology consistent in en-US: `Last session`, `Best set`, `Volume`.
+
+### Surface A
+
+New query: `getLastSetsByExercises(exerciseIds: string[]): Map<exerciseId, SetSummary>`
+
+```ts
+type SetSummary = {
+  workoutDate: string; // for "N days ago"
+  totalSets: number;
+  maxWeight: number; // highest weight used
+  representativeReps: number; // reps from the set with highest weight
+};
+```
+
+- Query via JOIN: `workout_sets` -> `workouts` where `workouts.status = 'completed'`
+- Order by `workouts.date DESC` and keep latest per exercise
+- Group by `exerciseId`
+
+### Surface B
+
+New query: `getExerciseHistory(exerciseId: string, page: number): ExerciseHistorySession[]`
 
 ```ts
 type ExerciseHistorySession = {
@@ -140,39 +196,46 @@ type ExerciseHistorySession = {
     weight: number;
     completed: boolean;
   }[];
-  totalVolume: number; // soma weight × reps dos sets completed
+  totalVolume: number; // sum of weight x reps for completed sets
 };
 ```
 
-### Superfície C
+### Surface C
 
-Extende o `LogbookWorkoutItem` com dados de comparação ou faz lookup on-demand.  
-Decisão de implementação: deixar para quando A e B estiverem prontos.
-
----
-
-## Notas de UX
-
-- Sem gráficos — diferenças de 1.5kg são invisíveis em escala. Números exatos sempre.
-- "Última vez" deve mostrar a data de forma relativa ("há 6 dias") não absoluta, para dar senso de ritmo.
-- Volume total (kg × reps) pode ser mostrado como número secundário — útil mesmo sem gráfico.
-- Se o usuário nunca treinou aquele exercício antes, não mostrar nada (não "0" ou "—", simplesmente omitir a linha).
+Extend `LogbookWorkoutItem` with comparison data or load comparison on demand.  
+Implementation decision: do this after Workout In Progress and Prepare Workout.
 
 ---
 
-## Arquivos que serão criados/modificados (estimativa)
+## UX Notes
 
-### Fase 1 — Superfície A
+- No charts - 1.5kg differences are often lost visually. Exact values should stay explicit.
+- Prefer relative date copy (`6 days ago`) instead of only absolute date.
+- Volume (`kg x reps`) can be a secondary metric.
+- If no prior history exists for an exercise, show a neutral empty state (`No previous session`).
 
-- `features/workouts/dao/queries/workoutSetQueries.ts` — nova query `getLastSetsByExercises`
-- `features/workouts/hooks/useLastExerciseSets.ts` — hook para usar na tela de preparar
-- `features/workouts/PrepareWorkoutScreen.tsx` — passa dados para o form
-- `features/workouts/components/prepare/PrepareWorkoutExercisesForm.tsx` — mostra "última vez"
+---
 
-### Fase 2 — Superfície B
+## Estimated Files To Create/Update
 
-- `features/workouts/dao/queries/workoutSetQueries.ts` — nova query `getExerciseHistory`
+### Phase 1 - Workout In Progress (lazy, on-demand)
+
+- `features/workouts/dao/queries/workoutSetQueries.ts` - add `getLastCompletedExerciseSnapshot`
+- `features/workouts/hooks/useExerciseLastSession.ts` - row-level lazy loading + cache
+- `features/workouts/InProgressWorkoutScreen.tsx` - wire action and expanded panel state
+- `features/workouts/components/in-progress/*` - add compact `LastSessionPanel` UI component
+
+### Phase 2 - Surface A (Prepare Workout)
+
+- `features/workouts/dao/queries/workoutSetQueries.ts` - add `getLastSetsByExercises`
+- `features/workouts/hooks/useLastExerciseSets.ts` - hook for prepare screen
+- `features/workouts/PrepareWorkoutScreen.tsx` - pass summary data to form
+- `features/workouts/components/prepare/PrepareWorkoutExercisesForm.tsx` - render `last time` row
+
+### Phase 3 - Surface B (Performance tab)
+
+- `features/workouts/dao/queries/workoutSetQueries.ts` - add `getExerciseHistory`
 - `features/workouts/hooks/useExerciseHistory.ts`
-- `app/(tabs)/performance.tsx` — tela principal com seletor + lista
+- `app/(tabs)/performance.tsx` - main screen with picker + list
 - `features/workouts/components/performance/ExerciseHistoryList.tsx`
 - `features/workouts/components/performance/ExerciseHistorySession.tsx`
