@@ -8,7 +8,7 @@ import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { DatabaseProvider } from "@/components/providers/DatabaseProvider";
-import { I18nProvider } from "@/components/providers/i18n-provider";
+import { I18nProvider, useI18n } from "@/components/providers/i18n-provider";
 import { ThemePreferenceProvider, useThemePreference } from "@/components/theme-preference";
 
 export { ErrorBoundary } from "expo-router";
@@ -57,12 +57,19 @@ function RootLayoutNav() {
 
 function ThemedNavigation() {
   const { theme } = useThemePreference();
+  const { t } = useI18n();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={theme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="settings"
+            options={{
+              title: t("settings.title") || "Settings",
+            }}
+          />
           <Stack.Screen name="workout-prepare" options={{ headerShown: false }} />
           <Stack.Screen name="workout-in-progress" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: "modal" }} />

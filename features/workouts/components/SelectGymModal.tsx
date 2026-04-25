@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type SelectGymModalProps = {
   isOpen: boolean;
@@ -44,6 +45,7 @@ export function SelectGymModal({
   onAddGym,
 }: SelectGymModalProps) {
   const palette = useRetroPalette();
+  const insets = useSafeAreaInsets();
   const [draftGymName, setDraftGymName] = useState("");
 
   const handleAdd = async () => {
@@ -62,7 +64,15 @@ export function SelectGymModal({
   return (
     <Modal visible={isOpen} transparent animationType="slide" onRequestClose={onClose}>
       <View style={[styles.overlay, { backgroundColor: "rgba(0, 0, 0, 0.5)" }]}>
-        <View style={[styles.container, { backgroundColor: palette.card }]}>
+        <View
+          style={[
+            styles.container,
+            {
+              backgroundColor: palette.card,
+              paddingBottom: 20 + insets.bottom,
+            },
+          ]}
+        >
           <View style={styles.header}>
             <Text style={[styles.headerTitle, { color: palette.textPrimary }]}>{title}</Text>
             <WindowControlButton
@@ -108,7 +118,10 @@ export function SelectGymModal({
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={styles.chipsWrap} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={[styles.chipsWrap, { paddingBottom: 12 + insets.bottom }]}
+            keyboardShouldPersistTaps="handled"
+          >
             <Chip
               label={noneLabel}
               selected={selectedGymId === null}
@@ -145,7 +158,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 2,
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 20,
     gap: 12,
   },
   header: {
@@ -194,7 +206,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    paddingBottom: 12,
   },
   emptyText: {
     width: "100%",
