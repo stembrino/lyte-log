@@ -7,6 +7,7 @@ import { ControlledSearchInput } from "@/components/ControlledSearchInput";
 import { WindowControlButton } from "@/components/WindowControlButton";
 import { useEffect } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RoutinePickerList } from "./routine-picker/RoutinePickerList";
 
 interface SelectRoutineModalProps {
@@ -15,6 +16,7 @@ interface SelectRoutineModalProps {
   onSelectRoutine?: (routine: WorkoutRoutinePickerItem) => void;
   onSelectRoutineId?: (routineId: string) => void;
   onStartWithoutRoutine?: () => void;
+  showStartWithoutRoutineAction?: boolean;
 }
 
 export function SelectRoutineModal({
@@ -22,8 +24,10 @@ export function SelectRoutineModal({
   onClose,
   onSelectRoutine,
   onStartWithoutRoutine,
+  showStartWithoutRoutineAction = true,
 }: SelectRoutineModalProps) {
   const palette = useRetroPalette();
+  const insets = useSafeAreaInsets();
   const { locale, t } = useI18n();
   const {
     items,
@@ -81,17 +85,21 @@ export function SelectRoutineModal({
               variant="compact"
             />
 
-            <Pressable
-              onPress={handleStartWithoutRoutine}
-              style={[
-                styles.startWithoutRoutineButton,
-                { borderColor: palette.border, backgroundColor: palette.page },
-              ]}
-            >
-              <Text style={[styles.startWithoutRoutineButtonText, { color: palette.textPrimary }]}>
-                {t("workouts.startWithoutRoutineCta")}
-              </Text>
-            </Pressable>
+            {showStartWithoutRoutineAction ? (
+              <Pressable
+                onPress={handleStartWithoutRoutine}
+                style={[
+                  styles.startWithoutRoutineButton,
+                  { borderColor: palette.border, backgroundColor: palette.page },
+                ]}
+              >
+                <Text
+                  style={[styles.startWithoutRoutineButtonText, { color: palette.textPrimary }]}
+                >
+                  {t("workouts.startWithoutRoutineCta")}
+                </Text>
+              </Pressable>
+            ) : null}
 
             <RoutinePickerList
               items={items}
@@ -107,6 +115,8 @@ export function SelectRoutineModal({
               palette={palette}
             />
           </View>
+
+          <View style={{ height: Math.max(8, insets.bottom + 4) }} />
         </View>
       </View>
     </Modal>

@@ -12,6 +12,7 @@ import {
   useRoutineMutations,
   type RoutineSubmitPayload,
 } from "@/features/routines/hooks/useRoutineMutations";
+import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { CreateRoutineModal, type RoutineFormInitialValues } from "./components/CreateRoutineModal";
@@ -32,6 +33,12 @@ export function RoutinesTabScreen() {
   } = usePaginatedRoutines(locale);
 
   const { createRoutine, updateRoutine, deleteRoutine } = useRoutineMutations(locale, reload);
+
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
 
   const [expandedRoutineIds, setExpandedRoutineIds] = useState<Record<string, boolean>>({});
   const [showRoutineModal, setShowRoutineModal] = useState(false);

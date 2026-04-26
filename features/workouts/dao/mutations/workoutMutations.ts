@@ -28,6 +28,89 @@ function normalizeSearchText(value: string): string {
     .trim();
 }
 
+type WorkoutSnapshot = {
+  exercises: {
+    exerciseId: string;
+    exerciseOrder: number;
+    sets: {
+      reps: number;
+    }[];
+  }[];
+};
+
+async function getWorkoutSnapshot(workoutId: string): Promise<WorkoutSnapshot> {
+  const workout = await db.query.workouts.findFirst({
+    where: eq(workouts.id, workoutId),
+    columns: {
+      id: true,
+    },
+    with: {
+      workoutExercises: {
+        columns: {
+          exerciseId: true,
+          exerciseOrder: true,
+        },
+        orderBy: (table, operators) => [operators.asc(table.exerciseOrder)],
+        with: {
+          sets: {
+            columns: {
+              reps: true,
+            },
+            orderBy: (table, operators) => [operators.asc(table.timestamp)],
+          },
+        },
+      },
+    },
+  });
+
+  if (!workout) {
+    throw new Error("WORKOUT_NOT_FOUND");
+  }
+
+  return {
+    exercises: workout.workoutExercises.map((exercise) => ({
+      exerciseId: exercise.exerciseId,
+      exerciseOrder: exercise.exerciseOrder,
+      sets: exercise.sets.map((set) => ({ reps: set.reps })),
+    })),
+  };
+}
+
+function mapRoutineExerciseRows(
+  routineId: string,
+  exercises: WorkoutSnapshot["exercises"],
+): {
+  id: string;
+  routineId: string;
+  exerciseId: string;
+  exerciseOrder: number;
+  setsTarget: number | null;
+  repsTarget: string | null;
+}[] {
+  return exercises
+    .slice()
+    .sort((a, b) => a.exerciseOrder - b.exerciseOrder)
+    .map((exercise, index) => {
+      const setsTarget = exercise.sets.length > 0 ? exercise.sets.length : null;
+      const repsValues = exercise.sets
+        .map((set) => set.reps)
+        .filter((reps) => Number.isFinite(reps) && reps > 0);
+      const avgReps =
+        repsValues.length > 0
+          ? Math.round(repsValues.reduce((sum, reps) => sum + reps, 0) / repsValues.length)
+          : null;
+
+      return {
+        id: `rte-${routineId}-${index + 1}`,
+        routineId,
+        exerciseId: exercise.exerciseId,
+        exerciseOrder: exercise.exerciseOrder,
+        setsTarget,
+        repsTarget: avgReps !== null ? String(avgReps) : null,
+      };
+    });
+}
+
 export async function startWorkout(args: StartWorkoutArgs): Promise<StartWorkoutResult> {
   return db.transaction(async (tx) => {
     const [activeWorkout] = await tx
@@ -52,9 +135,7 @@ export async function startWorkout(args: StartWorkoutArgs): Promise<StartWorkout
       date: now,
       status: "in_progress",
       duration: null,
-      notes: JSON.stringify({
-        sourceRoutineId: args.sourceRoutineId ?? null,
-      }),
+      sourceRoutineId: args.sourceRoutineId ?? null,
       gymId: args.gymId,
       createdAt: now,
     });
@@ -348,6 +429,7 @@ export async function softDeleteWorkout(workoutId: string): Promise<void> {
 export async function updateCompletedWorkoutFromLogbook(args: {
   workoutId: string;
   duration: number | null;
+  sourceRoutineId: string | null;
   sets: {
     setId: string;
     reps: number;
@@ -360,6 +442,7 @@ export async function updateCompletedWorkoutFromLogbook(args: {
       .update(workouts)
       .set({
         duration: args.duration,
+        sourceRoutineId: args.sourceRoutineId,
       })
       .where(eq(workouts.id, args.workoutId));
 
@@ -390,6 +473,7 @@ export async function saveWorkoutAsRoutine(args: {
   const routineId = `routine-${Date.now()}`;
   const createdAt = new Date().toISOString();
   const trimmedName = args.routineName.trim();
+  const routineExerciseRows = mapRoutineExerciseRows(routineId, args.exercises);
 
   await db.transaction(async (tx) => {
     await tx.insert(routines).values({
@@ -404,35 +488,42 @@ export async function saveWorkoutAsRoutine(args: {
       createdAt,
     });
 
-    const routineExerciseRows = args.exercises
-      .slice()
-      .sort((a, b) => a.exerciseOrder - b.exerciseOrder)
-      .map((exercise, index) => {
-        const setsTarget = exercise.sets.length > 0 ? exercise.sets.length : null;
-        const repsValues = exercise.sets
-          .map((set) => set.reps)
-          .filter((reps) => Number.isFinite(reps) && reps > 0);
-        const avgReps =
-          repsValues.length > 0
-            ? Math.round(repsValues.reduce((sum, reps) => sum + reps, 0) / repsValues.length)
-            : null;
-
-        return {
-          id: `rte-${routineId}-${index + 1}`,
-          routineId,
-          exerciseId: exercise.exerciseId,
-          exerciseOrder: exercise.exerciseOrder,
-          setsTarget,
-          repsTarget: avgReps !== null ? String(avgReps) : null,
-        };
-      });
-
     if (routineExerciseRows.length > 0) {
       await tx.insert(routineExercises).values(routineExerciseRows);
     }
   });
 
   return { routineId };
+}
+
+export async function createRoutineFromWorkout(args: {
+  workoutId: string;
+  locale: AppLocale;
+  routineName: string;
+}): Promise<{ routineId: string }> {
+  const snapshot = await getWorkoutSnapshot(args.workoutId);
+
+  return saveWorkoutAsRoutine({
+    locale: args.locale,
+    routineName: args.routineName,
+    exercises: snapshot.exercises,
+  });
+}
+
+export async function updateRoutineFromWorkout(args: {
+  workoutId: string;
+  routineId: string;
+}): Promise<void> {
+  const snapshot = await getWorkoutSnapshot(args.workoutId);
+  const routineExerciseRows = mapRoutineExerciseRows(args.routineId, snapshot.exercises);
+
+  await db.transaction(async (tx) => {
+    await tx.delete(routineExercises).where(eq(routineExercises.routineId, args.routineId));
+
+    if (routineExerciseRows.length > 0) {
+      await tx.insert(routineExercises).values(routineExerciseRows);
+    }
+  });
 }
 
 export async function updateWorkoutSourceRoutine(args: {
@@ -442,9 +533,7 @@ export async function updateWorkoutSourceRoutine(args: {
   await db
     .update(workouts)
     .set({
-      notes: JSON.stringify({
-        sourceRoutineId: args.routineId,
-      }),
+      sourceRoutineId: args.routineId,
     })
     .where(eq(workouts.id, args.workoutId));
 }

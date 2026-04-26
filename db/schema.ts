@@ -29,6 +29,9 @@ export const workouts = sqliteTable("workouts", {
   status: text("status").notNull().default("completed"),
   duration: integer("duration"),
   notes: text("notes"),
+  sourceRoutineId: text("source_routine_id").references(() => routines.id, {
+    onDelete: "set null",
+  }),
   gymId: text("gym_id").references(() => gyms.id, { onDelete: "set null" }),
   createdAt: text("created_at").notNull(),
   deletedAt: text("deleted_at"),
@@ -134,6 +137,7 @@ export const exercisesRelations = relations(exercises, ({ many }) => ({
 export const routinesRelations = relations(routines, ({ many }) => ({
   routineTagLinks: many(routineTagLinks),
   routineExercises: many(routineExercises),
+  workouts: many(workouts),
 }));
 
 export const routineTagsRelations = relations(routineTags, ({ many }) => ({
@@ -170,6 +174,10 @@ export const workoutsRelations = relations(workouts, ({ one, many }) => ({
   gym: one(gyms, {
     fields: [workouts.gymId],
     references: [gyms.id],
+  }),
+  sourceRoutine: one(routines, {
+    fields: [workouts.sourceRoutineId],
+    references: [routines.id],
   }),
   workoutExercises: many(workoutExercises),
 }));

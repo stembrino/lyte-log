@@ -19,30 +19,30 @@ This document is the single source of truth for the current relational model use
 ### Routine domain
 
 - routines
-- routine_groups
 - routine_exercises
 - routine_tags
 - routine_tag_links
-- routine_group_routines
 
 ### Localization
 
 - entity_translations
+
+### Internal control
+
+- \_\_data_patches
 
 ## ER Diagram
 
 ```mermaid
 erDiagram
   gyms ||--o{ workouts : "gym_id"
+  routines ||--o{ workouts : "source_routine_id"
   workouts ||--o{ workout_exercises : "workout_id"
   exercises ||--o{ workout_exercises : "exercise_id"
   workout_exercises ||--o{ sets : "workout_exercise_id"
 
   routines ||--o{ routine_exercises : "routine_id"
   exercises ||--o{ routine_exercises : "exercise_id"
-
-  routine_groups ||--o{ routine_group_routines : "routine_group_id"
-  routines ||--o{ routine_group_routines : "routine_id"
 
   routines ||--o{ routine_tag_links : "routine_id"
   routine_tags ||--o{ routine_tag_links : "tag_id"
@@ -57,10 +57,13 @@ erDiagram
   workouts {
     text id PK
     text date
+    text status
     int duration
     text notes
+    text source_routine_id FK
     text gym_id FK
     text created_at
+    text deleted_at
   }
 
   workout_exercises {
@@ -91,21 +94,10 @@ erDiagram
     boolean is_custom
     text search_pt
     text search_en
+    text image_url
   }
 
   routines {
-    text id PK
-    text name
-    text detail
-    text description
-    boolean is_system
-    boolean is_favorite
-    text search_pt
-    text search_en
-    text created_at
-  }
-
-  routine_groups {
     text id PK
     text name
     text detail
@@ -138,13 +130,6 @@ erDiagram
     text tag_id FK
   }
 
-  routine_group_routines {
-    text routine_group_id FK
-    text routine_id FK
-    int position
-    text label
-  }
-
   entity_translations {
     text entity_type PK
     text entity_id PK
@@ -154,11 +139,17 @@ erDiagram
     text created_at
     text updated_at
   }
+
+  __data_patches {
+    text id PK
+    text applied_at
+  }
 ```
 
 ## Notes
 
 - `routine_tag_links` has composite PK: (`routine_id`, `tag_id`).
-- `routine_group_routines` has composite PK: (`routine_group_id`, `routine_id`).
 - `entity_translations` has composite PK: (`entity_type`, `entity_id`, `field`, `locale`).
+- `workouts.source_routine_id` is nullable: workout can be free (no routine) or associated to one routine.
+- Legacy compatibility: existing rows can still be resolved from `workouts.notes.sourceRoutineId` while data is backfilled.
 - User-facing localized labels come from `entity_translations`; base columns are fallback values.

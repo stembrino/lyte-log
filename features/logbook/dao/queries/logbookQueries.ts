@@ -44,21 +44,6 @@ type RoutineRow = {
   name: string;
 };
 
-function parseSourceRoutineId(notes: string | null): string | null {
-  if (!notes) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(notes) as { sourceRoutineId?: unknown };
-    return typeof parsed.sourceRoutineId === "string" && parsed.sourceRoutineId.trim().length > 0
-      ? parsed.sourceRoutineId
-      : null;
-  } catch {
-    return null;
-  }
-}
-
 function buildCompletedWorkoutFilter(gymId?: string | null) {
   const notDeleted = isNull(workouts.deletedAt);
 
@@ -151,7 +136,7 @@ export async function getLogbookWorkoutsPage(args: {
 
   const sourceRoutineIdByWorkoutId = new Map<string, string>();
   for (const row of rows) {
-    const sourceRoutineId = parseSourceRoutineId(row.notes);
+    const sourceRoutineId = row.sourceRoutineId ?? null;
     if (sourceRoutineId) {
       sourceRoutineIdByWorkoutId.set(row.id, sourceRoutineId);
     }

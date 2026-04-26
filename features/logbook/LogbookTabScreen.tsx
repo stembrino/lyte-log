@@ -8,8 +8,11 @@ import {
   usePaginatedLogbook,
 } from "@/features/logbook/hooks/usePaginatedLogbook";
 import {
+  createRoutineFromWorkout,
   softDeleteWorkout,
+  updateRoutineFromWorkout,
   updateCompletedWorkoutFromLogbook,
+  updateWorkoutSourceRoutine,
 } from "@/features/workouts/dao/mutations/workoutMutations";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -20,6 +23,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { CreateRoutineFromWorkoutModal } from "./components/CreateRoutineFromWorkoutModal";
 import { EditLogbookWorkoutModal } from "./components/EditLogbookWorkoutModal";
 import { LogbookWorkoutCard } from "./components/LogbookWorkoutCard";
 
@@ -29,11 +33,17 @@ type GroupedWorkouts = {
   items: ReturnType<typeof usePaginatedLogbook>["items"];
 };
 
+type CreateRoutineDraft = {
+  workoutId: string;
+};
+
 export function LogbookTabScreen() {
   const palette = useRetroPalette();
   const { t, locale } = useI18n();
   const { showAlert, showConfirm, alertElement } = useGlobalAlert();
   const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
+  const [createRoutineDraft, setCreateRoutineDraft] = useState<CreateRoutineDraft | null>(null);
+  const [savingRoutineFromWorkout, setSavingRoutineFromWorkout] = useState(false);
   const [expandedWorkoutIds, setExpandedWorkoutIds] = useState<Set<string>>(() => new Set());
   const {
     items,
@@ -118,6 +128,7 @@ export function LogbookTabScreen() {
     async (payload: {
       workoutId: string;
       duration: number | null;
+      sourceRoutineId: string | null;
       sets: {
         setId: string;
         reps: number;
@@ -151,6 +162,98 @@ export function LogbookTabScreen() {
       return next;
     });
   }, []);
+
+  const handleUpdateRoutineFromWorkout = useCallback(
+    (item: (typeof items)[number]) => {
+      const sourceRoutine = item.sourceRoutine;
+
+      if (!sourceRoutine) {
+        showAlert({
+          title: t("performance.logbookUpdateRoutineMissingTitle"),
+          message: t("performance.logbookUpdateRoutineMissingBody"),
+          buttonLabel: t("exercises.ok"),
+        });
+        return;
+      }
+
+      showConfirm({
+        title: t("performance.logbookUpdateRoutineConfirmTitle"),
+        message: t("performance.logbookUpdateRoutineConfirmBody"),
+        cancelLabel: t("exercises.cancel"),
+        confirmLabel: t("performance.logbookUpdateRoutineConfirmAction"),
+        onConfirm: () => {
+          void (async () => {
+            try {
+              await updateRoutineFromWorkout({
+                workoutId: item.id,
+                routineId: sourceRoutine.id,
+              });
+              await reload();
+              showAlert({
+                title: t("performance.logbookUpdateRoutineSuccessTitle"),
+                message: t("performance.logbookUpdateRoutineSuccessBody"),
+                buttonLabel: t("exercises.ok"),
+              });
+            } catch {
+              showAlert({
+                title: t("performance.logbookUpdateRoutineErrorTitle"),
+                message: t("performance.logbookUpdateRoutineErrorBody"),
+                buttonLabel: t("exercises.ok"),
+              });
+            }
+          })();
+        },
+      });
+    },
+    [reload, showAlert, showConfirm, t],
+  );
+
+  const handleCreateRoutineFromWorkout = useCallback((item: (typeof items)[number]) => {
+    setCreateRoutineDraft({
+      workoutId: item.id,
+    });
+  }, []);
+
+  const handleConfirmCreateRoutineFromWorkout = useCallback(
+    async (routineName: string) => {
+      if (!createRoutineDraft || savingRoutineFromWorkout) {
+        return;
+      }
+
+      setSavingRoutineFromWorkout(true);
+
+      try {
+        const { routineId } = await createRoutineFromWorkout({
+          workoutId: createRoutineDraft.workoutId,
+          locale,
+          routineName,
+        });
+
+        await updateWorkoutSourceRoutine({
+          workoutId: createRoutineDraft.workoutId,
+          routineId,
+        });
+
+        await reload();
+        setCreateRoutineDraft(null);
+
+        showAlert({
+          title: t("performance.logbookCreateRoutineSuccessTitle"),
+          message: t("performance.logbookCreateRoutineSuccessBody"),
+          buttonLabel: t("exercises.ok"),
+        });
+      } catch {
+        showAlert({
+          title: t("performance.logbookCreateRoutineErrorTitle"),
+          message: t("performance.logbookCreateRoutineErrorBody"),
+          buttonLabel: t("exercises.ok"),
+        });
+      } finally {
+        setSavingRoutineFromWorkout(false);
+      }
+    },
+    [createRoutineDraft, locale, reload, savingRoutineFromWorkout, showAlert, t],
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: palette.page }]}>
@@ -222,6 +325,14 @@ export function LogbookTabScreen() {
                       onToggleExpanded={() => toggleWorkoutExpanded(item.id)}
                       onEdit={(selectedItem) => setEditingWorkoutId(selectedItem.id)}
                       onDelete={handleDeletePress}
+                      routineActionsButtonLabel={t("performance.logbookRoutineActionsButton")}
+                      routineActionsDismissLabel={t("routines.closeActionsButton")}
+                      updateRoutineActionLabel={t("performance.logbookUpdateRoutineAction")}
+                      createRoutineFromWorkoutActionLabel={t(
+                        "performance.logbookCreateRoutineFromWorkoutAction",
+                      )}
+                      onUpdateRoutineFromWorkout={handleUpdateRoutineFromWorkout}
+                      onCreateRoutineFromWorkout={handleCreateRoutineFromWorkout}
                     />
                   ))}
                 </View>
@@ -251,6 +362,9 @@ export function LogbookTabScreen() {
         item={editingWorkout}
         title={t("performance.logbookEditTitle")}
         durationLabel={t("performance.logbookEditDurationLabel")}
+        routineLabel={t("performance.logbookCardRoutine")}
+        noRoutineLabel={t("performance.logbookCardNoRoutine")}
+        selectRoutineLabel={t("workouts.startWorkoutShortCta")}
         setLabel={t("workouts.setLabel")}
         repsUnitSuffix={t("workouts.repsUnitSuffix")}
         weightUnit={t("workouts.weightUnit")}
@@ -260,6 +374,26 @@ export function LogbookTabScreen() {
         closeButtonAccessibilityLabel={t("routines.closeActionsButton")}
         onClose={() => setEditingWorkoutId(null)}
         onSave={handleSaveEdit}
+      />
+
+      <CreateRoutineFromWorkoutModal
+        visible={Boolean(createRoutineDraft)}
+        title={t("performance.logbookCreateRoutineConfirmTitle")}
+        description={t("performance.logbookCreateRoutineConfirmBody")}
+        placeholder={t("workouts.postFinishRoutineNamePlaceholder")}
+        cancelLabel={t("workouts.postFinishRoutineNameCancel")}
+        confirmLabel={t("workouts.postFinishRoutineNameConfirm")}
+        loadingLabel={t("routines.loading")}
+        initialName=""
+        saving={savingRoutineFromWorkout}
+        onClose={() => {
+          if (!savingRoutineFromWorkout) {
+            setCreateRoutineDraft(null);
+          }
+        }}
+        onConfirm={(routineName) => {
+          void handleConfirmCreateRoutineFromWorkout(routineName);
+        }}
       />
 
       {alertElement}

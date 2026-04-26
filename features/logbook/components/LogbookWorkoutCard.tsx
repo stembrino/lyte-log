@@ -1,3 +1,4 @@
+import { ActionMenu } from "@/components/ActionMenu";
 import { ExpandedPanel } from "@/components/ExpandedPanel";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { monoFont } from "@/constants/retroTheme";
@@ -25,6 +26,12 @@ type LogbookWorkoutCardProps = {
   onToggleExpanded: () => void;
   onEdit: (item: LogbookWorkoutItem) => void;
   onDelete: (id: string) => void;
+  routineActionsButtonLabel: string;
+  routineActionsDismissLabel: string;
+  updateRoutineActionLabel: string;
+  createRoutineFromWorkoutActionLabel: string;
+  onUpdateRoutineFromWorkout: (item: LogbookWorkoutItem) => void;
+  onCreateRoutineFromWorkout: (item: LogbookWorkoutItem) => void;
 };
 
 function formatNumber(value: number, locale: AppLocale): string {
@@ -68,6 +75,12 @@ export function LogbookWorkoutCard({
   onToggleExpanded,
   onEdit,
   onDelete,
+  routineActionsButtonLabel,
+  routineActionsDismissLabel,
+  updateRoutineActionLabel,
+  createRoutineFromWorkoutActionLabel,
+  onUpdateRoutineFromWorkout,
+  onCreateRoutineFromWorkout,
 }: LogbookWorkoutCardProps) {
   const palette = useRetroPalette();
   const title = formatWorkoutDate(item.date, locale);
@@ -158,6 +171,27 @@ export function LogbookWorkoutCard({
           })
         )}
       </View>
+
+      <View style={[styles.divider, { backgroundColor: palette.border }]} />
+
+      <View style={styles.routineActionsWrap}>
+        <ActionMenu
+          accessibilityLabel={routineActionsButtonLabel}
+          dismissLabel={routineActionsDismissLabel}
+          actions={[
+            {
+              key: "update-routine",
+              label: updateRoutineActionLabel,
+              onPress: () => onUpdateRoutineFromWorkout(item),
+            },
+            {
+              key: "create-routine-from-workout",
+              label: createRoutineFromWorkoutActionLabel,
+              onPress: () => onCreateRoutineFromWorkout(item),
+            },
+          ]}
+        />
+      </View>
     </ExpandedPanel>
   );
 }
@@ -200,6 +234,11 @@ const styles = StyleSheet.create({
   },
   setDetailsCol: {
     gap: 4,
+  },
+  routineActionsWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 2,
   },
   setDetailText: {
     fontFamily: monoFont,

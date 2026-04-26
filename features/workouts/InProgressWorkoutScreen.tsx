@@ -156,19 +156,6 @@ export function InProgressWorkoutScreen() {
     return value.toFixed(1);
   };
 
-  const extractSourceRoutineId = (notes: string | null | undefined): string | null => {
-    if (!notes) {
-      return null;
-    }
-
-    try {
-      const parsed = JSON.parse(notes) as { sourceRoutineId?: string | null };
-      return parsed.sourceRoutineId ?? null;
-    } catch {
-      return null;
-    }
-  };
-
   const buildWorkoutShareText = (activeWorkout: ActiveWorkoutRow) => {
     const dateText = new Date(activeWorkout.createdAt).toLocaleDateString(locale);
     const header = [`${t("workouts.inProgressTitle")} - ${dateText}`];
@@ -235,7 +222,7 @@ export function InProgressWorkoutScreen() {
         prev
           ? {
               ...prev,
-              notes: JSON.stringify({ sourceRoutineId: routineId }),
+              sourceRoutineId: routineId,
             }
           : prev,
       );
@@ -778,8 +765,7 @@ export function InProgressWorkoutScreen() {
   };
 
   const completedSetColor = colorScheme === "light" ? "#16A34A" : palette.success;
-  const shouldSuggestSaveAsRoutine =
-    Boolean(workout) && extractSourceRoutineId(workout?.notes) === null;
+  const shouldSuggestSaveAsRoutine = Boolean(workout) && workout?.sourceRoutineId === null;
   const canFinishWorkout = Boolean(workout) && (workout?.exercises.length ?? 0) > 0;
 
   return (

@@ -3,6 +3,7 @@ import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { monoFont } from "@/constants/retroTheme";
 import { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type ActionMenuItem = {
   key: string;
@@ -19,6 +20,7 @@ type ActionMenuProps = {
 
 export function ActionMenu({ actions, accessibilityLabel, dismissLabel }: ActionMenuProps) {
   const palette = useRetroPalette();
+  const insets = useSafeAreaInsets();
   const [visible, setVisible] = useState(false);
 
   const handleActionPress = (action: ActionMenuItem) => {
@@ -61,6 +63,7 @@ export function ActionMenu({ actions, accessibilityLabel, dismissLabel }: Action
                 backgroundColor: palette.card,
                 borderColor: palette.border,
                 shadowColor: palette.border,
+                paddingBottom: Math.max(12, insets.bottom + 6),
               },
             ]}
           >

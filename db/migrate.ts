@@ -38,6 +38,7 @@ export function runMigrations(database: SQLiteDatabase): void {
       status      TEXT NOT NULL DEFAULT 'completed',
       duration    INTEGER,
       notes       TEXT,
+      source_routine_id TEXT REFERENCES routines(id) ON DELETE SET NULL,
       gym_id      TEXT REFERENCES gyms(id) ON DELETE SET NULL,
       created_at  TEXT NOT NULL
     );
@@ -119,6 +120,7 @@ export function runMigrations(database: SQLiteDatabase): void {
   dropLegacyRoutineGroupTables(database);
   ensureExercisesImageUrlColumn(database);
   ensureWorkoutsDeletedAtColumn(database);
+  ensureWorkoutsSourceRoutineIdColumn(database);
 
   if (__DEV__) {
     runDevOnlyResetExercisesToBaseline(database, "migrate");
@@ -418,6 +420,54 @@ function ensureWorkoutsDeletedAtColumn(database: SQLiteDatabase): void {
     }
   } catch {
     // Ignore backfill failures; app can still run without soft-delete support.
+  }
+}
+
+function extractSourceRoutineIdFromNotes(notes: string | null): string | null {
+  if (!notes) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(notes) as { sourceRoutineId?: unknown };
+    return typeof parsed.sourceRoutineId === "string" && parsed.sourceRoutineId.trim().length > 0
+      ? parsed.sourceRoutineId
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function ensureWorkoutsSourceRoutineIdColumn(database: SQLiteDatabase): void {
+  try {
+    const rows = (database as any).getAllSync("PRAGMA table_info(workouts);") as {
+      name: string;
+    }[];
+    const columnNames = new Set(rows.map((row) => row.name));
+
+    if (!columnNames.has("source_routine_id")) {
+      database.execSync(
+        "ALTER TABLE workouts ADD COLUMN source_routine_id TEXT REFERENCES routines(id) ON DELETE SET NULL;",
+      );
+    }
+
+    const legacyRows = (database as any).getAllSync(
+      "SELECT id, notes FROM workouts WHERE source_routine_id IS NULL AND notes IS NOT NULL;",
+    ) as { id: string; notes: string | null }[];
+
+    for (const row of legacyRows) {
+      const sourceRoutineId = extractSourceRoutineIdFromNotes(row.notes);
+      if (!sourceRoutineId) {
+        continue;
+      }
+
+      (database as any).runSync("UPDATE workouts SET source_routine_id = ? WHERE id = ?;", [
+        sourceRoutineId,
+        row.id,
+      ]);
+    }
+  } catch {
+    // Ignore backfill failures; app can still run using notes fallback.
   }
 }
 

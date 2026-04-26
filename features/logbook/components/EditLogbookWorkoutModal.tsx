@@ -3,6 +3,7 @@ import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { WindowControlButton } from "@/components/WindowControlButton";
 import { monoFont } from "@/constants/retroTheme";
 import type { LogbookWorkoutItem } from "@/features/logbook/dao/queries/logbookQueries";
+import { SelectRoutineModal } from "@/features/workouts/components/SelectRoutineModal";
 import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
@@ -18,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 type EditLogbookWorkoutPayload = {
   workoutId: string;
   duration: number | null;
+  sourceRoutineId: string | null;
   sets: {
     setId: string;
     reps: number;
@@ -31,6 +33,9 @@ type EditLogbookWorkoutModalProps = {
   item: LogbookWorkoutItem | null;
   title: string;
   durationLabel: string;
+  routineLabel: string;
+  noRoutineLabel: string;
+  selectRoutineLabel: string;
   setLabel: string;
   repsUnitSuffix: string;
   weightUnit: string;
@@ -73,6 +78,9 @@ export function EditLogbookWorkoutModal({
   item,
   title,
   durationLabel,
+  routineLabel,
+  noRoutineLabel,
+  selectRoutineLabel,
   setLabel,
   repsUnitSuffix,
   weightUnit,
@@ -87,6 +95,8 @@ export function EditLogbookWorkoutModal({
   const insets = useSafeAreaInsets();
   const [durationDraft, setDurationDraft] = useState("");
   const [setDrafts, setSetDrafts] = useState<SetDraft[]>([]);
+  const [routineDraft, setRoutineDraft] = useState<{ id: string; name: string } | null>(null);
+  const [selectRoutineOpen, setSelectRoutineOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -95,6 +105,7 @@ export function EditLogbookWorkoutModal({
     }
 
     setDurationDraft(item.duration !== null ? String(item.duration) : "");
+    setRoutineDraft(item.sourceRoutine);
     setSetDrafts(
       item.setDetails.map((setRow) => ({
         setId: setRow.id,
@@ -107,6 +118,12 @@ export function EditLogbookWorkoutModal({
     );
   }, [item, visible]);
 
+  useEffect(() => {
+    if (!visible) {
+      setSelectRoutineOpen(false);
+    }
+  }, [visible]);
+
   const canSave = useMemo(() => Boolean(item) && !saving, [item, saving]);
 
   const handleSave = async () => {
@@ -117,6 +134,7 @@ export function EditLogbookWorkoutModal({
     const payload: EditLogbookWorkoutPayload = {
       workoutId: item.id,
       duration: durationDraft.trim() ? Math.max(1, parseNonNegativeInt(durationDraft)) : null,
+      sourceRoutineId: routineDraft?.id ?? null,
       sets: setDrafts.map((setDraft) => ({
         setId: setDraft.setId,
         reps: parseNonNegativeInt(setDraft.repsDraft),
@@ -161,6 +179,34 @@ export function EditLogbookWorkoutModal({
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View
+            style={[
+              styles.fieldCard,
+              { borderColor: palette.border, backgroundColor: palette.card },
+            ]}
+          >
+            <Text style={[styles.fieldLabel, { color: palette.textPrimary }]}>{routineLabel}</Text>
+            <TouchableOpacity
+              style={[
+                styles.routineButton,
+                {
+                  borderColor: palette.border,
+                  backgroundColor: palette.page,
+                },
+              ]}
+              onPress={() => setSelectRoutineOpen(true)}
+              disabled={saving}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.routineValueText, { color: palette.textPrimary }]}>
+                {routineDraft?.name ?? noRoutineLabel}
+              </Text>
+              <Text style={[styles.routineActionText, { color: palette.accent }]}>
+                {selectRoutineLabel}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <View
             style={[
               styles.fieldCard,
@@ -304,6 +350,15 @@ export function EditLogbookWorkoutModal({
           </TouchableOpacity>
         </View>
       </View>
+
+      <SelectRoutineModal
+        isOpen={selectRoutineOpen}
+        onClose={() => setSelectRoutineOpen(false)}
+        onSelectRoutine={(routine) => {
+          setRoutineDraft({ id: routine.id, name: routine.name });
+        }}
+        showStartWithoutRoutineAction={false}
+      />
     </Modal>
   );
 }
@@ -354,6 +409,26 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontFamily: monoFont,
     fontSize: 13,
+  },
+  routineButton: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  routineValueText: {
+    fontFamily: monoFont,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+  routineActionText: {
+    fontFamily: monoFont,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
   },
   exerciseTitle: {
     fontFamily: monoFont,

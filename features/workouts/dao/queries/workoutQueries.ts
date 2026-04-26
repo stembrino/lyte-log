@@ -12,6 +12,7 @@ export type ActiveWorkoutRow = {
   id: string;
   status: WorkoutStatus;
   date: string;
+  sourceRoutineId: string | null;
   gymId: string | null;
   notes: string | null;
   createdAt: string;
@@ -87,6 +88,7 @@ export async function getActiveWorkout(locale?: AppLocale): Promise<ActiveWorkou
     id: row.id,
     status: row.status as WorkoutStatus,
     date: row.date,
+    sourceRoutineId: row.sourceRoutineId ?? null,
     gymId: row.gymId ?? null,
     notes: row.notes ?? null,
     createdAt: row.createdAt,
