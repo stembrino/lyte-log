@@ -6,10 +6,12 @@ type ChipProps = {
   label: string;
   selected?: boolean;
   onPress?: () => void;
+  size?: "md" | "sm";
 };
 
-export function Chip({ label, selected = false, onPress }: ChipProps) {
+export function Chip({ label, selected = false, onPress, size = "md" }: ChipProps) {
   const palette = useRetroPalette();
+  const isSm = size === "sm";
 
   return (
     <Pressable onPress={onPress} hitSlop={6} accessibilityRole={onPress ? "button" : undefined}>
@@ -17,6 +19,7 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
         <View
           style={[
             styles.container,
+            isSm ? styles.containerSm : styles.containerMd,
             {
               borderColor: selected ? palette.accent : palette.border,
               backgroundColor: selected
@@ -27,7 +30,13 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
             },
           ]}
         >
-          <Text style={[styles.text, { color: selected ? palette.onAccent : palette.textPrimary }]}>
+          <Text
+            style={[
+              styles.text,
+              isSm ? styles.textSm : styles.textMd,
+              { color: selected ? palette.onAccent : palette.textPrimary },
+            ]}
+          >
             {selected ? "[x] " : "[ ] "}
             {label}
           </Text>
@@ -39,20 +48,33 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
 
 const styles = StyleSheet.create({
   container: {
-    minHeight: 36,
     borderWidth: 1,
     borderRadius: 2,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "flex-start",
   },
+  containerMd: {
+    minHeight: 36,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  containerSm: {
+    minHeight: 26,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+  },
   text: {
     fontFamily: monoFont,
-    fontSize: 12,
     fontWeight: "600",
     textTransform: "uppercase",
+  },
+  textMd: {
+    fontSize: 12,
     letterSpacing: 0.4,
+  },
+  textSm: {
+    fontSize: 10,
+    letterSpacing: 0.3,
   },
 });

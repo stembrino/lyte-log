@@ -5,6 +5,7 @@ import { useI18n } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
 import {
   type LogbookGymFilterValue,
+  type LogbookRoutineFilterValue,
   usePaginatedLogbook,
 } from "@/features/logbook/hooks/usePaginatedLogbook";
 import {
@@ -48,8 +49,11 @@ export function LogbookTabScreen() {
   const {
     items,
     gymGroups,
+    routineGroups,
     selectedGymFilter,
+    selectedRoutineFilter,
     setSelectedGymFilter,
+    setSelectedRoutineFilter,
     loadingInitial,
     loadingMore,
     hasMore,
@@ -96,6 +100,27 @@ export function LogbookTabScreen() {
 
     return options;
   }, [gymGroups, t, totalCount]);
+
+  const routineTotalCount = useMemo(() => {
+    return routineGroups.reduce((sum, row) => sum + row.workoutsCount, 0);
+  }, [routineGroups]);
+
+  const routineFilterOptions = useMemo(() => {
+    return [
+      {
+        value: "all" as LogbookRoutineFilterValue,
+        label: `${t("performance.logbookAllRoutinesFilter")} (${routineTotalCount})`,
+      },
+      ...[...routineGroups]
+        .sort((a, b) => b.workoutsCount - a.workoutsCount)
+        .map((group) => ({
+          value: (group.routineId ?? "none") as LogbookRoutineFilterValue,
+          label: `${
+            group.routineName?.trim() || t("performance.logbookNoRoutineFilter")
+          } (${group.workoutsCount})`,
+        })),
+    ];
+  }, [routineGroups, routineTotalCount, t]);
 
   const groupedWorkouts = useMemo(() => {
     const groups = new Map<string, GroupedWorkouts>();
@@ -257,27 +282,49 @@ export function LogbookTabScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.page }]}>
-      <View style={styles.headerWrap}>
-        <Text style={[styles.subtitle, { color: palette.textSecondary }]}>
-          {t("performance.logbookSubtitle")}
+      <View style={styles.filterRow}>
+        <Text style={[styles.filterLabel, { color: palette.textSecondary }]}>
+          {t("performance.logbookGymFilterLabel")}
         </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filtersScrollView}
+          contentContainerStyle={styles.filtersRow}
+        >
+          {filterOptions.map((option) => (
+            <Chip
+              key={String(option.value)}
+              label={option.label}
+              size="sm"
+              selected={selectedGymFilter === option.value}
+              onPress={() => setSelectedGymFilter(option.value)}
+            />
+          ))}
+        </ScrollView>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filtersScrollView}
-        contentContainerStyle={styles.filtersRow}
-      >
-        {filterOptions.map((option) => (
-          <Chip
-            key={String(option.value)}
-            label={option.label}
-            selected={selectedGymFilter === option.value}
-            onPress={() => setSelectedGymFilter(option.value)}
-          />
-        ))}
-      </ScrollView>
+      <View style={[styles.filterRow, styles.filterRowBottom]}>
+        <Text style={[styles.filterLabel, { color: palette.textSecondary }]}>
+          {t("performance.logbookRoutineFilterLabel")}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filtersScrollView}
+          contentContainerStyle={styles.filtersRow}
+        >
+          {routineFilterOptions.map((option) => (
+            <Chip
+              key={`routine-${String(option.value)}`}
+              label={option.label}
+              size="sm"
+              selected={selectedRoutineFilter === option.value}
+              onPress={() => setSelectedRoutineFilter(option.value)}
+            />
+          ))}
+        </ScrollView>
+      </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {loadingInitial ? (
@@ -405,22 +452,29 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  headerWrap: {
-    gap: 4,
-    marginBottom: 10,
+  filterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 6,
   },
-  subtitle: {
-    fontFamily: monoFont,
-    fontSize: 11,
-    letterSpacing: 0.2,
-  },
-  filtersScrollView: {
-    flexGrow: 0,
-    flexShrink: 0,
+  filterRowBottom: {
     marginBottom: 8,
   },
+  filterLabel: {
+    fontFamily: monoFont,
+    fontSize: 9,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    minWidth: 42,
+  },
+  filtersScrollView: {
+    flexGrow: 1,
+    flexShrink: 1,
+  },
   filtersRow: {
-    gap: 8,
+    gap: 6,
     paddingRight: 10,
   },
   content: {

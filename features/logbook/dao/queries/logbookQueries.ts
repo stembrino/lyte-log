@@ -39,23 +39,40 @@ export type LogbookGymGroup = {
   workoutsCount: number;
 };
 
+export type LogbookRoutineGroup = {
+  routineId: string | null;
+  routineName: string | null;
+  workoutsCount: number;
+};
+
 type RoutineRow = {
   id: string;
   name: string;
 };
 
-function buildCompletedWorkoutFilter(gymId?: string | null) {
+function buildCompletedWorkoutFilter(gymId?: string | null, routineId?: string | null) {
   const notDeleted = isNull(workouts.deletedAt);
+  const baseFilter = and(eq(workouts.status, "completed"), notDeleted);
 
-  if (gymId === undefined) {
-    return and(eq(workouts.status, "completed"), notDeleted);
+  if (gymId === undefined && routineId === undefined) {
+    return baseFilter;
   }
 
-  if (gymId === null) {
-    return and(eq(workouts.status, "completed"), notDeleted, isNull(workouts.gymId));
-  }
+  const gymFilter =
+    gymId === undefined
+      ? undefined
+      : gymId === null
+        ? isNull(workouts.gymId)
+        : eq(workouts.gymId, gymId);
 
-  return and(eq(workouts.status, "completed"), notDeleted, eq(workouts.gymId, gymId));
+  const routineFilter =
+    routineId === undefined
+      ? undefined
+      : routineId === null
+        ? isNull(workouts.sourceRoutineId)
+        : eq(workouts.sourceRoutineId, routineId);
+
+  return and(baseFilter, gymFilter, routineFilter);
 }
 
 async function getRoutinesByIds(routineIds: string[]): Promise<RoutineRow[]> {
@@ -72,11 +89,14 @@ async function getRoutinesByIds(routineIds: string[]): Promise<RoutineRow[]> {
     .where(inArray(routines.id, routineIds));
 }
 
-export async function getLogbookWorkoutsCount(args?: { gymId?: string | null }): Promise<number> {
+export async function getLogbookWorkoutsCount(args?: {
+  gymId?: string | null;
+  routineId?: string | null;
+}): Promise<number> {
   const [row] = await db
     .select({ count: sql<number>`count(*)` })
     .from(workouts)
-    .where(buildCompletedWorkoutFilter(args?.gymId));
+    .where(buildCompletedWorkoutFilter(args?.gymId, args?.routineId));
 
   return Number(row?.count ?? 0);
 }
@@ -84,10 +104,11 @@ export async function getLogbookWorkoutsCount(args?: { gymId?: string | null }):
 export async function getLogbookWorkoutsPage(args: {
   page: number;
   gymId?: string | null;
+  routineId?: string | null;
   locale: AppLocale;
 }): Promise<LogbookWorkoutItem[]> {
   const rows = await db.query.workouts.findMany({
-    where: buildCompletedWorkoutFilter(args.gymId),
+    where: buildCompletedWorkoutFilter(args.gymId, args.routineId),
     orderBy: [desc(workouts.date), desc(workouts.createdAt)],
     limit: LOGBOOK_PAGE_SIZE,
     offset: args.page * LOGBOOK_PAGE_SIZE,
@@ -227,6 +248,39 @@ export async function getLogbookGymGroups(): Promise<LogbookGymGroup[]> {
   return rows.map((row) => ({
     gymId: row.gymId,
     gymName: row.gymName,
+    workoutsCount: Number(row.workoutsCount),
+  }));
+}
+
+export async function getLogbookRoutineGroups(locale: AppLocale): Promise<LogbookRoutineGroup[]> {
+  const rows = await db
+    .select({
+      routineId: workouts.sourceRoutineId,
+      routineName: routines.name,
+      workoutsCount: sql<number>`count(${workouts.id})`,
+    })
+    .from(workouts)
+    .leftJoin(routines, eq(routines.id, workouts.sourceRoutineId))
+    .where(and(eq(workouts.status, "completed"), isNull(workouts.deletedAt)))
+    .groupBy(workouts.sourceRoutineId, routines.name)
+    .orderBy(asc(routines.name));
+
+  const routineIds = rows
+    .map((row) => row.routineId)
+    .filter((routineId): routineId is string => Boolean(routineId));
+
+  const routineNameTranslationMap = await getEntityFieldTranslationsMap({
+    locale,
+    entityType: "routine",
+    field: "name",
+    entityIds: routineIds,
+  });
+
+  return rows.map((row) => ({
+    routineId: row.routineId,
+    routineName: row.routineId
+      ? (routineNameTranslationMap.get(row.routineId) ?? row.routineName)
+      : null,
     workoutsCount: Number(row.workoutsCount),
   }));
 }
