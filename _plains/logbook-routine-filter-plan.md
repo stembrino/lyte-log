@@ -20,6 +20,7 @@ Add a **routine filter** to the logbook tab, allowing users to filter completed 
   - Routine filter row (`selectedRoutineFilter`)
 - Both filters default to `all`.
 - Routine chips are sorted by `workoutsCount` descending.
+- When gym changes, routine filter is reset to `all` to avoid stale/invalid routine selection in the new gym context.
 
 ### 2) Hook layer (state + pagination)
 
@@ -35,6 +36,17 @@ Add a **routine filter** to the logbook tab, allowing users to filter completed 
   - `gymId`
   - `routineId`
 - `reload()` resets pagination and reloads page 0 when either filter changes.
+- `useFocusEffect()` triggers `reload()` when returning to Logbook so renamed routines and other updates appear without app restart.
+
+#### Default gym sync behavior
+
+- File: `features/logbook/hooks/useApplyDefaultGymFilter.ts`
+- On mount and on focus, default gym is checked via `getDefaultGymId()`.
+- Auto-apply happens only when the current gym filter is still auto-managed:
+  - current is `all`, or
+  - current equals the last auto-applied gym id.
+- If user manually changed gym filter, auto-sync does not overwrite that choice.
+- If default gym changes and is auto-applied, routine filter is reset to `all`.
 
 ### 3) Query layer (combined filter in SQL)
 
@@ -57,5 +69,11 @@ Add a **routine filter** to the logbook tab, allowing users to filter completed 
 ### 5) Group sources for chips
 
 - Gym chips: `getLogbookGymGroups()`
-- Routine chips: `getLogbookRoutineGroups(locale)`
+- Routine chips: `getLogbookRoutineGroups({ locale, gymId })`
 - Routine names are translation-aware via translation map lookup.
+
+### 6) Counter semantics
+
+- Gym counters are global completed-workout totals by gym.
+- Routine counters are scoped by the selected gym (`gymId`) so they update when gym filter changes.
+- This avoids showing routine counts from unrelated gyms.

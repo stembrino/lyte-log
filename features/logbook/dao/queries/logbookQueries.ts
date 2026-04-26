@@ -252,7 +252,10 @@ export async function getLogbookGymGroups(): Promise<LogbookGymGroup[]> {
   }));
 }
 
-export async function getLogbookRoutineGroups(locale: AppLocale): Promise<LogbookRoutineGroup[]> {
+export async function getLogbookRoutineGroups(args: {
+  locale: AppLocale;
+  gymId?: string | null;
+}): Promise<LogbookRoutineGroup[]> {
   const rows = await db
     .select({
       routineId: workouts.sourceRoutineId,
@@ -261,7 +264,7 @@ export async function getLogbookRoutineGroups(locale: AppLocale): Promise<Logboo
     })
     .from(workouts)
     .leftJoin(routines, eq(routines.id, workouts.sourceRoutineId))
-    .where(and(eq(workouts.status, "completed"), isNull(workouts.deletedAt)))
+    .where(buildCompletedWorkoutFilter(args.gymId, undefined))
     .groupBy(workouts.sourceRoutineId, routines.name)
     .orderBy(asc(routines.name));
 
@@ -270,7 +273,7 @@ export async function getLogbookRoutineGroups(locale: AppLocale): Promise<Logboo
     .filter((routineId): routineId is string => Boolean(routineId));
 
   const routineNameTranslationMap = await getEntityFieldTranslationsMap({
-    locale,
+    locale: args.locale,
     entityType: "routine",
     field: "name",
     entityIds: routineIds,

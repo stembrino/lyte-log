@@ -239,6 +239,14 @@ export function LogbookTabScreen() {
     });
   }, []);
 
+  const handleSelectGymFilter = useCallback(
+    (value: LogbookGymFilterValue) => {
+      setSelectedGymFilter(value);
+      setSelectedRoutineFilter("all");
+    },
+    [setSelectedGymFilter, setSelectedRoutineFilter],
+  );
+
   const handleConfirmCreateRoutineFromWorkout = useCallback(
     async (routineName: string) => {
       if (!createRoutineDraft || savingRoutineFromWorkout) {
@@ -298,7 +306,7 @@ export function LogbookTabScreen() {
               label={option.label}
               size="sm"
               selected={selectedGymFilter === option.value}
-              onPress={() => setSelectedGymFilter(option.value)}
+              onPress={() => handleSelectGymFilter(option.value)}
             />
           ))}
         </ScrollView>

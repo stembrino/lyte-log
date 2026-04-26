@@ -10,6 +10,7 @@ import {
 } from "@/features/logbook/dao/queries/logbookQueries";
 import { useApplyDefaultGymFilter } from "@/features/logbook/hooks/useApplyDefaultGymFilter";
 import type { AppLocale } from "@/components/providers/i18n-provider";
+import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type LogbookGymFilterValue = "all" | "none" | string;
@@ -96,7 +97,7 @@ export function usePaginatedLogbook(locale: AppLocale): UsePaginatedLogbookResul
             ? getLogbookWorkoutsCount({ gymId: selectedGymId, routineId: selectedRoutineId })
             : Promise.resolve(null),
           reset ? getLogbookGymGroups() : Promise.resolve(null),
-          reset ? getLogbookRoutineGroups(locale) : Promise.resolve(null),
+          reset ? getLogbookRoutineGroups({ locale, gymId: selectedGymId }) : Promise.resolve(null),
         ]);
 
         if (requestVersion !== requestVersionRef.current) {
@@ -149,7 +150,19 @@ export function usePaginatedLogbook(locale: AppLocale): UsePaginatedLogbookResul
     void reload();
   }, [reload]);
 
-  useApplyDefaultGymFilter({ setSelectedGymFilter });
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
+
+  useApplyDefaultGymFilter({
+    selectedGymFilter,
+    setSelectedGymFilter,
+    onGymFilterAutoApplied: () => {
+      setSelectedRoutineFilter("all");
+    },
+  });
 
   const loadMore = useCallback(() => {
     if (loadingInitial || loadingMore || !hasMore) {
