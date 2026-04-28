@@ -16,6 +16,15 @@ jest.mock("@/components/hooks/useRetroPalette", () => ({
 
 jest.mock("@expo/vector-icons/FontAwesome", () => "MockFontAwesome");
 
+jest.mock("react-native-safe-area-context", () => ({
+  useSafeAreaInsets: () => ({
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  }),
+}));
+
 describe("ActionMenu", () => {
   it("opens the menu and runs the selected action", () => {
     const onEdit = jest.fn();

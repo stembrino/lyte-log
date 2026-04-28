@@ -1,5 +1,7 @@
 import { monoFont } from "@/constants/retroTheme";
 import type { ExerciseLastSessionState } from "@/features/workouts/hooks/useExerciseLastSession";
+import type { ExerciseTopSetState } from "@/features/workouts/hooks/useExerciseTopSet";
+import { InProgressExerciseTopSetSection } from "./InProgressExerciseTopSetSection";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Palette = {
@@ -21,6 +23,13 @@ type InProgressExerciseHistoryPanelProps = {
   onRetryOtherGyms: () => void;
   onCopySets?: () => Promise<void>;
   copyingSetS?: boolean;
+  topSetState: ExerciseTopSetState;
+  onLoadTopSet: () => void;
+  onRetryTopSet: () => void;
+  onApplyTopSet?: () => Promise<void>;
+  applyingTopSet?: boolean;
+  onCopyTopSetSession?: () => Promise<void>;
+  copyingTopSetSession?: boolean;
 };
 
 function formatNumber(value: number): string {
@@ -60,6 +69,13 @@ export function InProgressExerciseHistoryPanel({
   onRetryOtherGyms,
   onCopySets,
   copyingSetS,
+  topSetState,
+  onLoadTopSet,
+  onRetryTopSet,
+  onApplyTopSet,
+  applyingTopSet,
+  onCopyTopSetSession,
+  copyingTopSetSession,
 }: InProgressExerciseHistoryPanelProps) {
   const renderSnapshotContent = (
     state: Extract<ExerciseLastSessionState, { status: "loaded" }>,
@@ -214,6 +230,23 @@ export function InProgressExerciseHistoryPanel({
         {t("workouts.gymFieldLabel")}: {gymName ?? t("workouts.gymNotDefined")}
       </Text>
       {renderContent()}
+
+      <View style={[styles.sectionDivider, { backgroundColor: palette.border }]} />
+      <Text style={[styles.title, { color: palette.textPrimary }]}>
+        {t("workouts.historyPanelTopSetTitle")}
+      </Text>
+      <InProgressExerciseTopSetSection
+        palette={palette}
+        t={t}
+        topSetState={topSetState}
+        onLoadTopSet={onLoadTopSet}
+        onRetryTopSet={onRetryTopSet}
+        onApplyTopSet={onApplyTopSet}
+        applyingTopSet={applyingTopSet}
+        onCopyTopSetSession={onCopyTopSetSession}
+        copyingTopSetSession={copyingTopSetSession}
+        getRelativeDaysLabel={(input) => getRelativeDaysLabel(input, t)}
+      />
     </View>
   );
 }
@@ -242,6 +275,12 @@ const styles = StyleSheet.create({
   },
   contentGroup: {
     gap: 2,
+  },
+  sectionDivider: {
+    height: 1,
+    opacity: 0.45,
+    marginTop: 4,
+    marginBottom: 2,
   },
   retryText: {
     fontFamily: monoFont,

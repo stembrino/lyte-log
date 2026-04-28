@@ -5,6 +5,7 @@ import { monoFont } from "@/constants/retroTheme";
 import { resolveExerciseImageSource } from "@/features/exercises/utils/exerciseImageSource";
 import { InProgressExerciseHistoryPanel } from "./InProgressExerciseHistoryPanel";
 import type { ExerciseLastSessionState } from "@/features/workouts/hooks/useExerciseLastSession";
+import type { ExerciseTopSetState } from "@/features/workouts/hooks/useExerciseTopSet";
 import type { ActiveWorkoutRow } from "@/features/workouts/dao/queries/workoutQueries";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
@@ -42,6 +43,13 @@ type InProgressExerciseCardProps = {
   onRetryOtherGymsHistory: () => void;
   onCopySets?: () => Promise<void>;
   copyingSetS?: boolean;
+  topSetState: ExerciseTopSetState;
+  onLoadTopSet: () => void;
+  onRetryTopSet: () => void;
+  onApplyTopSet?: () => Promise<void>;
+  applyingTopSet?: boolean;
+  onCopyTopSetSession?: () => Promise<void>;
+  copyingTopSetSession?: boolean;
   onPersistSet: (args: {
     setId: string;
     currentReps: number;
@@ -77,6 +85,13 @@ export function InProgressExerciseCard({
   onRetryOtherGymsHistory,
   onCopySets,
   copyingSetS,
+  topSetState,
+  onLoadTopSet,
+  onRetryTopSet,
+  onApplyTopSet,
+  applyingTopSet,
+  onCopyTopSetSession,
+  copyingTopSetSession,
   onPersistSet,
   onDeleteSetPress,
   onToggleSetCompleted,
@@ -136,6 +151,13 @@ export function InProgressExerciseCard({
           onRetryOtherGyms={onRetryOtherGymsHistory}
           onCopySets={onCopySets}
           copyingSetS={copyingSetS}
+          topSetState={topSetState}
+          onLoadTopSet={onLoadTopSet}
+          onRetryTopSet={onRetryTopSet}
+          onApplyTopSet={onApplyTopSet}
+          applyingTopSet={applyingTopSet}
+          onCopyTopSetSession={onCopyTopSetSession}
+          copyingTopSetSession={copyingTopSetSession}
         />
       ) : null}
 

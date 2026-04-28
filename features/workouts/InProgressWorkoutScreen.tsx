@@ -29,6 +29,8 @@ import { createGym } from "@/features/workouts/dao/queries/gymQueries";
 import { useGymPicker } from "@/features/workouts/hooks/useGymPicker";
 import { useExerciseLastSession } from "@/features/workouts/hooks/useExerciseLastSession";
 import { useCopySetsFromLastSession } from "@/features/workouts/hooks/useCopySetsFromLastSession";
+import { useExerciseTopSet } from "@/features/workouts/hooks/useExerciseTopSet";
+import { useCopySetsFromTopSetSession } from "@/features/workouts/hooks/useCopySetsFromTopSetSession";
 import { useKeyboardInputAutoScroll } from "@/features/workouts/hooks/useKeyboardInputAutoScroll";
 import { PostFinishQuickActionsSheet } from "./components/PostFinishQuickActionsSheet";
 import { useRouter } from "expo-router";
@@ -71,12 +73,21 @@ export function InProgressWorkoutScreen() {
   const [isPostFinishGymModalOpen, setIsPostFinishGymModalOpen] = useState(false);
   const [savingAsRoutine, setSavingAsRoutine] = useState(false);
   const [updatingGym, setUpdatingGym] = useState(false);
+  const [applyingTopSetForExerciseId, setApplyingTopSetForExerciseId] = useState<string | null>(
+    null,
+  );
   const {
     getState: getHistoryState,
     ensureLoaded,
     retry: retryHistory,
     resetAll: resetHistory,
   } = useExerciseLastSession(workout?.id ?? null, workout?.gymId ?? null);
+  const {
+    getState: getTopSetState,
+    ensureLoaded: ensureTopSetLoaded,
+    retry: retryTopSet,
+    resetAll: resetTopSet,
+  } = useExerciseTopSet(workout?.id ?? null, workout?.gymId ?? null);
   const { scrollRef, setInputRef, handleInputFocus, handleScroll } = useKeyboardInputAutoScroll();
   const { showAlert, showConfirm, alertElement } = useGlobalAlert();
   const {
@@ -92,6 +103,11 @@ export function InProgressWorkoutScreen() {
     workout,
     onWorkoutUpdated: setWorkout,
   });
+  const { handleCopySetsFromTopSetSession, copyingTopSetSessionForExerciseId } =
+    useCopySetsFromTopSetSession({
+      workout,
+      onWorkoutUpdated: setWorkout,
+    });
 
   useEffect(() => {
     setSelectedGymId(workout?.gymId ?? null);
@@ -101,6 +117,7 @@ export function InProgressWorkoutScreen() {
     if (!workout) {
       setOpenHistoryByExerciseId({});
       resetHistory();
+      resetTopSet();
       return;
     }
 
@@ -117,7 +134,7 @@ export function InProgressWorkoutScreen() {
 
       return next;
     });
-  }, [workout, resetHistory]);
+  }, [workout, resetHistory, resetTopSet]);
 
   useFocusEffect(
     useCallback(() => {
@@ -655,7 +672,130 @@ export function InProgressWorkoutScreen() {
     }));
 
     if (shouldOpen) {
-      await ensureLoaded(exerciseId, "currentGym");
+      await Promise.all([
+        ensureLoaded(exerciseId, "currentGym"),
+        ensureTopSetLoaded(exerciseId, "allGyms"),
+      ]);
+    }
+  };
+
+  const handleApplyTopSetToExercise = async (workoutExerciseId: string, exerciseId: string) => {
+    if (!workout || applyingTopSetForExerciseId) {
+      return;
+    }
+
+    const topSetState = getTopSetState(exerciseId);
+
+    if (topSetState.status !== "loaded") {
+      showAlert({
+        title: t("workouts.historyPanelApplyTopSetErrorTitle"),
+        message: t("workouts.historyPanelApplyTopSetErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
+      return;
+    }
+
+    const targetExercise = workout.exercises.find((row) => row.id === workoutExerciseId);
+    if (!targetExercise) {
+      return;
+    }
+
+    setApplyingTopSetForExerciseId(workoutExerciseId);
+
+    try {
+      const reps = Math.max(0, topSetState.snapshot.topSet.set.reps);
+      const weight = Math.max(0, topSetState.snapshot.topSet.set.weight);
+      const firstSet = targetExercise.sets[0] ?? null;
+
+      if (firstSet) {
+        await updateWorkoutSet({
+          setId: firstSet.id,
+          reps,
+          weight,
+        });
+
+        setWorkout((prev) => {
+          if (!prev) {
+            return prev;
+          }
+
+          return {
+            ...prev,
+            exercises: prev.exercises.map((exercise) =>
+              exercise.id === workoutExerciseId
+                ? {
+                    ...exercise,
+                    sets: exercise.sets.map((set, index) =>
+                      index === 0
+                        ? {
+                            ...set,
+                            reps,
+                            weight,
+                          }
+                        : set,
+                    ),
+                  }
+                : exercise,
+            ),
+          };
+        });
+
+        setRepsDraftBySetId((prev) => ({
+          ...prev,
+          [firstSet.id]: String(reps),
+        }));
+        setWeightDraftBySetId((prev) => ({
+          ...prev,
+          [firstSet.id]: weight > 0 ? formatWeight(weight) : "",
+        }));
+      } else {
+        const createdSet = await addWorkoutSet({
+          workoutExerciseId,
+          reps,
+          weight,
+        });
+
+        setWorkout((prev) => {
+          if (!prev) {
+            return prev;
+          }
+
+          return {
+            ...prev,
+            exercises: prev.exercises.map((exercise) =>
+              exercise.id === workoutExerciseId
+                ? {
+                    ...exercise,
+                    sets: [...exercise.sets, createdSet],
+                  }
+                : exercise,
+            ),
+          };
+        });
+
+        setRepsDraftBySetId((prev) => ({
+          ...prev,
+          [createdSet.id]: String(reps),
+        }));
+        setWeightDraftBySetId((prev) => ({
+          ...prev,
+          [createdSet.id]: weight > 0 ? formatWeight(weight) : "",
+        }));
+      }
+
+      showAlert({
+        title: t("workouts.historyPanelApplyTopSetSuccessTitle"),
+        message: t("workouts.historyPanelApplyTopSetSuccessBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
+    } catch {
+      showAlert({
+        title: t("workouts.historyPanelApplyTopSetErrorTitle"),
+        message: t("workouts.historyPanelApplyTopSetErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
+    } finally {
+      setApplyingTopSetForExerciseId(null);
     }
   };
 
@@ -905,6 +1045,30 @@ export function InProgressWorkoutScreen() {
                       : undefined
                   }
                   copyingSetS={copyingSetsForExerciseId === exercise.id}
+                  topSetState={getTopSetState(exercise.exercise.id)}
+                  onLoadTopSet={() => {
+                    void ensureTopSetLoaded(exercise.exercise.id, "allGyms");
+                  }}
+                  onRetryTopSet={() => {
+                    void retryTopSet(exercise.exercise.id, "allGyms");
+                  }}
+                  onApplyTopSet={
+                    getTopSetState(exercise.exercise.id).status === "loaded"
+                      ? () => handleApplyTopSetToExercise(exercise.id, exercise.exercise.id)
+                      : undefined
+                  }
+                  applyingTopSet={applyingTopSetForExerciseId === exercise.id}
+                  onCopyTopSetSession={
+                    getTopSetState(exercise.exercise.id).status === "loaded"
+                      ? () =>
+                          handleCopySetsFromTopSetSession(
+                            exercise.id,
+                            exercise.exercise.id,
+                            getTopSetState(exercise.exercise.id),
+                          )
+                      : undefined
+                  }
+                  copyingTopSetSession={copyingTopSetSessionForExerciseId === exercise.id}
                   onPersistSet={handlePersistSet}
                   onDeleteSetPress={handleDeleteSetPress}
                   onToggleSetCompleted={handleToggleSetCompleted}
