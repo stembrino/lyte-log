@@ -1,10 +1,10 @@
+import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { monoFont } from "@/constants/retroTheme";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -42,6 +42,10 @@ export function CreateRoutineFromWorkoutModal({
 }: CreateRoutineFromWorkoutModalProps) {
   const palette = useRetroPalette();
   const insets = useSafeAreaInsets();
+  const keyboardAvoiding = useKeyboardAvoiding({
+    iosBehavior: "position",
+    iosOffset: -6,
+  });
   const [name, setName] = useState("");
 
   useEffect(() => {
@@ -73,8 +77,9 @@ export function CreateRoutineFromWorkoutModal({
     >
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "position" : "height"}
-        keyboardVerticalOffset={Math.max(0, insets.top - 6)}
+        enabled={keyboardAvoiding.enabled}
+        behavior={keyboardAvoiding.behavior}
+        keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
       >
         <View style={styles.backdrop} />
 

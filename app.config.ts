@@ -30,6 +30,8 @@ const config: ExpoConfig = {
   },
   android: {
     package: "com.anonymous.lytelog",
+    // Keep keyboard behavior consistent between dev and production builds.
+    softwareKeyboardLayoutMode: "resize",
     adaptiveIcon: {
       foregroundImage: "./assets/images/logo-logym-appicon.png",
       backgroundColor: "#1E1E1E",

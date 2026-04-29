@@ -1,3 +1,4 @@
+import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -11,7 +12,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -67,6 +67,7 @@ export function CreateRoutineModal({
   const palette = useRetroPalette();
   const { showConfirm, alertElement } = useGlobalAlert();
   const insets = useSafeAreaInsets();
+  const keyboardAvoiding = useKeyboardAvoiding();
 
   const [screen, setScreen] = useState<Screen>("basic");
   const [name, setName] = useState("");
@@ -283,9 +284,9 @@ export function CreateRoutineModal({
     >
       <KeyboardAvoidingView
         style={[styles.keyboardView, { backgroundColor: palette.page }]}
-        enabled={Platform.OS === "ios"}
-        behavior="padding"
-        keyboardVerticalOffset={Platform.OS === "ios" ? Math.max(0, insets.top) : 0}
+        enabled={keyboardAvoiding.enabled}
+        behavior={keyboardAvoiding.behavior}
+        keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
       >
         <View style={[styles.container, { backgroundColor: palette.page }]}>
           <View

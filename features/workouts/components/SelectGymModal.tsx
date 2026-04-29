@@ -1,4 +1,5 @@
 import { Chip } from "@/components/Chip";
+import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { WindowControlButton } from "@/components/WindowControlButton";
 import { monoFont } from "@/constants/retroTheme";
@@ -8,7 +9,6 @@ import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -53,6 +53,7 @@ export function SelectGymModal({
 }: SelectGymModalProps) {
   const palette = useRetroPalette();
   const insets = useSafeAreaInsets();
+  const keyboardAvoiding = useKeyboardAvoiding({ iosOffset: -6 });
   const [draftGymName, setDraftGymName] = useState("");
 
   const handleAdd = async () => {
@@ -72,8 +73,9 @@ export function SelectGymModal({
     <Modal visible={isOpen} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Math.max(0, insets.top - 6)}
+        enabled={keyboardAvoiding.enabled}
+        behavior={keyboardAvoiding.behavior}
+        keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
       >
         <View style={[styles.overlay, { backgroundColor: "rgba(0, 0, 0, 0.5)" }]}>
           <View

@@ -1,6 +1,7 @@
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useColorScheme } from "@/components/hooks/useColorScheme";
 import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
+import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
 import {
@@ -38,7 +39,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
-  Platform,
   Share,
   ScrollView,
   StyleSheet,
@@ -57,6 +57,7 @@ export function InProgressWorkoutScreen() {
   const colorScheme = useColorScheme();
   const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
+  const keyboardAvoiding = useKeyboardAvoiding({ iosOffset: 56 });
   const [loading, setLoading] = useState(true);
   const [workout, setWorkout] = useState<ActiveWorkoutRow | null>(null);
   const [repsDraftBySetId, setRepsDraftBySetId] = useState<Record<string, string>>({});
@@ -944,8 +945,9 @@ export function InProgressWorkoutScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.keyboardAvoidingView}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 24}
+      enabled={keyboardAvoiding.enabled}
+      behavior={keyboardAvoiding.behavior}
+      keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
     >
       <View
         style={[
