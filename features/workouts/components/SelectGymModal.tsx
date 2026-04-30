@@ -53,7 +53,7 @@ export function SelectGymModal({
 }: SelectGymModalProps) {
   const palette = useRetroPalette();
   const insets = useSafeAreaInsets();
-  const keyboardAvoiding = useKeyboardAvoiding({ iosOffset: -6 });
+  const keyboardAvoiding = useKeyboardAvoiding({ iosOffset: -6, androidBehavior: "position" });
   const [draftGymName, setDraftGymName] = useState("");
 
   const handleAdd = async () => {

@@ -43,7 +43,7 @@ export function PostFinishQuickActionsSheet({
   const palette = useRetroPalette();
   const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
-  const keyboardAvoiding = useKeyboardAvoiding();
+  const keyboardAvoiding = useKeyboardAvoiding({ androidBehavior: "position" });
   const [isNamingRoutine, setIsNamingRoutine] = useState(false);
   const [routineName, setRoutineName] = useState("");
 

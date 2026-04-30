@@ -8,10 +8,13 @@ type UseKeyboardAvoidingOptions = {
   androidOffset?: number;
 };
 
+// On Android, fullscreen modals rely on softwareKeyboardLayoutMode="resize" (app.config.ts)
+// and do NOT need KeyboardAvoidingView — passing androidBehavior explicitly enables it
+// only for overlay bottom-sheets where the OS resize does not apply.
 export function useKeyboardAvoiding({
   iosBehavior = "padding",
   iosOffset = 0,
-  androidBehavior = "height",
+  androidBehavior = undefined,
   androidOffset = 0,
 }: UseKeyboardAvoidingOptions = {}) {
   const insets = useSafeAreaInsets();

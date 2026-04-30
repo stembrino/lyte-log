@@ -60,23 +60,22 @@ describe("useKeyboardAvoiding", () => {
     expect(value.keyboardVerticalOffset).toBe(0);
   });
 
-  it("returns Android defaults with height behavior enabled", () => {
+  it("disables Android KAV by default (softwareKeyboardLayoutMode=resize handles fullscreen modals)", () => {
     const value = loadHook({ os: "android", topInset: 24 });
 
-    expect(value.enabled).toBe(true);
-    expect(value.behavior).toBe("height");
+    expect(value.enabled).toBe(false);
     expect(value.keyboardVerticalOffset).toBe(0);
   });
 
-  it("enables Android keyboard avoiding when behavior is provided", () => {
+  it("enables Android KAV when androidBehavior is explicitly provided (bottom sheets)", () => {
     const value = loadHook({
       os: "android",
       topInset: 24,
-      options: { androidBehavior: "height", androidOffset: 18 },
+      options: { androidBehavior: "position" },
     });
 
     expect(value.enabled).toBe(true);
-    expect(value.behavior).toBe("height");
-    expect(value.keyboardVerticalOffset).toBe(18);
+    expect(value.behavior).toBe("position");
+    expect(value.keyboardVerticalOffset).toBe(0);
   });
 });

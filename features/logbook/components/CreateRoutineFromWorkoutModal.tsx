@@ -45,6 +45,7 @@ export function CreateRoutineFromWorkoutModal({
   const keyboardAvoiding = useKeyboardAvoiding({
     iosBehavior: "position",
     iosOffset: -6,
+    androidBehavior: "position",
   });
   const [name, setName] = useState("");
 
