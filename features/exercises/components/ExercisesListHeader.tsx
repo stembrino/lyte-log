@@ -27,7 +27,7 @@ export function ExercisesListHeader({
   const { t } = useI18n();
   const palette = useRetroPalette();
 
-  const filterOptions: Array<{ key: ExerciseSourceFilter; label: string }> = [
+  const filterOptions: { key: ExerciseSourceFilter; label: string }[] = [
     { key: "all", label: t("exercises.filterAll") },
     { key: "custom", label: t("exercises.filterMine") },
     { key: "system", label: t("exercises.filterSystem") },
