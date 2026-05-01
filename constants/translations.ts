@@ -27,6 +27,11 @@ export const translations = {
       defaultGymNotSet: "Não definida",
       defaultGymSaveErrorTitle: "Erro ao salvar academia padrão",
       defaultGymSaveErrorBody: "Não foi possível atualizar a academia padrão agora.",
+      rateApp: "Avaliar app",
+      rateAppAction: "Abrir",
+      rateAppUnavailableTitle: "Avaliação indisponível",
+      rateAppUnavailableBody:
+        "Não foi possível abrir a avaliação agora. Tente novamente em uma build instalada da loja.",
       theme: "Tema",
       dark: "Escuro",
       light: "Claro",
@@ -390,6 +395,11 @@ export const translations = {
       defaultGymNotSet: "Not set",
       defaultGymSaveErrorTitle: "Could not save default gym",
       defaultGymSaveErrorBody: "The default gym could not be updated right now.",
+      rateApp: "Rate app",
+      rateAppAction: "Open",
+      rateAppUnavailableTitle: "Review unavailable",
+      rateAppUnavailableBody:
+        "Could not open the review prompt right now. Try again on an installed store build.",
       theme: "Theme",
       dark: "Dark",
       light: "Light",

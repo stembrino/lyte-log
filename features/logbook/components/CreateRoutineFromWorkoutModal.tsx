@@ -1,16 +1,8 @@
-import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
+import { AppKeyboardAvoidingView } from "@/components/AppKeyboardAvoidingView";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { monoFont } from "@/constants/retroTheme";
 import { useEffect, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type CreateRoutineFromWorkoutModalProps = {
@@ -42,11 +34,7 @@ export function CreateRoutineFromWorkoutModal({
 }: CreateRoutineFromWorkoutModalProps) {
   const palette = useRetroPalette();
   const insets = useSafeAreaInsets();
-  const keyboardAvoiding = useKeyboardAvoiding({
-    iosBehavior: "position",
-    iosOffset: -6,
-    androidBehavior: "position",
-  });
+
   const [name, setName] = useState("");
 
   useEffect(() => {
@@ -76,11 +64,11 @@ export function CreateRoutineFromWorkoutModal({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
+      <AppKeyboardAvoidingView
         style={styles.keyboardView}
-        enabled={keyboardAvoiding.enabled}
-        behavior={keyboardAvoiding.behavior}
-        keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
+        iosBehavior="position"
+        iosOffset={-6}
+        androidBehavior="position"
       >
         <View style={styles.backdrop} />
 
@@ -143,7 +131,7 @@ export function CreateRoutineFromWorkoutModal({
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </AppKeyboardAvoidingView>
     </Modal>
   );
 }

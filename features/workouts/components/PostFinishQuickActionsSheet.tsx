@@ -1,18 +1,10 @@
-import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
+import { AppKeyboardAvoidingView } from "@/components/AppKeyboardAvoidingView";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type PostFinishQuickActionsSheetProps = {
@@ -43,7 +35,7 @@ export function PostFinishQuickActionsSheet({
   const palette = useRetroPalette();
   const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
-  const keyboardAvoiding = useKeyboardAvoiding({ androidBehavior: "position" });
+
   const [isNamingRoutine, setIsNamingRoutine] = useState(false);
   const [routineName, setRoutineName] = useState("");
 
@@ -75,12 +67,7 @@ export function PostFinishQuickActionsSheet({
 
   return (
     <Modal visible={isOpen} transparent animationType="slide" onRequestClose={handleClose}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        enabled={keyboardAvoiding.enabled}
-        behavior={keyboardAvoiding.behavior}
-        keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
-      >
+      <AppKeyboardAvoidingView style={styles.keyboardView} androidBehavior="position">
         <View style={styles.backdrop} />
 
         <View
@@ -211,7 +198,7 @@ export function PostFinishQuickActionsSheet({
             </TouchableOpacity>
           ) : null}
         </View>
-      </KeyboardAvoidingView>
+      </AppKeyboardAvoidingView>
     </Modal>
   );
 }

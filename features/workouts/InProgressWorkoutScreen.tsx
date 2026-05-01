@@ -1,8 +1,9 @@
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useColorScheme } from "@/components/hooks/useColorScheme";
 import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
-import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
+import { AppKeyboardAvoidingView } from "@/components/AppKeyboardAvoidingView";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { FEATURE_FLAGS } from "@/constants/featureFlags";
 import { monoFont } from "@/constants/retroTheme";
 import {
   getActiveWorkout,
@@ -33,12 +34,12 @@ import { useCopySetsFromLastSession } from "@/features/workouts/hooks/useCopySet
 import { useExerciseTopSet } from "@/features/workouts/hooks/useExerciseTopSet";
 import { useCopySetsFromTopSetSession } from "@/features/workouts/hooks/useCopySetsFromTopSetSession";
 import { useKeyboardInputAutoScroll } from "@/features/workouts/hooks/useKeyboardInputAutoScroll";
+import { useWorkoutRatingPrompt } from "@/features/workouts/hooks/useWorkoutRatingPrompt";
 import { PostFinishQuickActionsSheet } from "./components/PostFinishQuickActionsSheet";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Keyboard,
-  KeyboardAvoidingView,
   Share,
   ScrollView,
   StyleSheet,
@@ -57,7 +58,7 @@ export function InProgressWorkoutScreen() {
   const colorScheme = useColorScheme();
   const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
-  const keyboardAvoiding = useKeyboardAvoiding({ iosOffset: 56, androidBehavior: "height" });
+
   const [loading, setLoading] = useState(true);
   const [workout, setWorkout] = useState<ActiveWorkoutRow | null>(null);
   const [repsDraftBySetId, setRepsDraftBySetId] = useState<Record<string, string>>({});
@@ -90,6 +91,7 @@ export function InProgressWorkoutScreen() {
     resetAll: resetTopSet,
   } = useExerciseTopSet(workout?.id ?? null, workout?.gymId ?? null);
   const { scrollRef, setInputRef, handleInputFocus, handleScroll } = useKeyboardInputAutoScroll();
+  const { maybePromptForCompletedWorkout } = useWorkoutRatingPrompt();
   const { showAlert, showConfirm, alertElement } = useGlobalAlert();
   const {
     gyms,
@@ -136,6 +138,20 @@ export function InProgressWorkoutScreen() {
       return next;
     });
   }, [workout, resetHistory, resetTopSet]);
+
+  useEffect(() => {
+    if (!FEATURE_FLAGS.workoutAutoRatePrompt || !isPostFinishPanelOpen) {
+      return;
+    }
+
+    const promptTimeout = setTimeout(() => {
+      void maybePromptForCompletedWorkout();
+    }, 1000);
+
+    return () => {
+      clearTimeout(promptTimeout);
+    };
+  }, [isPostFinishPanelOpen, maybePromptForCompletedWorkout]);
 
   useFocusEffect(
     useCallback(() => {
@@ -943,11 +959,10 @@ export function InProgressWorkoutScreen() {
   const canFinishWorkout = Boolean(workout) && (workout?.exercises.length ?? 0) > 0;
 
   return (
-    <KeyboardAvoidingView
+    <AppKeyboardAvoidingView
       style={styles.keyboardAvoidingView}
-      enabled={keyboardAvoiding.enabled}
-      behavior={keyboardAvoiding.behavior}
-      keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
+      iosOffset={56}
+      androidBehavior="height"
     >
       <View
         style={[
@@ -1186,7 +1201,7 @@ export function InProgressWorkoutScreen() {
 
         {alertElement}
       </View>
-    </KeyboardAvoidingView>
+    </AppKeyboardAvoidingView>
   );
 }
 

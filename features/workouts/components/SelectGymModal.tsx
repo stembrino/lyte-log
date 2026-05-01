@@ -1,5 +1,5 @@
+import { AppKeyboardAvoidingView } from "@/components/AppKeyboardAvoidingView";
 import { Chip } from "@/components/Chip";
-import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { WindowControlButton } from "@/components/WindowControlButton";
 import { monoFont } from "@/constants/retroTheme";
@@ -7,7 +7,6 @@ import type { GymItem } from "@/features/workouts/dao/queries/gymQueries";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useState } from "react";
 import {
-  KeyboardAvoidingView,
   Modal,
   ScrollView,
   StyleSheet,
@@ -53,7 +52,7 @@ export function SelectGymModal({
 }: SelectGymModalProps) {
   const palette = useRetroPalette();
   const insets = useSafeAreaInsets();
-  const keyboardAvoiding = useKeyboardAvoiding({ iosOffset: -6, androidBehavior: "position" });
+
   const [draftGymName, setDraftGymName] = useState("");
 
   const handleAdd = async () => {
@@ -71,12 +70,7 @@ export function SelectGymModal({
 
   return (
     <Modal visible={isOpen} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        enabled={keyboardAvoiding.enabled}
-        behavior={keyboardAvoiding.behavior}
-        keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
-      >
+      <AppKeyboardAvoidingView iosOffset={-6} androidBehavior="position">
         <View style={[styles.overlay, { backgroundColor: "rgba(0, 0, 0, 0.5)" }]}>
           <View
             style={[
@@ -207,15 +201,12 @@ export function SelectGymModal({
             </ScrollView>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </AppKeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
-  },
   overlay: {
     flex: 1,
     justifyContent: "flex-end",

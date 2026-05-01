@@ -7,7 +7,9 @@ import { LanguageSettingRow } from "@/features/settings/components/LanguageSetti
 import { DefaultGymSettingRow } from "@/features/settings/components/DefaultGymSettingRow";
 import { SettingsSection } from "@/features/settings/components/SettingsSection";
 import { ThemeSettingRow } from "@/features/settings/components/ThemeSettingRow";
+import { RateAppSettingRow } from "@/features/settings/components/RateAppSettingRow";
 import Colors from "@/constants/Colors";
+import { FEATURE_FLAGS } from "@/constants/featureFlags";
 
 export function SettingsScreen() {
   const colorScheme = useColorScheme();
@@ -43,6 +45,16 @@ export function SettingsScreen() {
         >
           <DefaultGymSettingRow />
         </SettingsSection>
+
+        {FEATURE_FLAGS.settingsRateApp ? (
+          <SettingsSection
+            title={t("settings.rateApp") || "Rate App"}
+            textColor={textColor}
+            borderColor={palette.border}
+          >
+            <RateAppSettingRow />
+          </SettingsSection>
+        ) : null}
       </ScrollView>
     </View>
   );

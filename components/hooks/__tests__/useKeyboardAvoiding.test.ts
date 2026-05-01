@@ -60,22 +60,23 @@ describe("useKeyboardAvoiding", () => {
     expect(value.keyboardVerticalOffset).toBe(0);
   });
 
-  it("disables Android KAV by default (softwareKeyboardLayoutMode=resize handles fullscreen modals)", () => {
+  it("returns Android defaults with padding behavior enabled", () => {
     const value = loadHook({ os: "android", topInset: 24 });
 
-    expect(value.enabled).toBe(false);
+    expect(value.enabled).toBe(true);
+    expect(value.behavior).toBe("padding");
     expect(value.keyboardVerticalOffset).toBe(0);
   });
 
-  it("enables Android KAV when androidBehavior is explicitly provided (bottom sheets)", () => {
+  it("enables Android KAV when androidBehavior is explicitly provided", () => {
     const value = loadHook({
       os: "android",
       topInset: 24,
-      options: { androidBehavior: "position" },
+      options: { androidBehavior: "height", androidOffset: 18 },
     });
 
     expect(value.enabled).toBe(true);
-    expect(value.behavior).toBe("position");
-    expect(value.keyboardVerticalOffset).toBe(0);
+    expect(value.behavior).toBe("height");
+    expect(value.keyboardVerticalOffset).toBe(18);
   });
 });

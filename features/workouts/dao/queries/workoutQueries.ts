@@ -2,7 +2,7 @@ import { db } from "@/db/client";
 import type { AppLocale } from "@/constants/translations";
 import { workouts } from "@/db/schema";
 import { getEntityFieldTranslationsMap } from "@/features/translations/dao/queries/translationQueries";
-import { desc, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 export const WORKOUT_ACTIVE_STATUSES = ["in_progress", "paused"] as const;
 
@@ -110,4 +110,14 @@ export async function getActiveWorkout(locale?: AppLocale): Promise<ActiveWorkou
       })),
     })),
   };
+}
+
+export async function getCompletedWorkoutsCount(): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(${workouts.id})` })
+    .from(workouts)
+    .where(and(eq(workouts.status, "completed"), isNull(workouts.deletedAt)))
+    .limit(1);
+
+  return Number(row?.count ?? 0);
 }

@@ -1,19 +1,11 @@
+import { AppKeyboardAvoidingView } from "@/components/AppKeyboardAvoidingView";
 import { SingleSelectChipGroup } from "@/components/SingleSelectChipGroup";
 import { WindowControlButton } from "@/components/WindowControlButton";
-import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { monoFont } from "@/constants/retroTheme";
 import { useEffect, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type CreateExercisePayload = {
@@ -43,7 +35,7 @@ export function CreateExerciseModal({
   const { t } = useI18n();
   const palette = useRetroPalette();
   const insets = useSafeAreaInsets();
-  const keyboardAvoiding = useKeyboardAvoiding();
+
   const [name, setName] = useState("");
   const [muscleGroup, setMuscleGroup] = useState<string | null>(null);
   const [nameError, setNameError] = useState(false);
@@ -116,12 +108,7 @@ export function CreateExerciseModal({
       presentationStyle="formSheet"
       onRequestClose={resetAndClose}
     >
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        enabled={keyboardAvoiding.enabled}
-        behavior={keyboardAvoiding.behavior}
-        keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
-      >
+      <AppKeyboardAvoidingView>
         <View style={[styles.container, { backgroundColor: palette.page }]}>
           <View
             style={[
@@ -240,15 +227,12 @@ export function CreateExerciseModal({
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </AppKeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
-  },
   container: {
     flex: 1,
   },

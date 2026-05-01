@@ -1,4 +1,4 @@
-import { useKeyboardAvoiding } from "@/components/hooks/useKeyboardAvoiding";
+import { AppKeyboardAvoidingView } from "@/components/AppKeyboardAvoidingView";
 import { useRetroPalette } from "@/components/hooks/useRetroPalette";
 import { useGlobalAlert } from "@/components/hooks/useGlobalAlert";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -9,14 +9,7 @@ import {
   type ExerciseLibraryItem,
 } from "@/features/exercises/hooks/usePaginatedExerciseLibrary";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreateExerciseModal } from "@/features/exercises/components/CreateExerciseModal";
 import { useExerciseMutations } from "@/features/exercises/hooks/useExerciseMutations";
@@ -67,7 +60,6 @@ export function CreateRoutineModal({
   const palette = useRetroPalette();
   const { showConfirm, alertElement } = useGlobalAlert();
   const insets = useSafeAreaInsets();
-  const keyboardAvoiding = useKeyboardAvoiding();
 
   const [screen, setScreen] = useState<Screen>("basic");
   const [name, setName] = useState("");
@@ -282,12 +274,7 @@ export function CreateRoutineModal({
       presentationStyle="formSheet"
       onRequestClose={handleRequestClose}
     >
-      <KeyboardAvoidingView
-        style={[styles.keyboardView, { backgroundColor: palette.page }]}
-        enabled={keyboardAvoiding.enabled}
-        behavior={keyboardAvoiding.behavior}
-        keyboardVerticalOffset={keyboardAvoiding.keyboardVerticalOffset}
-      >
+      <AppKeyboardAvoidingView style={{ backgroundColor: palette.page }}>
         <View style={[styles.container, { backgroundColor: palette.page }]}>
           <View
             style={[
@@ -418,15 +405,12 @@ export function CreateRoutineModal({
 
           {alertElement}
         </View>
-      </KeyboardAvoidingView>
+      </AppKeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
-  },
   container: {
     flex: 1,
   },
