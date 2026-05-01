@@ -252,6 +252,7 @@ export const translations = {
     routines: {
       title: "",
       subtitle: "",
+      infoHintDismiss: "OK",
       systemRoutines: "Rotinas do Gym Log",
       systemRoutinesHint: "Use estas rotinas como base e adapte conforme seu objetivo.",
       emptySystemRoutines: "Nenhuma rotina padrão encontrada.",
@@ -614,6 +615,7 @@ export const translations = {
     routines: {
       title: "",
       subtitle: "",
+      infoHintDismiss: "OK",
       systemRoutines: "Gym Log Routines",
       systemRoutinesHint: "Use these routines as a base and adapt them to your goals.",
       emptySystemRoutines: "No default routines found.",
