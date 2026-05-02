@@ -274,7 +274,7 @@ export function CreateRoutineModal({
       presentationStyle="formSheet"
       onRequestClose={handleRequestClose}
     >
-      <AppKeyboardAvoidingView style={{ backgroundColor: palette.page }}>
+      <AppKeyboardAvoidingView style={{ backgroundColor: palette.page }} androidBehavior="padding">
         <View style={[styles.container, { backgroundColor: palette.page }]}>
           <View
             style={[
