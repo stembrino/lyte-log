@@ -22,6 +22,7 @@ type Props = {
   onSubmit: (payload: CreateExercisePayload) => Promise<void>;
   mode?: ExerciseModalMode;
   initialValues?: CreateExercisePayload;
+  prefillName?: string;
 };
 
 export function CreateExerciseModal({
@@ -31,6 +32,7 @@ export function CreateExerciseModal({
   onSubmit,
   mode = "create",
   initialValues,
+  prefillName,
 }: Props) {
   const { t } = useI18n();
   const palette = useRetroPalette();
@@ -50,14 +52,15 @@ export function CreateExerciseModal({
       return;
     }
 
-    setName(initialValues?.name?.toUpperCase() ?? "");
+    const normalizedPrefill = prefillName?.trim().toUpperCase().slice(0, 60) ?? "";
+    setName(initialValues?.name?.toUpperCase() ?? normalizedPrefill);
     setMuscleGroup(initialValues?.muscleGroup ?? null);
     setNameError(false);
     setMuscleGroupError(false);
     setSubmitError(null);
     setSubmitting(false);
     setFocusedField(null);
-  }, [initialValues, visible]);
+  }, [initialValues, prefillName, visible]);
 
   const resetAndClose = () => {
     setName("");

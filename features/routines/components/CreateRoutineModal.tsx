@@ -401,6 +401,7 @@ export function CreateRoutineModal({
             onClose={() => setCreateExerciseModalVisible(false)}
             muscleGroups={muscleGroups}
             onSubmit={handleCreateExercise}
+            prefillName={searchQuery}
           />
 
           {alertElement}

@@ -213,6 +213,7 @@ export function PrepareWorkoutExercisePickerModal({
         onClose={() => setCreateModalVisible(false)}
         muscleGroups={muscleGroups}
         onSubmit={handleCreateExercise}
+        prefillName={searchQuery}
       />
 
       <Snackbar

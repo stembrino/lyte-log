@@ -152,6 +152,7 @@ export default function ExercisesTabScreen() {
         onClose={() => setCreateModalVisible(false)}
         muscleGroups={muscleGroups}
         onSubmit={handleCreateExercise}
+        prefillName={query}
       />
 
       <CreateExerciseModal
