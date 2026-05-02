@@ -68,7 +68,7 @@ export function CreateRoutineFromWorkoutModal({
         style={styles.keyboardView}
         iosBehavior="position"
         iosOffset={-6}
-        androidBehavior="position"
+        androidBehavior="padding"
       >
         <View style={styles.backdrop} />
 

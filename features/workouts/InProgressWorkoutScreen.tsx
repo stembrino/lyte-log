@@ -962,7 +962,7 @@ export function InProgressWorkoutScreen() {
     <AppKeyboardAvoidingView
       style={styles.keyboardAvoidingView}
       iosOffset={56}
-      androidBehavior="height"
+      androidBehavior="padding"
     >
       <View
         style={[

@@ -67,7 +67,7 @@ export function PostFinishQuickActionsSheet({
 
   return (
     <Modal visible={isOpen} transparent animationType="slide" onRequestClose={handleClose}>
-      <AppKeyboardAvoidingView style={styles.keyboardView} androidBehavior="position">
+      <AppKeyboardAvoidingView style={styles.keyboardView} androidBehavior="padding">
         <View style={styles.backdrop} />
 
         <View
