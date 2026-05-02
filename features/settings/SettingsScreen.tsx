@@ -8,6 +8,7 @@ import { DefaultGymSettingRow } from "@/features/settings/components/DefaultGymS
 import { SettingsSection } from "@/features/settings/components/SettingsSection";
 import { ThemeSettingRow } from "@/features/settings/components/ThemeSettingRow";
 import { RateAppSettingRow } from "@/features/settings/components/RateAppSettingRow";
+import { FeedbackSettingRow } from "@/features/settings/components/FeedbackSettingRow";
 import Colors from "@/constants/Colors";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
 
@@ -55,6 +56,14 @@ export function SettingsScreen() {
             <RateAppSettingRow />
           </SettingsSection>
         ) : null}
+
+        <SettingsSection
+          title={t("settings.support")}
+          textColor={textColor}
+          borderColor={palette.border}
+        >
+          <FeedbackSettingRow />
+        </SettingsSection>
       </ScrollView>
     </View>
   );
