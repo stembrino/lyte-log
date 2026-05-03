@@ -111,7 +111,12 @@ export function CreateExerciseModal({
       presentationStyle="formSheet"
       onRequestClose={resetAndClose}
     >
-      <AppKeyboardAvoidingView androidBehavior="padding">
+      <AppKeyboardAvoidingView
+        style={{ backgroundColor: palette.page }}
+        iosBehavior="position"
+        iosOffset={-6}
+        androidBehavior="padding"
+      >
         <View style={[styles.container, { backgroundColor: palette.page }]}>
           <View
             style={[
