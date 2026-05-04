@@ -26,10 +26,10 @@ const config: ExpoConfig = {
   },
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.anonymous.gymlog",
+    bundleIdentifier: "com.fabio.gymlog",
   },
   android: {
-    package: "com.anonymous.gymlog",
+    package: "com.fabio.gymlog",
     // Keep keyboard behavior consistent between dev and production builds.
     softwareKeyboardLayoutMode: "resize",
     adaptiveIcon: {
