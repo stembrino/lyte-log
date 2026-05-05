@@ -373,6 +373,44 @@ export async function removeWorkoutExercise(args: {
   });
 }
 
+export async function reorderWorkoutExercises(args: {
+  workoutId: string;
+  orderedWorkoutExerciseIds: string[];
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const existingRows = await tx
+      .select({ id: workoutExercises.id })
+      .from(workoutExercises)
+      .where(eq(workoutExercises.workoutId, args.workoutId))
+      .orderBy(asc(workoutExercises.exerciseOrder));
+
+    const existingIds = existingRows.map((row) => row.id);
+    const orderedIds = Array.from(new Set(args.orderedWorkoutExerciseIds));
+
+    if (orderedIds.length !== existingIds.length) {
+      throw new Error("INVALID_EXERCISE_ORDER");
+    }
+
+    const existingIdSet = new Set(existingIds);
+    if (orderedIds.some((id) => !existingIdSet.has(id))) {
+      throw new Error("INVALID_EXERCISE_ORDER");
+    }
+
+    for (let index = 0; index < orderedIds.length; index += 1) {
+      const workoutExerciseId = orderedIds[index];
+      if (!workoutExerciseId) {
+        continue;
+      }
+
+      const nextOrder = index + 1;
+      await tx
+        .update(workoutExercises)
+        .set({ exerciseOrder: nextOrder })
+        .where(eq(workoutExercises.id, workoutExerciseId));
+    }
+  });
+}
+
 export async function updateWorkoutStatus(args: {
   workoutId: string;
   status: "in_progress" | "paused";

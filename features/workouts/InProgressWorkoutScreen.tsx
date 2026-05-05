@@ -14,6 +14,7 @@ import {
   addWorkoutSet,
   cancelWorkout,
   finishWorkout,
+  reorderWorkoutExercises,
   removeWorkoutExercise,
   removeWorkoutSet,
   saveWorkoutAsRoutine,
@@ -27,6 +28,7 @@ import { SelectGymModal } from "@/features/workouts/components/SelectGymModal";
 import { WorkoutStatusDot } from "@/features/workouts/components/WorkoutStatusDot";
 import { PrepareWorkoutExercisePickerModal } from "@/features/workouts/components/prepare/PrepareWorkoutExercisePickerModal";
 import { InProgressExerciseCard } from "@/features/workouts/components/in-progress/InProgressExerciseCard";
+import { InProgressAdjustSheet } from "@/features/workouts/components/in-progress/InProgressAdjustSheet";
 import { createGym } from "@/features/workouts/dao/queries/gymQueries";
 import { useGymPicker } from "@/features/workouts/hooks/useGymPicker";
 import { useExerciseLastSession } from "@/features/workouts/hooks/useExerciseLastSession";
@@ -66,6 +68,8 @@ export function InProgressWorkoutScreen() {
   const [canceling, setCanceling] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
+  const [isAdjustSheetOpen, setIsAdjustSheetOpen] = useState(false);
+  const [isAdjustGymModalOpen, setIsAdjustGymModalOpen] = useState(false);
   const [deletingExerciseId, setDeletingExerciseId] = useState<string | null>(null);
   const [deletingSetId, setDeletingSetId] = useState<string | null>(null);
   const [openHistoryByExerciseId, setOpenHistoryByExerciseId] = useState<Record<string, boolean>>(
@@ -298,9 +302,9 @@ export function InProgressWorkoutScreen() {
   const handleAssignWorkoutGym = async (
     gymId: string | null,
     gymOverride?: { id: string; name: string } | null,
-  ) => {
+  ): Promise<boolean> => {
     if (!workout || updatingGym) {
-      return;
+      return false;
     }
 
     setUpdatingGym(true);
@@ -330,13 +334,14 @@ export function InProgressWorkoutScreen() {
             }
           : prev,
       );
-      setIsPostFinishGymModalOpen(false);
+      return true;
     } catch {
       showAlert({
         title: t("workouts.postFinishGymUpdateErrorTitle"),
         message: t("workouts.postFinishGymUpdateErrorBody"),
         buttonLabel: t("workouts.postFinishCloseCta"),
       });
+      return false;
     } finally {
       setUpdatingGym(false);
     }
@@ -358,6 +363,50 @@ export function InProgressWorkoutScreen() {
         buttonLabel: t("workouts.postFinishCloseCta"),
       });
       return false;
+    }
+  };
+
+  const handleReorderExercises = async (nextExerciseIds: string[]) => {
+    if (!workout) {
+      return;
+    }
+
+    const currentById = new Map(workout.exercises.map((exercise) => [exercise.id, exercise]));
+    const nextExercises = nextExerciseIds
+      .map((exerciseId) => currentById.get(exerciseId))
+      .filter((exercise): exercise is NonNullable<typeof exercise> => Boolean(exercise))
+      .map((exercise, index) => ({
+        ...exercise,
+        exerciseOrder: index + 1,
+      }));
+
+    if (nextExercises.length !== workout.exercises.length) {
+      return;
+    }
+
+    setWorkout((prev) =>
+      prev
+        ? {
+            ...prev,
+            exercises: nextExercises,
+          }
+        : prev,
+    );
+
+    try {
+      await reorderWorkoutExercises({
+        workoutId: workout.id,
+        orderedWorkoutExerciseIds: nextExerciseIds,
+      });
+    } catch {
+      showAlert({
+        title: t("workouts.adjustWorkoutReorderErrorTitle"),
+        message: t("workouts.adjustWorkoutReorderErrorBody"),
+        buttonLabel: t("workouts.postFinishCloseCta"),
+      });
+
+      const current = await getActiveWorkout(locale);
+      setWorkout(current);
     }
   };
 
@@ -1098,17 +1147,31 @@ export function InProgressWorkoutScreen() {
 
           {workout ? (
             <View style={[styles.exerciseActionsGroup, { borderBottomColor: palette.border }]}>
-              <TouchableOpacity
-                style={[styles.addExerciseButton, { borderColor: palette.border }]}
-                onPress={() => setIsExercisePickerOpen(true)}
-              >
-                <View style={styles.addExerciseButtonContent}>
-                  <FontAwesome name="plus" size={11} color={palette.textPrimary} />
-                  <Text style={[styles.addExerciseButtonText, { color: palette.textPrimary }]}>
-                    {t("workouts.addExerciseInlineCta")}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              <View style={styles.inlineActionsRow}>
+                <TouchableOpacity
+                  style={[styles.inlineActionButton, { borderColor: palette.border }]}
+                  onPress={() => setIsExercisePickerOpen(true)}
+                >
+                  <View style={styles.addExerciseButtonContent}>
+                    <FontAwesome name="plus" size={11} color={palette.textPrimary} />
+                    <Text style={[styles.addExerciseButtonText, { color: palette.textPrimary }]}>
+                      {t("workouts.addExerciseInlineCta")}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.inlineActionButton, { borderColor: palette.border }]}
+                  onPress={() => setIsAdjustSheetOpen(true)}
+                >
+                  <View style={styles.addExerciseButtonContent}>
+                    <FontAwesome name="sliders" size={11} color={palette.textPrimary} />
+                    <Text style={[styles.addExerciseButtonText, { color: palette.textPrimary }]}>
+                      {t("workouts.adjustWorkoutCta")}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : null}
 
@@ -1192,7 +1255,61 @@ export function InProgressWorkoutScreen() {
           addButtonLabel={t("workouts.gymAddButton")}
           emptyLabel={t("workouts.gymEmptyState")}
           onSelectGym={(gymId) => {
-            void handleAssignWorkoutGym(gymId);
+            void (async () => {
+              const didUpdate = await handleAssignWorkoutGym(gymId);
+              if (didUpdate) {
+                setIsPostFinishGymModalOpen(false);
+              }
+            })();
+          }}
+          onAddGym={handleCreateGymForCompletedWorkout}
+          onDeleteGym={handleDeleteGymForCompletedWorkout}
+          deleteGymButtonAccessibilityLabel={t("workouts.gymDeleteButton")}
+        />
+
+        <InProgressAdjustSheet
+          isOpen={isAdjustSheetOpen}
+          onClose={() => setIsAdjustSheetOpen(false)}
+          items={
+            workout?.exercises.map((exercise) => ({
+              id: exercise.id,
+              name: exercise.exercise.name,
+              exerciseOrder: exercise.exerciseOrder,
+            })) ?? []
+          }
+          title={t("workouts.adjustWorkoutTitle")}
+          reorderHint={t("workouts.adjustWorkoutReorderHint")}
+          manageGymLabel={
+            workout?.gym?.name
+              ? `${t("workouts.gymFieldLabel")}: ${workout.gym.name}`
+              : t("workouts.adjustWorkoutManageGymCta")
+          }
+          manageGymAccessibilityLabel={t("workouts.adjustWorkoutManageGymCta")}
+          doneLabel={t("workouts.adjustWorkoutDoneCta")}
+          onManageGym={() => setIsAdjustGymModalOpen(true)}
+          onReorder={(nextItemIds) => {
+            void handleReorderExercises(nextItemIds);
+          }}
+        />
+
+        <SelectGymModal
+          isOpen={isAdjustGymModalOpen}
+          onClose={() => setIsAdjustGymModalOpen(false)}
+          gyms={gyms}
+          selectedGymId={selectedGymId}
+          loading={loadingGyms || updatingGym}
+          title={t("workouts.selectGymModalTitle")}
+          noneLabel={t("workouts.gymNoneOption")}
+          addPlaceholder={t("workouts.gymAddPlaceholder")}
+          addButtonLabel={t("workouts.gymAddButton")}
+          emptyLabel={t("workouts.gymEmptyState")}
+          onSelectGym={(gymId) => {
+            void (async () => {
+              const didUpdate = await handleAssignWorkoutGym(gymId);
+              if (didUpdate) {
+                setIsAdjustGymModalOpen(false);
+              }
+            })();
           }}
           onAddGym={handleCreateGymForCompletedWorkout}
           onDeleteGym={handleDeleteGymForCompletedWorkout}
@@ -1247,7 +1364,12 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     borderBottomWidth: 1,
   },
-  addExerciseButton: {
+  inlineActionsRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  inlineActionButton: {
+    flex: 1,
     minHeight: 36,
     borderWidth: 1,
     borderRadius: 2,
